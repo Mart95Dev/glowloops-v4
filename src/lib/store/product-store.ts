@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Product, ProductDisplay } from '../types/product';
+import { ProductDisplay } from '../types/product';
 import { getAllProducts, getNewArrivals, getPopularProducts, convertToProductDisplay } from '../services/product-service';
 
 interface ProductState {

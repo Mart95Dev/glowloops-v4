@@ -8,7 +8,7 @@ const PRODUCTS_COLLECTION = 'products';
 /**
  * Convertit un document Firestore en objet Product
  */
-const convertFirestoreDocToProduct = (doc: any): Product => {
+const convertFirestoreDocToProduct = (doc: { id: string; data: () => Record<string, unknown> }): Product => {
   const data = doc.data();
   try {
     return ProductSchema.parse({

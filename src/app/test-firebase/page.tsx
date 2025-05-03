@@ -6,7 +6,16 @@ import { db } from '@/lib/firebase/firebase-config';
 
 interface Product {
   id: string;
-  [key: string]: any;
+  name?: string;
+  description?: string;
+  price?: number;
+  imageUrl?: string;
+  category?: string;
+  basic_info?: {
+    name?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: string | number | boolean | undefined | Record<string, unknown>;
 }
 
 export default function TestFirebase() {

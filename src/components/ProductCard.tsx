@@ -1,5 +1,6 @@
 // Composant de carte produit
 import { ProductDisplay } from '@/lib/types/product';
+import Image from 'next/image';
 
 interface ProductCardProps {
   product: ProductDisplay;
@@ -9,14 +10,17 @@ export const ProductCard = ({ product }: ProductCardProps) => {
   return (
     <div className="group relative overflow-hidden rounded-lg shadow-md transition-all hover:shadow-lg">
       <div className="aspect-square w-full overflow-hidden">
-        <img
-          src={product.imageUrl}
+        <Image
+          src={product.imageUrl || 'https://via.placeholder.com/300x300?text=Image+non+disponible'}
           alt={product.name}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={(e) => {
-            // Fallback en cas d'erreur de chargement d'image
-            const target = e.target as HTMLImageElement;
-            target.src = 'https://via.placeholder.com/300x300?text=Image+non+disponible';
+          width={300}
+          height={300}
+          priority={false}
+          unoptimized={false}
+          onError={() => {
+            // La gestion des erreurs est maintenant gérée par le fallback dans src
+            console.log('Erreur de chargement d\'image pour:', product.name);
           }}
         />
       </div>
