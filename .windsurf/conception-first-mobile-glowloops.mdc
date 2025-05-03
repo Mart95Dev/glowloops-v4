@@ -1,0 +1,131 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+PRINCIPE FONDAMENTAL
+TOUTE CONCEPTION DOIT COMMENCER PAR LE MOBILE.
+Chez GlowLoops, la conception mobile-first n'est pas une option mais un impératif absolu pour tous les composants, pages et fonctionnalités.
+MÉTHODOLOGIE MOBILE-FIRST
+Workflow obligatoire
+
+Commencer par concevoir en 375px de large (iPhone standard)
+Adapter ensuite pour tablette (768px)
+Finaliser avec la version desktop (1024px+)
+
+Interdictions formelles
+
+❌ NE JAMAIS commencer par la version desktop
+❌ NE JAMAIS ajouter le mobile comme une "adaptation" après coup
+❌ NE JAMAIS masquer des fonctionnalités essentielles sur mobile
+
+RÈGLES D'APPLICATION
+1. Structure et grille
+
+Utiliser des unités flexibles (%, rem, vh/vw) plutôt que des pixels fixes
+Adopter une grille de 4px pour tous les espacements
+Définir une largeur maximale de composant à 375px pour la conception initiale
+
+2. Typographie
+
+Définir les tailles de police en rem (base 16px)
+Échelles typographiques mobiles:
+
+Titres h1: 1.75rem (28px)
+Titres h2: 1.5rem (24px)
+Titres h3: 1.25rem (20px)
+Corps: 1rem (16px)
+Petit texte: 0.875rem (14px)
+
+
+
+3. Touches et interactions
+
+Zone tactile minimale: 44×44px pour tout élément interactif
+Espacement minimal entre éléments interactifs: 8px
+Réduire le nombre d'étapes pour compléter une action
+
+4. Contenu et hiérarchie
+
+Prioriser le contenu essentiel (produits, CTA, prix)
+Simplifier les menus et la navigation
+Utiliser des composants empilés verticalement
+Éviter les tableaux complexes
+
+5. Images et médias
+
+Utiliser des ratios d'aspect fixes pour maintenir la mise en page stable
+Optimiser les images pour le chargement mobile (format WebP)
+Utiliser lazy loading pour toutes les images hors écran
+
+6. Conventions spécifiques GlowLoops
+Navigation
+
+Menu hamburger fonctionnel sur mobile
+Barre de recherche compacte et extensible
+Panier et favoris toujours accessibles
+
+Catalogue produits
+
+2 produits par ligne maximum sur mobile
+Filtres dans un drawer accessible via bouton
+Trier et filtrer en popover plutôt qu'en sidebar
+
+Page produit
+
+Galerie en slider (pas de thumbnails visibles)
+Options produit en accordéon si nombreuses
+Bouton CTA sticky en bas d'écran
+
+Checkout
+
+Une étape par écran
+Formulaires simplifiés avec auto-suggestion
+Résumé de commande collapse/expand
+
+VALIDATION ET ASSURANCE QUALITÉ
+Checklist obligatoire
+Avant toute validation, chaque composant/page doit être vérifié selon:
+
+Fonctionnalité complète sur écrans 320-375px
+Utilisabilité tactile (zones de touche suffisantes)
+Performance (temps de chargement < 3s sur 3G)
+Accessibilité (navigable au clavier, lecteur d'écran)
+
+Tests requis
+
+Test sur vrais appareils Android et iOS
+Test d'orientation (portrait/paysage)
+Test de zoom jusqu'à 200%
+
+DOCUMENTATION TECHNIQUE
+Dans Figma
+
+Organiser les maquettes par ordre: Mobile → Tablette → Desktop
+Nommer les frames avec le préfixe de taille (ex: "M-Header", "T-Header", "D-Header")
+Utiliser des variantes pour documenter les adaptations responsive
+Documenter les points de rupture dans les descriptions des composants
+
+Dans le code
+css/* Exemple d'implémentation CSS */
+.component {
+  /* Styles mobile par défaut */
+  padding: 1rem;
+  font-size: 1rem;
+  
+  /* Puis adaptations tablette */
+  @media (min-width: 768px) {
+    padding: 1.5rem;
+    font-size: 1.125rem;
+  }
+  
+  /* Puis adaptations desktop */
+  @media (min-width: 1024px) {
+    padding: 2rem;
+    font-size: 1.25rem;
+  }
+}
+RAPPEL FINAL
+La qualité de l'expérience mobile est notre priorité absolue. Tout design qui ne respecte pas l'approche mobile-first sera automatiquement rejeté.
+
+Cette règle s'applique à tous les membres de l'équipe sans exception, des designers aux développeurs en passant par les product managers.

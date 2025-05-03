@@ -49,3 +49,6 @@ next-env.d.ts
 **/*.p12
 **/*secret*
 **/*credential*
+
+# old components
+/old_components
