@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GlowLoops V4
+
+Plateforme e-commerce de bijoux utilisant Next.js 15.3.1 et Firebase 11.6.1.
 
 ## Getting Started
 
