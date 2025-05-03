@@ -1,4 +1,4 @@
-import { collection, getDocs, query, where, orderBy, limit, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, limit, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { getStorage, ref, getDownloadURL, listAll } from 'firebase/storage';
 import { db } from '../firebase/firebase-config';
 import { Product, ProductSchema, ProductDisplay } from '../types/product';
@@ -12,10 +12,97 @@ const PRODUCTS_COLLECTION = 'products';
  */
 const convertFirestoreDocToProduct = (doc: { id: string; data: () => Record<string, unknown> }): Product => {
   const data = doc.data();
+  
+  // Conversion des objets en tableaux si nécessaire
+  const processedData = { ...data };
+  
+  // Traitement de basic_info
+  if (processedData.basic_info && typeof processedData.basic_info === 'object') {
+    const basicInfo = processedData.basic_info as Record<string, unknown>;
+    
+    // S'assurer que tags est un tableau
+    let tagsArray: unknown[] = [];
+    if (basicInfo.tags) {
+      if (Array.isArray(basicInfo.tags)) {
+        tagsArray = basicInfo.tags;
+      } else if (typeof basicInfo.tags === 'object') {
+        tagsArray = Object.values(basicInfo.tags as Record<string, unknown>);
+      }
+    }
+    
+    // Mise à jour de basic_info avec les tags convertis et les valeurs par défaut
+    processedData.basic_info = {
+      ...basicInfo,
+      name: basicInfo.name || `Produit ${doc.id}`,
+      sku: basicInfo.sku || `SKU-${doc.id.substring(0, 6)}`,
+      slug: basicInfo.slug || `produit-${doc.id.toLowerCase().substring(0, 6)}`,
+      categoryId: basicInfo.categoryId || 'autre',
+      collection: basicInfo.collection || 'Générale',
+      tags: tagsArray
+    };
+  } else {
+    // Si basic_info n'existe pas du tout, le créer avec des valeurs par défaut
+    processedData.basic_info = {
+      name: `Produit ${doc.id}`,
+      sku: `SKU-${doc.id.substring(0, 6)}`,
+      slug: `produit-${doc.id.toLowerCase().substring(0, 6)}`,
+      categoryId: 'autre',
+      collection: 'Générale'
+    };
+  }
+  
+  // Traitement des materials
+  if (processedData.specifications && typeof processedData.specifications === 'object') {
+    const specs = processedData.specifications as Record<string, unknown>;
+    
+    // S'assurer que materials est un tableau
+    let materialsArray: unknown[] = [];
+    if (specs.materials) {
+      if (Array.isArray(specs.materials)) {
+        materialsArray = specs.materials;
+      } else if (typeof specs.materials === 'object') {
+        materialsArray = Object.values(specs.materials as Record<string, unknown>);
+      }
+    }
+    
+    // Mise à jour de specifications avec les materials convertis
+    processedData.specifications = {
+      ...specs,
+      materials: materialsArray
+    };
+  }
+  
+  // Traitement des collections
+  let collectionsArray: unknown[] = [];
+  if (processedData.collections) {
+    if (Array.isArray(processedData.collections)) {
+      collectionsArray = processedData.collections;
+    } else if (typeof processedData.collections === 'object') {
+      collectionsArray = Object.values(processedData.collections as Record<string, unknown>);
+    }
+  }
+  processedData.collections = collectionsArray;
+  
+  // Ajout de valeurs par défaut pour pricing si manquant ou incomplet
+  if (!processedData.pricing || typeof processedData.pricing !== 'object') {
+    processedData.pricing = {
+      regular_price: 0,
+      currency: 'EUR'
+    };
+  } else {
+    const pricing = processedData.pricing as Record<string, unknown>;
+    processedData.pricing = {
+      ...pricing,
+      regular_price: pricing.regular_price !== undefined ? pricing.regular_price : 0,
+      currency: pricing.currency || 'EUR'
+    };
+  }
+  
   try {
+    // Tentative de validation avec le schéma Zod
     return ProductSchema.parse({
       id: doc.id,
-      ...data
+      ...processedData
     });
   } catch (error) {
     console.error(`Erreur lors de la validation du produit ${doc.id}:`, error);
@@ -82,17 +169,103 @@ export const getProductById = async (productId: string): Promise<Product | null>
 };
 
 /**
- * Récupère les images d'un produit depuis Firebase Storage
+ * Récupère les images d'un produit depuis Firebase Storage et met à jour les liens dans Firestore si nécessaire
  */
-export const getProductImages = async (productId: string): Promise<ProductImage[]> => {
+export const getProductImages = async (productId: string, updateFirestore = false): Promise<ProductImage[]> => {
   try {
     const storage = getStorage();
-    const imagesRef = ref(storage, `products/${productId}/images`);
+    
+    // Vérifier d'abord le dossier racine du produit (nouvelle structure)
+    const rootImagesRef = ref(storage, `products/${productId}`);
     
     try {
-      // Essayer d'abord le dossier /images
+      const rootResult = await listAll(rootImagesRef);
+      
+      if (rootResult.items.length > 0) {
+        const images: ProductImage[] = [];
+        let mainImageUrl: string | null = null;
+        let thumbnailUrl: string | null = null;
+        const galleryImageUrls: Record<string, string> = {};
+        
+        for (const imageRef of rootResult.items) {
+          try {
+            const url = await getDownloadURL(imageRef);
+            const fileName = imageRef.name.toLowerCase();
+            const isMain = fileName.includes('main');
+            const isThumbnail = fileName.includes('thumbnail') || fileName.includes('thumb');
+            const imageType = isMain ? 'main' : (isThumbnail ? 'thumbnail' : 'gallery');
+            
+            // Stocker les URLs pour la mise à jour Firestore
+            if (isMain) {
+              mainImageUrl = url;
+            } else if (isThumbnail) {
+              thumbnailUrl = url;
+            } else {
+              // Utiliser l'index comme clé pour les images de galerie
+              const galleryIndex = Object.keys(galleryImageUrls).length;
+              galleryImageUrls[galleryIndex] = url;
+            }
+            
+            images.push({
+              id: imageRef.name,
+              url,
+              alt: `Image ${imageRef.name} du produit ${productId}`,
+              type: imageType
+            });
+          } catch (error) {
+            console.error(`Erreur lors de la récupération de l'URL de l'image ${imageRef.name}:`, error);
+          }
+        }
+        
+        // Mettre à jour les liens d'images dans Firestore si demandé
+        if (updateFirestore && images.length > 0 && (mainImageUrl || thumbnailUrl || Object.keys(galleryImageUrls).length > 0)) {
+          try {
+            const productRef = doc(db, PRODUCTS_COLLECTION, productId);
+            const productDoc = await getDoc(productRef);
+            
+            if (productDoc.exists()) {
+              const productData = productDoc.data();
+              const currentMedia = productData.media || {};
+              
+              // Préparer la mise à jour
+              const mediaUpdate: Record<string, string | Record<string, string>> = {};
+              
+              if (mainImageUrl) {
+                mediaUpdate.mainImageUrl = mainImageUrl;
+              }
+              
+              if (thumbnailUrl) {
+                mediaUpdate.thumbnailUrl = thumbnailUrl;
+              }
+              
+              if (Object.keys(galleryImageUrls).length > 0) {
+                mediaUpdate.galleryImageUrls = galleryImageUrls;
+              }
+              
+              // Mettre à jour le document
+              await updateDoc(productRef, {
+                media: {
+                  ...currentMedia,
+                  ...mediaUpdate
+                }
+              });
+              
+              console.log(`Liens d'images mis à jour dans Firestore pour ${productId}`);
+            }
+          } catch (updateError) {
+            console.error(`Erreur lors de la mise à jour des liens d'images dans Firestore pour ${productId}:`, updateError);
+          }
+        }
+        
+        console.log(`Nombre d'images trouvées pour ${productId}: ${images.length}`);
+        if (images.length > 0) {
+          return images;
+        }
+      }
+      
+      // Si le dossier racine est vide, essayer le dossier /images (ancienne structure)
+      const imagesRef = ref(storage, `products/${productId}/images`);
       const result = await listAll(imagesRef);
-      console.log(`Dossier images trouvé pour ${productId} avec ${result.items.length} éléments`);
       
       if (result.items.length > 0) {
         const images: ProductImage[] = [];
@@ -105,46 +278,15 @@ export const getProductImages = async (productId: string): Promise<ProductImage[
               url,
               alt: `Image ${imageRef.name} du produit ${productId}`,
               type: imageRef.name.includes('main') ? 'main' : 
-                    imageRef.name.includes('thumbnail') ? 'thumbnail' : 'gallery'
+                    imageRef.name.includes('thumbnail') || imageRef.name.includes('thumb') ? 'thumbnail' : 'gallery'
             });
           } catch (error) {
             console.error(`Erreur lors de la récupération de l'URL de l'image ${imageRef.name}:`, error);
           }
         }
         
-        console.log(`Nombre d'images trouvées pour ${productId}: ${images.length}`);
+        console.log(`Nombre d'images trouvées dans le dossier /images pour ${productId}: ${images.length}`);
         if (images.length > 0) {
-          return images;
-        }
-      }
-      
-      // Si le dossier /images est vide, essayer le dossier racine du produit
-      const rootImagesRef = ref(storage, `products/${productId}`);
-      const rootResult = await listAll(rootImagesRef);
-      
-      if (rootResult.items.length > 0) {
-        const images: ProductImage[] = [];
-        
-        for (const imageRef of rootResult.items) {
-          try {
-            // Vérifier si c'est un fichier image (extension jpg, png, etc.)
-            if (imageRef.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
-              const url = await getDownloadURL(imageRef);
-              images.push({
-                id: imageRef.name,
-                url,
-                alt: `Image ${imageRef.name} du produit ${productId}`,
-                type: imageRef.name.includes('main') ? 'main' : 
-                      imageRef.name.includes('thumbnail') ? 'thumbnail' : 'gallery'
-              });
-            }
-          } catch (error) {
-            console.error(`Erreur lors de la récupération de l'URL de l'image ${imageRef.name}:`, error);
-          }
-        }
-        
-        if (images.length > 0) {
-          console.log(`Nombre d'images trouvées dans le dossier racine pour ${productId}: ${images.length}`);
           return images;
         }
       }
