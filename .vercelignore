@@ -3,3 +3,7 @@
 
 .windsurf
 .windsurf/*
+
+# scripts
+/src/scripts
+/src/scripts/*

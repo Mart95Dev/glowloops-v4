@@ -130,4 +130,5 @@ export type ProductDisplay = {
   isNew: boolean;
   popularity: number;
   collection: string;
+  galleryImages: string[];
 };
