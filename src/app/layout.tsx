@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Poppins } from "next/font/google";
+import { Header, Footer } from "@/components/layout";
+import CartDrawer from "@/components/layout/CartDrawer";
 import "./globals.css";
 
 const playfairDisplay = Playfair_Display({
@@ -30,7 +32,10 @@ export default function RootLayout({
       <body
         className={`${playfairDisplay.variable} ${poppins.variable} antialiased`}
       >
-        {children}
+        <Header />
+        <main className="pt-32 pb-16 min-h-screen">{children}</main>
+        <Footer />
+        <CartDrawer />
       </body>
     </html>
   );

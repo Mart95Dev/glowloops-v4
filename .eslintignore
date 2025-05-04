@@ -1,0 +1,11 @@
+# Ignorer le dossier old_components
+/old_components/**/*
+/old_components
+
+# Ignorer les fichiers de build
+/.next/
+/out/
+/build/
+
+# Ignorer les fichiers de dépendances
+/node_modules/
