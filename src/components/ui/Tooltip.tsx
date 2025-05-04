@@ -2,14 +2,14 @@ import React from 'react';
 import { cn } from '@/lib/utils/cn';
 
 export interface TooltipProps extends React.HTMLAttributes<HTMLDivElement> {
-  content: React.ReactNode;
+  tooltipContent: React.ReactNode;
   position?: 'top' | 'right' | 'bottom' | 'left';
   delay?: number;
   children: React.ReactElement;
 }
 
 export const Tooltip = ({
-  content,
+  tooltipContent,
   position = 'top',
   delay = 300,
   children,
@@ -20,17 +20,19 @@ export const Tooltip = ({
   const [tooltipPosition, setTooltipPosition] = React.useState({ top: 0, left: 0 });
   const childRef = React.useRef<HTMLElement>(null);
   const tooltipRef = React.useRef<HTMLDivElement>(null);
-  let timeout: NodeJS.Timeout;
+  const timeoutRef = React.useRef<NodeJS.Timeout>();
 
   const showTooltip = () => {
-    timeout = setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       setIsVisible(true);
       updateTooltipPosition();
     }, delay);
   };
 
   const hideTooltip = () => {
-    clearTimeout(timeout);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
     setIsVisible(false);
   };
 
@@ -69,7 +71,9 @@ export const Tooltip = ({
 
   React.useEffect(() => {
     return () => {
-      clearTimeout(timeout);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
   }, []);
 
@@ -119,7 +123,7 @@ export const Tooltip = ({
           role="tooltip"
           {...props}
         >
-          {content}
+          {tooltipContent}
           <div
             className={cn(
               "absolute w-2 h-2 bg-gray-800 transform rotate-45",

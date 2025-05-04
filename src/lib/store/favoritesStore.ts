@@ -30,7 +30,7 @@ interface FavoritesState {
 // Création du store avec persistance
 export const useFavoritesStore = create<FavoritesState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       items: [],
       count: 0,
 

@@ -1,9 +1,9 @@
 import { toast } from '@/components/ui/toast-utils';
-import { ToastAction } from '@/components/ui/Toast';
+import { ToastActionElement } from '@/components/ui/Toast';
 
 type ToastOptions = {
   description?: string;
-  action?: React.ReactNode;
+  action?: ToastActionElement;
   duration?: number;
 };
 
@@ -12,7 +12,7 @@ export const toastUtils = {
     toast({
       title,
       description: options?.description,
-      variant: 'success',
+      className: 'bg-green-100 border-green-500 text-green-800',
       action: options?.action,
       duration: options?.duration,
     });
@@ -22,7 +22,7 @@ export const toastUtils = {
     toast({
       title,
       description: options?.description,
-      variant: 'destructive',
+      className: 'bg-red-100 border-red-500 text-red-800',
       action: options?.action,
       duration: options?.duration,
     });
@@ -41,7 +41,7 @@ export const toastUtils = {
     toast({
       title,
       description: options?.description,
-      variant: 'warning',
+      className: 'bg-yellow-100 border-yellow-500 text-yellow-800',
       action: options?.action,
       duration: options?.duration,
     });
