@@ -60,7 +60,10 @@ export const useCart = create<CartState>()(
       updateQuantity: (id, quantite) => set((state) => {
         if (quantite <= 0) {
           // Si la quantité est 0 ou négative, supprimer l'article
-          return state.removeItem(id);
+          const newItems = state.items.filter((item) => item.id !== id);
+          const totalItems = newItems.reduce((sum, item) => sum + item.quantite, 0);
+          const totalPrice = newItems.reduce((sum, item) => sum + (item.prix * item.quantite), 0);
+          return { items: newItems, totalItems, totalPrice };
         }
         
         const newItems = state.items.map((item) => 
