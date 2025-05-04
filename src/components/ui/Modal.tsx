@@ -6,11 +6,8 @@ const Modal = DialogPrimitive.Root;
 
 const ModalTrigger = DialogPrimitive.Trigger;
 
-const ModalPortal = ({
-  className,
-  ...props
-}: DialogPrimitive.DialogPortalProps) => (
-  <DialogPrimitive.Portal className={cn(className)} {...props} />
+const ModalPortal = (props: DialogPrimitive.DialogPortalProps) => (
+  <DialogPrimitive.Portal {...props} />
 );
 ModalPortal.displayName = DialogPrimitive.Portal.displayName;
 
