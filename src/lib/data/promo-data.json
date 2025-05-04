@@ -1,0 +1,26 @@
+{
+  "promos": [
+    {
+      "id": "summer-sale",
+      "message": "Livraison gratuite dès 50€ d'achat + -20% avec le code SUMMER",
+      "durationDays": 7,
+      "variant": "default",
+      "link": "/promos"
+    },
+    {
+      "id": "new-collection",
+      "message": "Nouvelle collection disponible ! Découvrez nos créations exclusives",
+      "durationDays": 14,
+      "variant": "success",
+      "link": "/nouveautes"
+    },
+    {
+      "id": "last-chance",
+      "message": "Derniers jours pour profiter de -30% sur les boucles d'oreilles",
+      "durationDays": 3,
+      "variant": "warning",
+      "link": "/promos/boucles-oreilles"
+    }
+  ],
+  "activePromo": "summer-sale"
+}

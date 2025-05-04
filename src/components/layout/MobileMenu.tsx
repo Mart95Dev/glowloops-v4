@@ -1,249 +1,121 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useUIStore } from '@/lib/store/ui-store';
-import { useUserStore } from '@/lib/store/user-store';
+import { X } from 'lucide-react';
+import { useAuth } from '@/lib/firebase/auth';
 
 interface MobileMenuProps {
   isOpen: boolean;
+  onClose: () => void;
 }
 
-const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen }) => {
-  const { closeMenu } = useUIStore();
-  const { user } = useUserStore();
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
+  const { user } = useAuth();
+  const [isMounted, setIsMounted] = useState(false);
 
-  const toggleCategory = (category: string) => {
-    setExpandedCategory(expandedCategory === category ? null : category);
-  };
+  // Marquer comme monté côté client
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  
+  // Désactiver le scroll quand le menu mobile est ouvert
+  useEffect(() => {
+    if (!isMounted) return;
+    
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, isMounted]);
 
+  // Si pas encore monté côté client, ne rien afficher
+  if (!isMounted) {
+    return null;
+  }
+  
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.3 }}
-          className="md:hidden bg-white border-t border-gray-100 overflow-hidden"
-        >
-          <div className="container mx-auto px-4 py-4">
-            <nav className="flex flex-col space-y-4">
-              {/* Lien utilisateur mobile */}
-              <Link 
-                href={user ? "/mon-compte" : "/connexion"}
-                className="flex items-center py-2 text-foreground"
-                onClick={closeMenu}
-              >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  width="20" 
-                  height="20" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
-                  className="mr-3"
-                >
-                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-                {user ? "Mon compte" : "Connexion / Inscription"}
-              </Link>
-
-              {/* Nouveautés */}
-              <Link 
-                href="/collections/nouveautes" 
-                className="py-2 text-foreground"
-                onClick={closeMenu}
-              >
-                Nouveautés
-              </Link>
-
-              {/* Bijoux avec sous-catégories */}
-              <div>
+        <>
+          {/* Overlay de fond */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/40 z-40 md:hidden"
+            onClick={onClose}
+          />
+          
+          {/* Menu mobile */}
+          <motion.div
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'tween', duration: 0.3 }}
+            className="fixed top-0 right-0 h-full w-4/5 max-w-sm bg-lilas-fonce text-white shadow-xl z-50 md:hidden overflow-y-auto"
+          >
+            <div className="flex flex-col h-full">
+              {/* En-tête du menu */}
+              <div className="flex items-center justify-between p-4 border-b border-lilas/20">
+                <h2 className="text-lg font-medium text-white">Menu</h2>
                 <button 
-                  className="flex items-center justify-between w-full py-2 text-foreground"
-                  onClick={() => toggleCategory('bijoux')}
+                  onClick={onClose}
+                  className="p-2 text-white/80 hover:text-white transition-colors"
+                  aria-label="Fermer le menu"
                 >
-                  <span>Bijoux</span>
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    width="16" 
-                    height="16" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    className={`transition-transform duration-300 ${expandedCategory === 'bijoux' ? 'rotate-180' : ''}`}
-                  >
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
+                  <X size={24} />
                 </button>
-                <AnimatePresence>
-                  {expandedCategory === 'bijoux' && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="pl-4 space-y-2 overflow-hidden"
+              </div>
+              
+              {/* Contenu du menu */}
+              <div className="flex-1 overflow-y-auto py-4 px-6">
+                <nav className="flex-grow">
+                  {[
+                    { label: 'Nouveautés', href: '/nouveautes' },
+                    { label: 'Style', href: '/style' },
+                    { label: 'Vibe', href: '/vibe' },
+                    { label: 'Matériaux', href: '/materiaux' },
+                    { label: 'Packs', href: '/packs' },
+                    { label: 'Abonnement', href: '/abonnement' },
+                    { label: 'Boutique', href: '/shop' },
+                    { label: user ? 'Mon compte' : 'Se connecter', href: user ? '/compte' : '/connexion' },
+                  ].map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={onClose}
+                      className="block py-4 text-lg transition-colors border-b border-lilas/20 last:border-0 text-white hover:text-[#f3f3fd]"
                     >
-                      <Link 
-                        href="/collections/bijoux/boucles-oreilles" 
-                        className="block py-2 text-foreground"
-                        onClick={closeMenu}
-                      >
-                        Boucles d&apos;oreilles
-                      </Link>
-                      <Link 
-                        href="/collections/bijoux/colliers" 
-                        className="block py-2 text-foreground"
-                        onClick={closeMenu}
-                      >
-                        Colliers
-                      </Link>
-                      <Link 
-                        href="/collections/bijoux/bracelets" 
-                        className="block py-2 text-foreground"
-                        onClick={closeMenu}
-                      >
-                        Bracelets
-                      </Link>
-                      <Link 
-                        href="/collections/bijoux/bagues" 
-                        className="block py-2 text-foreground"
-                        onClick={closeMenu}
-                      >
-                        Bagues
-                      </Link>
-                      <Link 
-                        href="/collections/bijoux/ensembles" 
-                        className="block py-2 text-foreground"
-                        onClick={closeMenu}
-                      >
-                        Ensembles
-                      </Link>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Accessoires avec sous-catégories */}
-              <div>
-                <button 
-                  className="flex items-center justify-between w-full py-2 text-foreground"
-                  onClick={() => toggleCategory('accessoires')}
-                >
-                  <span>Accessoires</span>
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    width="16" 
-                    height="16" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    className={`transition-transform duration-300 ${expandedCategory === 'accessoires' ? 'rotate-180' : ''}`}
-                  >
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </button>
-                <AnimatePresence>
-                  {expandedCategory === 'accessoires' && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="pl-4 space-y-2 overflow-hidden"
+                      {item.label}
+                    </Link>
+                  ))}
+                </nav>
+                
+                {user && (
+                  <div className="mt-auto pb-6">
+                    <button
+                      onClick={() => {
+                        // Appeler la fonction de déconnexion
+                        onClose();
+                      }}
+                      className="block w-full text-left py-3 text-red-300 hover:text-red-200 transition-colors border-t border-lilas/20"
                     >
-                      <Link 
-                        href="/collections/accessoires/barrettes" 
-                        className="block py-2 text-foreground"
-                        onClick={closeMenu}
-                      >
-                        Barrettes
-                      </Link>
-                      <Link 
-                        href="/collections/accessoires/headbands" 
-                        className="block py-2 text-foreground"
-                        onClick={closeMenu}
-                      >
-                        Headbands
-                      </Link>
-                      <Link 
-                        href="/collections/accessoires/porte-cles" 
-                        className="block py-2 text-foreground"
-                        onClick={closeMenu}
-                      >
-                        Porte-clés
-                      </Link>
-                      <Link 
-                        href="/collections/accessoires/autres" 
-                        className="block py-2 text-foreground"
-                        onClick={closeMenu}
-                      >
-                        Autres
-                      </Link>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      Déconnexion
+                    </button>
+                  </div>
+                )}
               </div>
-
-              {/* Best-sellers */}
-              <Link 
-                href="/collections/best-sellers" 
-                className="py-2 text-foreground"
-                onClick={closeMenu}
-              >
-                Best-sellers
-              </Link>
-
-              {/* À propos */}
-              <Link 
-                href="/a-propos" 
-                className="py-2 text-foreground"
-                onClick={closeMenu}
-              >
-                À propos
-              </Link>
-
-              {/* Liens supplémentaires */}
-              <div className="pt-4 mt-4 border-t border-gray-100 space-y-2">
-                <Link 
-                  href="/contact" 
-                  className="block py-2 text-sm text-gray-500"
-                  onClick={closeMenu}
-                >
-                  Contact
-                </Link>
-                <Link 
-                  href="/faq" 
-                  className="block py-2 text-sm text-gray-500"
-                  onClick={closeMenu}
-                >
-                  FAQ
-                </Link>
-                <Link 
-                  href="/livraison" 
-                  className="block py-2 text-sm text-gray-500"
-                  onClick={closeMenu}
-                >
-                  Livraison & Retours
-                </Link>
-              </div>
-            </nav>
-          </div>
-        </motion.div>
+            </div>
+          </motion.div>
+        </>
       )}
     </AnimatePresence>
   );

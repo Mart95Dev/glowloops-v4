@@ -1,176 +1,305 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Input } from '../ui/Input';
-import { Button } from '../ui/Button';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { ArrowUp } from 'lucide-react';
 
 const Footer: React.FC = () => {
-  const handleNewsletterSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // Logique pour gérer l'inscription à la newsletter
-    // À implémenter avec Firebase
+  const [isMounted, setIsMounted] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const { scrollYProgress } = useScroll();
+  
+  // Effet de parallax pour les sections du footer
+  const translateY = useTransform(scrollYProgress, [0.7, 1], [50, 0]);
+  
+  useEffect(() => {
+    setIsMounted(true);
+    
+    const handleScroll = () => {
+      if (window.scrollY > 500) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  
+  // Fonction pour remonter en haut de la page
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
 
+  // Si pas encore monté côté client, ne rien afficher
+  if (!isMounted) {
+    return null;
+  }
+
+  // Valeurs par défaut pour les informations de l'entreprise
+  const nom = 'GlowLoops';
+  const email = 'contact@glowloops.com';
+  const telephone = '+33 1 23 45 67 89';
+  const site = 'www.glowloops.com';
+  const adresse = '123 Rue de la Mode';
+  const codePostal = '75001';
+  const ville = 'Paris';
+  const pays = 'France';
+  const slogan = 'Des boucles d\'oreilles qui font tourner les têtes. Style unique, petits prix, grands effets.';
+
   return (
-    <footer className="bg-lilas-clair pt-12 pb-6">
-      <div className="container mx-auto px-4">
-        {/* Section newsletter */}
-        <div className="max-w-xl mx-auto mb-12 text-center">
-          <h3 className="text-2xl font-playfair mb-4">Rejoignez la communauté GlowLoops</h3>
-          <p className="text-gray-600 mb-6">
-            Inscrivez-vous à notre newsletter pour recevoir des offres exclusives, 
-            des conseils de style et être informé(e) des nouveautés en avant-première.
-          </p>
-          <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-2">
-            <Input
-              type="email"
-              placeholder="Votre adresse email"
-              required
-              className="flex-grow"
-            />
-            <Button type="submit">S&apos;inscrire</Button>
-          </form>
-        </div>
+    <footer className="bg-gray-50 border-t relative print:hidden" role="contentinfo" itemScope itemType="https://schema.org/WPFooter">
+      {/* Bouton scroll to top */}
+      <AnimatedScrollTopButton show={showScrollTop} onClick={scrollToTop} />
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          {/* Logo et description */}
-          <div className="md:col-span-1">
-            <Link href="/" className="inline-block mb-4">
-              <Image 
-                src="/logo.png" 
-                alt="GlowLoops" 
-                width={150} 
-                height={40} 
-                className="h-10 w-auto"
-              />
+      {/* Main footer */}
+      <div className="container mx-auto py-8 md:py-12 px-4 overflow-hidden">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          {/* About column */}
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.6 }}
+            className="col-span-2 md:col-span-1"
+            itemScope
+            itemType="https://schema.org/Organization"
+          >
+            <Link href="/" className="text-xl font-bold text-lilas-fonce mb-4 inline-block font-display" aria-label={`${nom} - Accueil`} itemProp="url">
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-lilas"
+                itemProp="name"
+              >
+                {nom.substring(0, 4)}
+              </motion.span>
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                itemProp="name"
+              >
+                {nom.substring(4)}
+              </motion.span>
             </Link>
-            <p className="text-gray-600 mb-4">
-              Des bijoux fantaisie tendance et accessoires pour sublimer votre style au quotidien.
+            <p className="text-sm text-gray-600 mb-4" itemProp="description">
+              {slogan}
             </p>
-            <div className="flex space-x-4">
-              <SocialLink href="https://instagram.com" aria-label="Instagram">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                </svg>
-              </SocialLink>
-              <SocialLink href="https://facebook.com" aria-label="Facebook">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
-                </svg>
-              </SocialLink>
-              <SocialLink href="https://pinterest.com" aria-label="Pinterest">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"></path>
-                  <path d="M21 12c0 4.418 -4.03 8 -9 8a9.863 9.863 0 0 1 -4.255 -.949l-3.745 .976l1.148 -3.71a7.569 7.569 0 0 1 -1.148 -3.993c0 -4.418 4.03 -8 9 -8s9 3.582 9 8z"></path>
-                </svg>
-              </SocialLink>
-              <SocialLink href="https://tiktok.com" aria-label="TikTok">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"></path>
-                </svg>
-              </SocialLink>
+            <div className="space-y-2">
+              <div className="flex items-center text-sm text-gray-600">
+                <span className="block" itemProp="address" itemScope itemType="https://schema.org/PostalAddress">
+                  <span itemProp="streetAddress">{adresse}</span>,&nbsp;
+                  <span itemProp="postalCode">{codePostal}</span>&nbsp;
+                  <span itemProp="addressLocality">{ville}</span>,&nbsp;
+                  <span itemProp="addressCountry">{pays}</span>
+                </span>
+              </div>
+              <div className="flex items-center text-sm text-gray-600">
+                <a href={`tel:${telephone}`} className="hover:text-lilas-fonce transition-colors" itemProp="telephone">
+                  {telephone}
+                </a>
+              </div>
+              <div className="flex items-center text-sm text-gray-600">
+                <a href={`mailto:${email}`} className="hover:text-lilas-fonce transition-colors" itemProp="email">
+                  {email}
+                </a>
+              </div>
+              <div className="flex items-center text-sm text-gray-600">
+                <a href={`https://${site}`} target="_blank" rel="noopener noreferrer" className="hover:text-lilas-fonce transition-colors" itemProp="url">
+                  {site}
+                </a>
+              </div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Liens rapides */}
-          <div>
-            <h4 className="font-playfair text-lg mb-4">Collections</h4>
-            <ul className="space-y-2">
-              <FooterLink href="/collections/nouveautes">Nouveautés</FooterLink>
-              <FooterLink href="/collections/bijoux">Bijoux</FooterLink>
-              <FooterLink href="/collections/accessoires">Accessoires</FooterLink>
-              <FooterLink href="/collections/best-sellers">Best-sellers</FooterLink>
-              <FooterLink href="/collections/promos">Promotions</FooterLink>
+          {/* Shop column */}
+          <motion.div
+            style={{ y: translateY }}
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            itemScope
+            itemType="https://schema.org/SiteNavigationElement"
+          >
+            <h4 className="font-medium mb-4 text-gray-800" id="footer-nav-shop">Shop</h4>
+            <ul className="space-y-2 text-sm" aria-labelledby="footer-nav-shop">
+              {[
+                { href: "/nouveautes", label: "Nouveautés" },
+                { href: "/shop", label: "Boutique" },
+                { href: "/packs", label: "Packs" },
+                { href: "/abonnement", label: "Abonnement" }
+              ].map((item, index) => (
+                <motion.li 
+                  key={item.href}
+                  initial={{ opacity: 0, x: -10 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.1 * index }}
+                >
+                  <motion.div whileHover={{ x: 3 }} transition={{ duration: 0.2 }}>
+                    <Link href={item.href} className="text-gray-600 hover:text-lilas-fonce transition-colors" itemProp="url">
+                      <span itemProp="name">{item.label}</span>
+                    </Link>
+                  </motion.div>
+                </motion.li>
+              ))}
             </ul>
-          </div>
+          </motion.div>
 
-          {/* Informations */}
-          <div>
-            <h4 className="font-playfair text-lg mb-4">Informations</h4>
-            <ul className="space-y-2">
-              <FooterLink href="/a-propos">À propos</FooterLink>
-              <FooterLink href="/livraison">Livraison & Retours</FooterLink>
-              <FooterLink href="/faq">FAQ</FooterLink>
-              <FooterLink href="/contact">Contact</FooterLink>
-              <FooterLink href="/blog">Blog</FooterLink>
+          {/* Help column */}
+          <motion.div
+            style={{ y: translateY }}
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            itemScope
+            itemType="https://schema.org/SiteNavigationElement"
+          >
+            <h4 className="font-medium mb-4 text-gray-800" id="footer-nav-aide">Aide</h4>
+            <ul className="space-y-2 text-sm" aria-labelledby="footer-nav-aide">
+              {[
+                { href: "/faq", label: "FAQ" },
+                { href: "/livraison", label: "Livraison & Retours" },
+                { href: "/contact", label: "Contact" },
+                { href: "/taille-guide", label: "Guide des tailles" },
+                { href: "/entretien", label: "Entretien des bijoux" }
+              ].map((item, index) => (
+                <motion.li 
+                  key={item.href}
+                  initial={{ opacity: 0, x: -10 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.1 * index }}
+                >
+                  <motion.div whileHover={{ x: 3 }} transition={{ duration: 0.2 }}>
+                    <Link href={item.href} className="text-gray-600 hover:text-lilas-fonce transition-colors" itemProp="url">
+                      <span itemProp="name">{item.label}</span>
+                    </Link>
+                  </motion.div>
+                </motion.li>
+              ))}
             </ul>
-          </div>
+          </motion.div>
 
-          {/* Légal */}
-          <div>
-            <h4 className="font-playfair text-lg mb-4">Légal</h4>
-            <ul className="space-y-2">
-              <FooterLink href="/cgv">Conditions générales de vente</FooterLink>
-              <FooterLink href="/confidentialite">Politique de confidentialité</FooterLink>
-              <FooterLink href="/cookies">Gestion des cookies</FooterLink>
-              <FooterLink href="/mentions-legales">Mentions légales</FooterLink>
-            </ul>
-          </div>
-        </div>
-
-        {/* Moyens de paiement */}
-        <div className="border-t border-gray-200 pt-6 mt-6">
-          <div className="flex flex-wrap justify-between items-center">
-            <div className="mb-4 md:mb-0">
-              <p className="text-sm text-gray-500">
-                © {new Date().getFullYear()} GlowLoops. Tous droits réservés.
-              </p>
+          {/* Info column */}
+          <motion.div
+            style={{ y: translateY }}
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            itemScope
+            itemType="https://schema.org/SiteNavigationElement"
+          >
+            <h4 className="font-medium mb-4 text-gray-800" id="footer-nav-info">À propos</h4>
+            <div className="space-y-3 text-sm">
+              <h3 className="text-gray-500 font-medium mb-2">Informations</h3>
+              <ul className="space-y-2">
+                <li>
+                  <Link href="/a-propos" className="text-gray-500 hover:text-lilas-700 transition-colors">
+                    À propos
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/livraison" className="text-gray-500 hover:text-lilas-700 transition-colors">
+                    Livraison
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/cgv" className="text-gray-500 hover:text-lilas-700 transition-colors">
+                    CGV
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/confidentialite" className="text-gray-500 hover:text-lilas-700 transition-colors">
+                    Confidentialité
+                  </Link>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => {}}
+                    className="text-gray-500 hover:text-lilas-700 transition-colors"
+                  >
+                    Paramètres des cookies
+                  </button>
+                </li>
+              </ul>
             </div>
-            <div className="flex space-x-4">
-              <Image src="/payment/visa.svg" alt="Visa" width={40} height={24} />
-              <Image src="/payment/mastercard.svg" alt="Mastercard" width={40} height={24} />
-              <Image src="/payment/paypal.svg" alt="PayPal" width={40} height={24} />
-              <Image src="/payment/apple-pay.svg" alt="Apple Pay" width={40} height={24} />
-            </div>
-          </div>
+          </motion.div>
         </div>
       </div>
+
+      {/* Bottom footer */}
+      <motion.div 
+        className="border-t border-gray-200 py-4 md:py-6"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center text-sm text-gray-500">
+          <p className="mb-4 md:mb-0 text-center md:text-left">
+            <span itemProp="copyrightYear">{new Date().getFullYear()}</span> © <span itemProp="copyrightHolder" itemScope itemType="https://schema.org/Organization"><span itemProp="name">{nom}</span></span>. Tous droits réservés.
+          </p>
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <div className="flex items-center justify-center mb-4 md:mb-0">
+              <Image 
+                src="/images/payment/payment.png" 
+                alt="Méthodes de paiement acceptées : Visa, Mastercard, PayPal"
+                width={200}
+                height={40}
+                className="h-6 md:h-8 w-auto" 
+              />
+            </div>
+            <div className="flex gap-4 text-xs md:text-sm" itemScope itemType="https://schema.org/SiteNavigationElement">
+              <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.2 }}>
+                <Link href="/accessibilite" className="text-gray-500 hover:text-lilas-fonce transition-colors" itemProp="url">
+                  <span itemProp="name">Accessibilité</span>
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.2 }}>
+                <Link href="/contact" className="text-gray-500 hover:text-lilas-fonce transition-colors" itemProp="url">
+                  <span itemProp="name">Nous contacter</span>
+                </Link>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
     </footer>
   );
 };
 
-// Composant pour les liens du footer
-interface FooterLinkProps {
-  href: string;
-  children: React.ReactNode;
-}
-
-const FooterLink: React.FC<FooterLinkProps> = ({ href, children }) => {
+// Composant pour le bouton de retour en haut
+function AnimatedScrollTopButton({ show, onClick }: { show: boolean; onClick: () => void }) {
   return (
-    <li>
-      <Link 
-        href={href} 
-        className="text-gray-600 hover:text-lilas-fonce transition-colors"
-      >
-        {children}
-      </Link>
-    </li>
-  );
-};
-
-// Composant pour les liens sociaux
-interface SocialLinkProps {
-  href: string;
-  children: React.ReactNode;
-  'aria-label': string;
-}
-
-const SocialLink: React.FC<SocialLinkProps> = ({ href, children, ...props }) => {
-  return (
-    <a 
-      href={href} 
-      target="_blank" 
-      rel="noopener noreferrer"
-      className="text-gray-600 hover:text-lilas-fonce transition-colors"
-      {...props}
+    <motion.button
+      className="fixed bottom-4 right-4 md:bottom-8 md:right-8 p-3 bg-lilas rounded-full border-lilas-fonce border-2 shadow-lg z-50"
+      onClick={onClick}
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ 
+        opacity: show ? 1 : 0, 
+        scale: show ? 1 : 0.5,
+        y: show ? 0 : 20
+      }}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+      transition={{ duration: 0.3 }}
+      aria-label="Retour en haut de la page"
     >
-      {children}
-    </a>
+      <ArrowUp className="w-5 h-5" aria-hidden="true" />
+    </motion.button>
   );
-};
+}
 
 export default Footer;
