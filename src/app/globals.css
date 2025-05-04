@@ -5,6 +5,11 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --lilas-clair: #E6E6FA;
+  --lilas-fonce: #9370DB;
+  --creme-nude: #F5F5DC;
+  --dore: #FFD700;
+  --menthe: #98FB98;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -17,7 +22,11 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-poppins), sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-playfair-display), serif;
 }
 
 @layer utilities {

@@ -59,12 +59,11 @@ Configurer l'architecture de base du projet Next.js 15 avec Zustand pour la gest
 
 - Configurer Zustand avec les stores principaux (panier, utilisateur, UI)
 - Mettre en place Zod pour la validation des schémas de données
-- Configurer TailwindCSS 4 avec les couleurs personnalisées de GlowLoops
+- Configurer TailwindCSS  avec les couleurs personnalisées de GlowLoops
 - Créer les variables CSS pour les couleurs de base (lilas-clair, lilas-fonce, creme-nude, dore, menthe)
 - Configurer les polices Playfair Display et Poppins
 
-**Critères d'acceptation**:
-- Le projet démarre sans erreur avec npm run dev
+**Critères d'acceptation**:- Le projet démarre sans erreur avec npm run dev
 - Les stores Zustand sont correctement configurés
 - Les couleurs et la typographie sont conformes à la charte graphique
 - La connexion à Firebase est fonctionnelle

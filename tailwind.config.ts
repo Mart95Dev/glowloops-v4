@@ -11,6 +11,15 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        "lilas-clair": "var(--lilas-clair)",
+        "lilas-fonce": "var(--lilas-fonce)",
+        "creme-nude": "var(--creme-nude)",
+        "dore": "var(--dore)",
+        "menthe": "var(--menthe)",
+      },
+      fontFamily: {
+        'playfair': ['var(--font-playfair-display)', 'serif'],
+        'poppins': ['var(--font-poppins)', 'sans-serif'],
       },
     },
   },

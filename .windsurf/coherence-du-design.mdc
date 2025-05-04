@@ -1,7 +1,7 @@
 ---
 description: coherence design
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # Règle de développement pour la cohérence du design
 

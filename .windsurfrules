@@ -1,23 +1,8 @@
-
-# Règles de Développement GlowLoops V4
-
-## Principes Fondamentaux
-
-### 1. Mobile-First (PRIORITÉ ABSOLUE)
-- **TOUTE conception DOIT commencer par le mobile (375px)**
-- Adapter ensuite pour tablette (768px) puis desktop (1024px+)
-- ❌ NE JAMAIS commencer par la version desktop
-- ❌ NE JAMAIS ajouter le mobile comme une "adaptation" après coup
-
-### 2. Cohérence du Design
-- Maintenir une cohérence totale avec les composants existants dans `old_components`
-- **Impératif** : La navigation du header doit maintenir une cohérence avec les composants dans `old_components/old-new-glowloops-v2`
-
-### 3. TypeScript Strict
-- Utiliser TypeScript en mode strict
-- ❌ NE JAMAIS utiliser le type `any`
+# Structure et Stack Technique de GlowLoops V4
 
 ## Stack Technique
+
+Le projet GlowLoops V4 utilise la stack technique suivante qui doit être maintenue pour assurer la cohérence du développement :
 
 | Technologie | Version | Utilisation |
 |-------------|---------|-------------|
@@ -33,6 +18,8 @@
 | Framer Motion | 10.16.4 | Animations |
 
 ## Structure du Projet
+
+La structure suivante du projet **DOIT** être strictement respectée :
 
 ```
 glowloops-v4/
@@ -62,6 +49,26 @@ glowloops-v4/
         ├── types/         # Types et schémas TypeScript/Zod
         └── utils/         # Fonctions utilitaires
 ```
+
+## Règles de Développement
+
+1. **TypeScript Strict** : Utiliser TypeScript en mode strict et éviter l'utilisation de `any`.
+2. **Organisation des Fichiers** : Respecter la structure de dossiers définie ci-dessus.
+3. **Gestion d'État** : Utiliser Zustand pour la gestion d'état global.
+4. **Validation des Données** : Utiliser Zod pour la validation des données et la définition des schémas.
+5. **Composants** : Créer des composants réutilisables et les placer dans le dossier approprié.
+6. **Variables d'Environnement** : Stocker les clés API et autres secrets dans des variables d'environnement.
+7. **Sécurité** : Ne jamais exposer les clés Firebase ou autres informations sensibles dans le code versionnée.
+
+## Conventions de Nommage
+
+- **Fichiers** : Utiliser le PascalCase pour les composants React (ex: `ProductCard.tsx`) et le kebab-case pour les autres fichiers (ex: `product-service.ts`).
+- **Composants** : Nommer les composants en PascalCase (ex: `ProductCard`).
+- **Fonctions** : Nommer les fonctions en camelCase (ex: `getProducts`).
+- **Types/Interfaces** : Nommer les types et interfaces en PascalCase (ex: `Product`).
+- **Stores** : Nommer les stores avec un suffixe "Store" (ex: `productStore`).
+
+Cette structure et ces conventions doivent être strictement respectées pour maintenir la cohérence et la maintenabilité du projet.
 
 ## Charte Graphique
 

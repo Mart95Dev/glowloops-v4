@@ -3,7 +3,14 @@ const nextConfig = {
   reactStrictMode: false, // Désactiver le mode strict pour éviter les doubles rendus
   swcMinify: true,
   images: {
-    domains: ['firebasestorage.googleapis.com', 'via.placeholder.com'], // Domaines autorisés pour les images
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+        port: '',
+        pathname: '/**',
+      }
+    ], // Domaines autorisés pour les images
   },
   experimental: {
     // Options expérimentales
