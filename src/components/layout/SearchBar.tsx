@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '../ui/Button';
-import { Search, Loader2, Phone, ImageIcon } from 'lucide-react';
+import { Search, Loader2, Gem, ImageIcon } from 'lucide-react';
 import { useUIStore } from '@/lib/store/ui-store';
 import { SearchResult, getSearchSuggestions, searchCategories } from '@/lib/services/search-service';
 import Image from 'next/image';
@@ -190,7 +190,7 @@ const SearchBar: React.FC = () => {
                       onClick={() => handleCategorySelect(category.url)}
                     >
                       <div className="flex-shrink-0 w-8 h-8 rounded-full bg-lilas-clair/30 flex items-center justify-center text-lilas-fonce">
-                        <Phone size={16} />
+                        <Gem size={16} />
                       </div>
                       <span>{category.name}</span>
                     </div>
