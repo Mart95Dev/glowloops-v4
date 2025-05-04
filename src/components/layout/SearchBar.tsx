@@ -1,225 +1,256 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { collection, query, where, limit, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase/firebase-config';
-import { useUIStore } from '@/lib/store/ui-store';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
+import { Search, Loader2, Phone, ImageIcon } from 'lucide-react';
+import { useUIStore } from '@/lib/store/ui-store';
+import { SearchResult, getSearchSuggestions, searchCategories } from '@/lib/services/search-service';
 import Image from 'next/image';
+import { useDebounce } from '@/lib/hooks/use-debounce';
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
-interface SearchResult {
+// Fonction pour normaliser le texte (supprimer les accents)
+const normalizeText = (text: string): string => {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+};
+
+interface CategoryResult {
   id: string;
   name: string;
-  category: string;
-  image: string;
+  url: string;
 }
 
 const SearchBar: React.FC = () => {
   const { isSearchOpen, toggleSearch, closeSearch } = useUIStore();
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [categoryResults, setCategoryResults] = useState<CategoryResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
-  // Fermer la recherche lorsqu'on clique en dehors
+  // Fonction pour effectuer la recherche
+  const performSearch = useCallback(async (term: string) => {
+    console.log('[SEARCHBAR] Début recherche avec terme:', term);
+    
+    if (!term || term.length < 2) {
+      console.log('[SEARCHBAR] Terme trop court, réinitialisation des résultats');
+      setResults([]);
+      setCategoryResults([]);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Normaliser le terme de recherche (supprimer les accents)
+      const normalizedTerm = normalizeText(term);
+      console.log('[SEARCHBAR] Terme normalisé:', normalizedTerm);
+      
+      // Recherche de produits
+      console.log('[SEARCHBAR] Appel getSearchSuggestions...');
+      const productResults = await getSearchSuggestions(normalizedTerm, 5);
+      console.log('[SEARCHBAR] Résultats produits reçus:', productResults);
+      setResults(productResults);
+      
+      // Recherche de catégories
+      console.log('[SEARCHBAR] Appel searchCategories...');
+      const categories = await searchCategories(normalizedTerm, 3);
+      console.log('[SEARCHBAR] Résultats catégories reçus:', categories);
+      setCategoryResults(categories);
+    } catch (error) {
+      console.error('[SEARCHBAR] Erreur lors de la recherche:', error);
+    } finally {
+      setIsLoading(false);
+      console.log('[SEARCHBAR] Fin de recherche, isLoading=false');
+    }
+  }, []);
+
+  // Effectuer la recherche lorsque le terme de recherche change (avec debounce)
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        closeSearch();
-      }
-    };
+    // Ne lancer la recherche que si la modale est ouverte
+    if (isSearchOpen) {
+      performSearch(debouncedSearchTerm);
+    }
+  }, [debouncedSearchTerm, performSearch, isSearchOpen]);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [closeSearch]);
-
-  // Recherche dans Firestore
+  // Réinitialiser l'état lorsque la modale est fermée
   useEffect(() => {
-    const searchProducts = async () => {
-      if (searchTerm.length < 2) {
-        setResults([]);
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        // Recherche par nom de produit
-        const searchTermLower = searchTerm.toLowerCase();
-        const productsRef = collection(db, 'products');
-        
-        // Recherche des produits dont le nom commence par le terme de recherche
-        // Note: Firestore ne supporte pas les recherches de texte complètes, 
-        // donc nous utilisons une approche simplifiée
-        const nameStartsWithQuery = query(
-          productsRef,
-          where('nameSearch', '>=', searchTermLower),
-          where('nameSearch', '<=', searchTermLower + '\uf8ff'),
-          limit(5)
-        );
-        
-        const querySnapshot = await getDocs(nameStartsWithQuery);
-        
-        const searchResults: SearchResult[] = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          searchResults.push({
-            id: doc.id,
-            name: data.name,
-            category: data.category,
-            image: data.images[0] || '',
-          });
-        });
-        
-        setResults(searchResults);
-      } catch (error) {
-        console.error('Erreur lors de la recherche:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const debounceTimer = setTimeout(() => {
-      searchProducts();
-    }, 300);
-
-    return () => clearTimeout(debounceTimer);
-  }, [searchTerm]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchTerm.trim()) {
-      router.push(`/recherche?q=${encodeURIComponent(searchTerm.trim())}`);
-      closeSearch();
+    if (!isSearchOpen) {
       setSearchTerm('');
+      setResults([]);
+      setCategoryResults([]);
+    }
+  }, [isSearchOpen]);
+
+  // Gérer la navigation vers un produit
+  const handleProductSelect = (url: string) => {
+    // Pour l'instant, on affiche juste une alerte car la page produit n'existe pas encore
+    alert(`Navigation vers: ${url}`);
+    // Quand les pages produits existeront: router.push(url);
+    closeSearch();
+  };
+
+  // Gérer la navigation vers une catégorie
+  const handleCategorySelect = (url: string) => {
+    // Pour l'instant, on affiche juste une alerte car la page catégorie n'existe pas encore
+    alert(`Navigation vers la catégorie: ${url}`);
+    // Quand les pages catégories existeront: router.push(url);
+    closeSearch();
+  };
+
+  // Gérer la soumission du formulaire de recherche
+  const handleSearch = () => {
+    if (searchTerm.trim()) {
+      // Pour l'instant, on affiche juste une alerte car la page de recherche n'existe pas encore
+      alert(`Recherche pour: ${searchTerm.trim()}`);
+      // Quand la page de recherche existera: router.push(`/shop?search=${encodeURIComponent(searchTerm.trim())}`);
+      closeSearch();
     }
   };
 
-  const handleResultClick = (id: string) => {
-    router.push(`/produits/${id}`);
-    closeSearch();
-    setSearchTerm('');
-  };
-
   return (
-    <div className="relative" ref={searchRef}>
-      {/* Icône de recherche pour mobile */}
-      <Button
-        variant="ghost"
-        size="icon"
-        aria-label="Rechercher"
-        onClick={toggleSearch}
-        className="sm:hidden"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+    <>
+      <div className="relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Rechercher"
+          onClick={toggleSearch}
+          className="sm:hidden"
         >
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-      </Button>
-
-      {/* Barre de recherche - toujours visible sur desktop, conditionnelle sur mobile */}
-      <div
-        className={`
-          absolute right-0 top-0 sm:relative
-          transition-all duration-300 ease-in-out
-          ${isSearchOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none sm:opacity-100 sm:scale-100 sm:pointer-events-auto'}
-        `}
-      >
-        <form onSubmit={handleSearch} className="relative">
-          <Input
-            type="search"
-            placeholder="Rechercher..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-64 pr-10 focus:w-72 transition-all duration-300"
-          />
-          <button
-            type="submit"
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-lilas-fonce"
-            aria-label="Rechercher"
+          <Search size={24} />
+        </Button>
+        
+        <div className="hidden sm:block">
+          <Button
+            variant="outline"
+            className="w-64 justify-start text-sm text-muted-foreground"
+            onClick={toggleSearch}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-          </button>
-        </form>
+            <Search className="mr-2 h-4 w-4" />
+            <span>Rechercher...</span>
+          </Button>
+        </div>
+      </div>
 
-        {/* Résultats de recherche */}
-        {searchTerm.length >= 2 && (
-          <div className="absolute z-20 mt-2 w-full bg-white rounded-md shadow-lg overflow-hidden">
-            {isLoading ? (
-              <div className="p-4 text-center text-sm text-gray-500">
-                Recherche en cours...
+      <Dialog 
+        open={isSearchOpen} 
+        onOpenChange={(open) => {
+          if (!open) closeSearch();
+        }}
+      >
+        <DialogContent className="sm:max-w-md md:max-w-xl">
+          <DialogTitle className="text-xl font-semibold mb-4">Recherche</DialogTitle>
+          
+          {/* Champ de recherche */}
+          <div className="relative mb-4">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <Search className="w-5 h-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lilas-fonce focus:border-transparent"
+              placeholder="Rechercher des produits, catégories..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          {/* Contenu de recherche */}
+          <div className="mt-2 max-h-[60vh] overflow-y-auto">
+            {/* Affichage du loader pendant le chargement */}
+            {isLoading && (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="h-6 w-6 animate-spin text-lilas-fonce" />
               </div>
-            ) : results.length > 0 ? (
-              <ul>
-                {results.map((result) => (
-                  <li key={result.id} className="border-b border-gray-100 last:border-none">
-                    <button
-                      onClick={() => handleResultClick(result.id)}
-                      className="w-full px-4 py-2 text-left hover:bg-lilas-clair flex items-center"
+            )}
+            
+            {/* Message pour terme trop court */}
+            {!isLoading && searchTerm.length < 2 && (
+              <p className="p-4 text-sm text-center text-muted-foreground">
+                Tapez au moins 2 caractères pour rechercher
+              </p>
+            )}
+            
+            {/* Message aucun résultat */}
+            {!isLoading && searchTerm.length >= 2 && categoryResults.length === 0 && results.length === 0 && (
+              <p className="p-4 text-sm text-center text-muted-foreground">
+                Aucun résultat trouvé pour &ldquo;{searchTerm}&rdquo;
+              </p>
+            )}
+
+            {/* Affichage des catégories */}
+            {categoryResults.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-gray-500 mb-2 px-1">Catégories</h3>
+                <div className="space-y-2">
+                  {categoryResults.map((category) => (
+                    <div 
+                      key={category.id}
+                      className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-md cursor-pointer"
+                      onClick={() => handleCategorySelect(category.url)}
                     >
-                      {result.image && (
-                        <div className="w-10 h-10 mr-3 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-lilas-clair/30 flex items-center justify-center text-lilas-fonce">
+                        <Phone size={16} />
+                      </div>
+                      <span>{category.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Affichage des produits */}
+            {results.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 mb-2 px-1">Produits</h3>
+                <div className="space-y-2">
+                  {results.map((result) => (
+                    <div
+                      key={result.id}
+                      className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-md cursor-pointer"
+                      onClick={() => handleProductSelect(result.url)}
+                    >
+                      {result.imageUrl ? (
+                        <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-md overflow-hidden border border-gray-200">
                           <Image
-                            src={result.image}
+                            src={result.imageUrl}
                             alt={result.name}
                             width={40}
                             height={40}
                             className="w-full h-full object-cover"
                           />
                         </div>
+                      ) : (
+                        <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-md overflow-hidden flex items-center justify-center text-gray-400 border border-gray-200">
+                          <ImageIcon size={18} />
+                        </div>
                       )}
-                      <div>
-                        <div className="text-sm font-medium">{result.name}</div>
-                        <div className="text-xs text-gray-500">{result.category}</div>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{result.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {result.price ? `${result.price} ${result.currency || '€'}` : 'Prix non disponible'}
+                        </span>
                       </div>
-                    </button>
-                  </li>
-                ))}
-                <li className="p-2 text-center">
-                  <button
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Bouton voir tous les résultats */}
+                <div className="pt-4 pb-2 px-1">
+                  <Button 
+                    variant="link" 
+                    className="w-full text-sm text-lilas-fonce hover:text-lilas-fonce/80"
                     onClick={handleSearch}
-                    className="text-sm text-lilas-fonce hover:underline"
                   >
                     Voir tous les résultats
-                  </button>
-                </li>
-              </ul>
-            ) : (
-              <div className="p-4 text-center text-sm text-gray-500">
-                Aucun résultat trouvé
+                  </Button>
+                </div>
               </div>
             )}
           </div>
-        )}
-      </div>
-    </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

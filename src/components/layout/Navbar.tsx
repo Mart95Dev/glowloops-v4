@@ -2,20 +2,17 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/lib/firebase/auth';
 import { useCartStore } from '@/lib/store/cart-store';
 import { useFavoritesCount } from '@/lib/store/favoritesStore';
 import { toast } from '@/lib/utils/toast';
 import { authService } from '@/lib/firebase/auth-service';
 import { navigationData } from '@/lib/data/navigation-data';
+import SearchBar from '@/components/layout/SearchBar';
 
 // Import des micro-composants
 import {
   Logo,
-  SearchDesktop,
-  SearchMobile,
-  SearchButton,
   MenuButton,
   FavoritesButton,
   CartButton,
@@ -28,9 +25,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({ onMobileMenuToggle }: NavbarProps) {
-  const [searchQuery, setSearchQuery] = useState("");
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -39,17 +34,20 @@ export default function Navbar({ onMobileMenuToggle }: NavbarProps) {
   const pathname = usePathname();
   const totalItems = useCartStore((state) => state.totalItems);
   const { user } = useAuth();
-  const userMenuRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const { count: favoritesCount } = useFavoritesCount();
+  
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Marquer comme monté côté client
+  // Monter le composant côté client
   useEffect(() => {
     setIsMounted(true);
-    
-    // Détecter le défilement pour ajouter de l'ombre
+  }, []);
+
+  // Effet pour détecter le scroll
+  useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+      const scrollPosition = window.scrollY;
+      setIsScrolled(scrollPosition > 10);
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -61,7 +59,6 @@ export default function Navbar({ onMobileMenuToggle }: NavbarProps) {
     if (!isMounted) return;
     
     setIsMobileMenuOpen(false);
-    setIsSearchVisible(false);
     setUserMenuOpen(false);
   }, [pathname, isMounted]);
 
@@ -81,44 +78,16 @@ export default function Navbar({ onMobileMenuToggle }: NavbarProps) {
     };
   }, [isMounted]);
 
-  // Focus sur le champ de recherche quand il devient visible
-  useEffect(() => {
-    if (!isMounted) return;
-    
-    if (isSearchVisible && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [isSearchVisible, isMounted]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isMounted || !searchQuery.trim()) return;
-    
-    // Rediriger vers la page de recherche avec la requête
-    router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
-    setIsSearchVisible(false);
-  };
-
   const toggleMobileMenu = () => {
     if (!isMounted) return;
     const newState = !isMobileMenuOpen;
     setIsMobileMenuOpen(newState);
     onMobileMenuToggle(newState);
-    
-    // Fermer la recherche si elle est ouverte
-    if (isSearchVisible) setIsSearchVisible(false);
   };
 
   const toggleUserMenu = () => {
     if (!isMounted) return;
     setUserMenuOpen(!userMenuOpen);
-  };
-
-  const toggleSearchBar = () => {
-    if (!isMounted) return;
-    setIsSearchVisible(!isSearchVisible);
-    // Fermer le menu mobile si la recherche est ouverte
-    if (isMobileMenuOpen) setIsMobileMenuOpen(false);
   };
 
   const handleLogout = async () => {
@@ -152,17 +121,11 @@ export default function Navbar({ onMobileMenuToggle }: NavbarProps) {
           {/* Logo */}
           <Logo />
 
-          {/* Recherche desktop */}
-          <SearchDesktop 
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            onSearch={handleSearch}
-          />
+          {/* Barre de recherche */}
+          <SearchBar />
 
           {/* Actions */}
           <div className="flex items-center space-x-1 md:space-x-4">
-            {/* Recherche mobile */}
-            <SearchButton onClick={toggleSearchBar} />
 
             {/* Compte */}
             <UserMenu 
@@ -193,19 +156,6 @@ export default function Navbar({ onMobileMenuToggle }: NavbarProps) {
         navigationData={navigationData}
         pathname={pathname}
       />
-
-      {/* Barre de recherche mobile */}
-      <AnimatePresence>
-        {isSearchVisible && (
-          <SearchMobile 
-            isVisible={isSearchVisible}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            onSearch={handleSearch}
-            searchInputRef={searchInputRef}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 }

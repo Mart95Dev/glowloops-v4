@@ -1,0 +1,595 @@
+{
+  "users": [
+    {
+      "_id": "user_test_1",
+      "authUserId": "user_test_1",
+      "email": "alice.martin@example.com",
+      "firstName": "Alice",
+      "lastName": "Martin",
+      "createdAt": "TIMESTAMP",
+      "updatedAt": "TIMESTAMP",
+      "shippingAddresses": [
+        {
+          "addressLine1": "12 Rue des Lilas", "addressLine2": null, "city": "Paris", "postalCode": "75001", "country": "FR", "isDefault": true
+        }
+      ],
+      "billingAddress": { "addressLine1": "12 Rue des Lilas", "addressLine2": null, "city": "Paris", "postalCode": "75001", "country": "FR" },
+      "phoneNumber": "+33612345678",
+      "avatarUrl": null
+    },
+    {
+      "_id": "user_test_2",
+      "authUserId": "user_test_2",
+      "email": "bob.dupont@example.com",
+      "firstName": "Bob",
+      "lastName": "Dupont",
+      "createdAt": "TIMESTAMP",
+      "updatedAt": "TIMESTAMP",
+      "shippingAddresses": [
+        { "addressLine1": "45 Avenue des Champs", "addressLine2": "Appt 5B", "city": "Lyon", "postalCode": "69002", "country": "FR", "isDefault": true }
+      ],
+      "billingAddress": { "addressLine1": "45 Avenue des Champs", "addressLine2": "Appt 5B", "city": "Lyon", "postalCode": "69002", "country": "FR" },
+      "phoneNumber": null,
+      "avatarUrl": null
+    }
+  ],
+  "categories": [
+    {
+      "_id": "style", "name": "Style", "slug": "style", "description": "Explorez nos différents styles de boucles d'oreilles.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_style", "parentCategoryId": null, "order": 1
+    },
+    {
+      "_id": "creoles", "name": "Créoles", "slug": "creoles", "description": "Des créoles pour tous les styles.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_creoles", "parentCategoryId": "style", "order": 1
+    },
+    {
+      "_id": "mini_hoops", "name": "Mini-hoops", "slug": "mini-hoops", "description": "Petites créoles élégantes et discrètes.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_mini_hoops", "parentCategoryId": "style", "order": 2
+    },
+    {
+      "_id": "ear_cuffs", "name": "Ear cuffs", "slug": "ear-cuffs", "description": "Bijoux d'oreille sans perçage.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_ear_cuffs", "parentCategoryId": "style", "featured": true, "order": 3
+    },
+    {
+      "_id": "pendantes", "name": "Pendantes", "slug": "pendantes", "description": "Élégantes et raffinées.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_pendantes", "parentCategoryId": "style", "order": 4
+    },
+    {
+      "_id": "puces", "name": "Puces", "slug": "puces", "description": "Discrètes et chics.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_puces", "parentCategoryId": "style", "order": 5
+    },
+    {
+      "_id": "ear_jackets", "name": "Ear Jackets", "slug": "ear-jackets", "description": "Bijoux qui s'étendent derrière le lobe.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_ear_jackets", "parentCategoryId": "style", "order": 6
+    },
+    {
+      "_id": "huggies", "name": "Huggies", "slug": "huggies", "description": "Petites créoles ajustées au lobe.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_huggies", "parentCategoryId": "style", "order": 7
+    },
+    {
+      "_id": "asymetriques", "name": "Asymétriques", "slug": "asymetriques", "description": "Boucles dépareillées pour un style unique.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_asymetriques", "parentCategoryId": "style", "order": 8
+    },
+    {
+      "_id": "mix_match", "name": "Mix & Match", "slug": "mix-match", "description": "Créez votre propre combinaison.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_mix_match", "parentCategoryId": "style", "order": 9
+    },
+    {
+      "_id": "vibe", "name": "Vibe", "slug": "vibe", "description": "Choisissez votre style selon votre humeur.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_vibe", "parentCategoryId": null, "order": 2
+    },
+    {
+      "_id": "chic", "name": "Chic", "slug": "chic", "description": "Élégance intemporelle.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_chic", "parentCategoryId": "vibe", "featured": true, "order": 1
+    },
+    {
+      "_id": "bold", "name": "Bold", "slug": "bold", "description": "Pièces audacieuses et affirmées.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_bold", "parentCategoryId": "vibe", "order": 2
+    },
+    {
+      "_id": "casual", "name": "Casual", "slug": "casual", "description": "Pour un quotidien stylé.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_casual", "parentCategoryId": "vibe", "order": 3
+    },
+    {
+      "_id": "boheme", "name": "Bohème", "slug": "boheme", "description": "Esprit libre et naturel.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_boheme", "parentCategoryId": "vibe", "order": 4
+    },
+    {
+      "_id": "minimaliste", "name": "Minimaliste", "slug": "minimaliste", "description": "Simplicité et élégance.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_minimaliste", "parentCategoryId": "vibe", "featured": true, "order": 5
+    },
+    {
+      "_id": "y2k", "name": "Y2K", "slug": "y2k", "description": "Inspiré des années 2000.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_y2k", "parentCategoryId": "vibe", "order": 6
+    },
+    {
+      "_id": "old_money", "name": "Old Money", "slug": "old-money", "description": "Style sophistiqué et intemporel.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_old_money", "parentCategoryId": "vibe", "order": 7
+    },
+    {
+      "_id": "nature_inspired", "name": "Nature Inspired", "slug": "nature-inspired", "description": "Inspiré par les éléments naturels.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_nature_inspired", "parentCategoryId": "vibe", "order": 8
+    },
+    {
+      "_id": "materiaux", "name": "Matériaux", "slug": "materiaux", "description": "Découvrez nos différents matériaux.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_materiaux", "parentCategoryId": null, "order": 3
+    },
+    {
+      "_id": "resine", "name": "Résine", "slug": "resine", "description": "Légère et colorée.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_resine", "parentCategoryId": "materiaux", "featured": true, "order": 1
+    },
+    {
+      "_id": "acier", "name": "Acier", "slug": "acier", "description": "Robuste et durable.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_acier", "parentCategoryId": "materiaux", "order": 2
+    },
+    {
+      "_id": "plaque_or", "name": "Plaqué or", "slug": "plaque-or", "description": "Élégance dorée.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_plaque_or", "parentCategoryId": "materiaux", "featured": true, "order": 3
+    },
+    {
+      "_id": "argent", "name": "Argent", "slug": "argent", "description": "Classique et intemporel.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_argent", "parentCategoryId": "materiaux", "order": 4
+    },
+    {
+      "_id": "perles", "name": "Perles", "slug": "perles", "description": "Élégance naturelle.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_perles", "parentCategoryId": "materiaux", "order": 5
+    },
+    {
+      "_id": "durables", "name": "Matériaux Durables", "slug": "durables", "description": "Écoresponsables et éthiques.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_durables", "parentCategoryId": "materiaux", "order": 6
+    },
+    {
+      "_id": "pierres_colorees", "name": "Pierres Colorées", "slug": "pierres-colorees", "description": "Éclat et couleur.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_pierres_colorees", "parentCategoryId": "materiaux", "order": 7
+    },
+    {
+      "_id": "tendances_2025", "name": "Tendances 2025", "slug": "tendances-2025", "description": "Découvrez les tendances de l'année.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_tendances_2025", "parentCategoryId": null, "order": 4
+    },
+    {
+      "_id": "xxl_statement", "name": "XXL Statement", "slug": "xxl-statement", "description": "Boucles d'oreilles imposantes.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_xxl_statement", "parentCategoryId": "tendances_2025", "order": 1
+    },
+    {
+      "_id": "perles_modernes", "name": "Perles Modernes", "slug": "perles-modernes", "description": "Perles revisitées et contemporaines.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_perles_modernes", "parentCategoryId": "tendances_2025", "order": 2
+    },
+    {
+      "_id": "pierres_naturelles", "name": "Pierres Naturelles", "slug": "pierres-naturelles", "description": "Beauté naturelle et énergies.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_pierres_naturelles", "parentCategoryId": "tendances_2025", "order": 3
+    },
+    {
+      "_id": "vintage_chic", "name": "Vintage Chic", "slug": "vintage-chic", "description": "Inspiration rétro et élégante.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_vintage_chic", "parentCategoryId": "tendances_2025", "order": 4
+    },
+    {
+      "_id": "geometrique", "name": "Géométrique & Sculptural", "slug": "geometrique", "description": "Formes modernes et audacieuses.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_geometrique", "parentCategoryId": "tendances_2025", "order": 5
+    },
+    {
+      "_id": "personnalisation", "name": "Personnalisation", "slug": "personnalisation", "description": "Créez des bijoux uniques.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_personnalisation", "parentCategoryId": null, "order": 5
+    },
+    {
+      "_id": "graves", "name": "Bijoux Gravés", "slug": "graves", "description": "Personnalisez avec un message.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_graves", "parentCategoryId": "personnalisation", "order": 1
+    },
+    {
+      "_id": "initiales", "name": "Initiales & Symboles", "slug": "initiales", "description": "Exprimez votre identité.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_initiales", "parentCategoryId": "personnalisation", "order": 2
+    },
+    {
+      "_id": "birthstones", "name": "Birthstones", "slug": "birthstones", "description": "Pierres de naissance.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_birthstones", "parentCategoryId": "personnalisation", "order": 3
+    },
+    {
+      "_id": "nouveautes", "name": "Nouveautés", "slug": "nouveautes", "description": "Découvrez nos dernières créations.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_nouveautes", "parentCategoryId": null, "order": 6
+    },
+    {
+      "_id": "cette_semaine", "name": "Cette Semaine", "slug": "cette-semaine", "description": "Nos dernières arrivées.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_cette_semaine", "parentCategoryId": "nouveautes", "order": 1
+    },
+    {
+      "_id": "ce_mois", "name": "Ce Mois", "slug": "ce-mois", "description": "Les nouveautés du mois.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_ce_mois", "parentCategoryId": "nouveautes", "order": 2
+    },
+    {
+      "_id": "exclusivites", "name": "Exclusivités Web", "slug": "exclusivites", "description": "Uniquement disponible en ligne.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_exclusivites", "parentCategoryId": "nouveautes", "order": 3
+    },
+    {
+      "_id": "promos", "name": "Promos", "slug": "promos", "description": "Nos offres spéciales.", "imageUrl": "IMAGE_PLACEHOLDER_CATEGORY_promos", "parentCategoryId": null, "order": 7
+    }
+  ],
+  "products": [
+    {
+      "_id": "creole_torsadee_or", "type": "jewelry", "status": "active",
+      "basic_info": { "name": "Créoles Torsadées Dorées", "slug": "creoles-torsadees-dorees", "sku": "GL-CR-TOR-DOR", "collection": "Classiques", "categoryId": "creoles", "tags": ["doré", "classique", "torsadé"], "createdAt": "TIMESTAMP", "updatedAt": "TIMESTAMP" },
+      "supplierInfo": { "supplierId": "nihaojewelry", "supplierProductId": "NJH12345", "supplierProductUrl": null, "lastSyncAt": null },
+      "pricing": { "currency": "EUR", "tax_category": "standard", "discount_eligible": true, "cost_price": 500, "regular_price": 1990, "sale_price": null },
+      "inventory": { "track_inventory": true, "quantity": 50, "low_stock_threshold": 10, "backorder_allowed": false, "preorder_allowed": false, "estimated_shipping_days": 2 },
+      "variations": [],
+      "specifications": { "materials": ["Acier inoxydable", "Plaqué Or 18K"], "weight_g": 3, "dimensions_mm": { "length": 20, "width": 2, "height": 20 }, "metal_type": "Acier inoxydable", "closure_type": "Tige poussette", "plating": "Or 18K", "is_nickel_free": true, "is_lead_free": true },
+      "media": { "mainImageUrl": "IMAGE_PLACEHOLDER_PRODUCT_MAIN_creole_torsadee_or", "thumbnailUrl": null, "galleryImageUrls": ["IMAGE_PLACEHOLDER_GALLERY_creole_torsadee_or_0", "IMAGE_PLACEHOLDER_GALLERY_creole_torsadee_or_1"], "modelWearingImageUrls": ["IMAGE_PLACEHOLDER_MODEL_creole_torsadee_or_0"] },
+      "content": { "short_description": "Élégantes créoles torsadées plaquées or.", "full_description": "Un classique revisité.", "selling_points": ["Design torsadé unique"], "style_tips": [], "occasion": ["quotidien", "soirée", "cadeau"] },
+      "seo": { "meta_title": "Créoles Torsadées Dorées | GlowLoops", "meta_description": "Achetez nos élégantes créoles torsadées.", "meta_keywords": ["créoles", "dorées"], "search_terms": ["boucles oreilles dorées"] },
+      "social_proof": { "reviewCount": 2, "averageRating": 4.5 },
+      "related": { "crossSellProductIds": ["pendant_simple_or"] },
+      "shipping": { "weight_g": 15, "requires_shipping": true, "free_shipping": false },
+      "isNew": true,
+      "popularity": 75
+    },
+    {
+      "_id": "puces_pierre_couleur", "type": "jewelry", "status": "active",
+      "basic_info": { "name": "Puces d'Oreilles Pierre de Couleur", "slug": "puces-pierre-couleur", "sku": "GL-PU-CLR", "collection": "Éclats", "categoryId": "puces", "tags": ["puces", "couleur", "argent"], "createdAt": "TIMESTAMP", "updatedAt": "TIMESTAMP" },
+      "supplierInfo": { "supplierId": "cjdropshipping", "supplierProductId": "CJD112233", "lastSyncAt": null },
+      "pricing": { "currency": "EUR", "tax_category": "standard", "discount_eligible": true, "cost_price": 650, "regular_price": 2490 },
+      "inventory": { "track_inventory": true, "quantity": null, "low_stock_threshold": 5, "backorder_allowed": false, "preorder_allowed": false },
+      "variations": [
+        { "id": "clr_bleu_arg", "name": "Bleu Saphir - Argent", "attributes": { "color": "Bleu Saphir", "material": "Argent 925" }, "sku": "GL-PU-CLR-BL-ARG", "price_adjustment": 0, "inventory_quantity": 25, "imageUrls": ["IMAGE_PLACEHOLDER_VARIATION_puces_pierre_couleur_clr_bleu_arg_0"] },
+        { "id": "clr_vert_arg", "name": "Vert Émeraude - Argent", "attributes": { "color": "Vert Émeraude", "material": "Argent 925" }, "sku": "GL-PU-CLR-VE-ARG", "price_adjustment": 0, "inventory_quantity": 30, "imageUrls": ["IMAGE_PLACEHOLDER_VARIATION_puces_pierre_couleur_clr_vert_arg_0"] },
+        { "id": "clr_rouge_dor", "name": "Rouge Rubis - Plaqué Or", "attributes": { "color": "Rouge Rubis", "material": "Plaqué Or" }, "sku": "GL-PU-CLR-RG-DOR", "price_adjustment": 200, "inventory_quantity": 15, "imageUrls": ["IMAGE_PLACEHOLDER_VARIATION_puces_pierre_couleur_clr_rouge_dor_0"] }
+      ],
+      "specifications": { "materials": ["Argent 925", "Plaqué Or", "Cristal"], "weight_g": 1, "dimensions_mm": { "width": 6, "height": 6 }, "stone_type": "Cristal", "closure_type": "Poussette", "is_nickel_free": true },
+      "media": { "mainImageUrl": "IMAGE_PLACEHOLDER_PRODUCT_MAIN_puces_pierre_couleur", "galleryImageUrls": ["IMAGE_PLACEHOLDER_GALLERY_puces_pierre_couleur_0"] },
+      "content": { "short_description": "Puces discrètes avec une touche de couleur.", "full_description": "Choisissez votre couleur favorite."}, 
+      "seo": { "meta_title": "Puces d'Oreilles Pierre de Couleur | GlowLoops" },
+      "social_proof": { "reviewCount": 1, "averageRating": 5 },
+      "shipping": { "weight_g": 10, "requires_shipping": true },
+      "isNew": true,
+      "popularity": 60
+    },
+    {
+      "_id": "pendante_fine_arg", "type": "jewelry", "status": "active",
+      "basic_info": { "name": "Pendantes Fines Argent", "slug": "pendantes-fines-argent", "sku": "GL-PE-FIN-ARG", "collection": "Minimaliste", "categoryId": "pendantes", "tags": ["argent", "minimaliste", "fin"], "createdAt": "TIMESTAMP" },
+      "supplierInfo": { "supplierId": "nihaojewelry", "supplierProductId": "NJH67890" },
+      "pricing": { "currency": "EUR", "regular_price": 2990, "cost_price": 900 },
+      "inventory": { "quantity": 40 },
+      "specifications": { "materials": ["Argent 925"], "weight_g": 2.5, "dimensions_mm": { "length": 40 } },
+      "media": { "mainImageUrl": "IMAGE_PLACEHOLDER_PRODUCT_MAIN_pendante_fine_arg", "galleryImageUrls": ["IMAGE_PLACEHOLDER_GALLERY_pendante_fine_arg_0"] },
+      "content": { "short_description": "Élégance et simplicité en argent."}, 
+      "social_proof": { "reviewCount": 0, "averageRating": 0 },
+      "shipping": { "weight_g": 12 },
+      "isNew": false,
+      "popularity": 45
+    },
+    {
+      "_id": "creole_epaisse_vin", "type": "jewelry", "status": "active",
+      "basic_info": { "name": "Créoles Épaisses Vintage", "slug": "creoles-epaisses-vintage", "sku": "GL-CR-EPA-VIN", "collection": "Rétro", "categoryId": "creoles", "tags": ["vintage", "doré", "épais"], "createdAt": "TIMESTAMP" },
+      "supplierInfo": { "supplierId": "cjdropshipping", "supplierProductId": "CJD445566" },
+      "pricing": { "currency": "EUR", "regular_price": 3490, "cost_price": 1100 },
+      "inventory": { "quantity": 25 },
+      "specifications": { "materials": ["Laiton", "Plaqué Or"], "weight_g": 8, "dimensions_mm": { "width": 5, "height": 30 } },
+      "media": { "mainImageUrl": "IMAGE_PLACEHOLDER_PRODUCT_MAIN_creole_epaisse_vin" },
+      "content": { "short_description": "Look rétro affirmé."}, 
+      "social_proof": { "reviewCount": 0, "averageRating": 0 },
+      "shipping": { "weight_g": 25 },
+      "isNew": false,
+      "popularity": 55
+    },
+    {
+      "_id": "puces_perle_cla", "type": "jewelry", "status": "active",
+      "basic_info": { "name": "Puces Perle Classique", "slug": "puces-perle-classique", "sku": "GL-PU-PER-CLA", "collection": "Intemporel", "categoryId": "puces", "tags": ["perle", "classique", "argent"], "createdAt": "TIMESTAMP" },
+      "supplierInfo": { "supplierId": "nihaojewelry", "supplierProductId": "NJH11223" },
+      "pricing": { "currency": "EUR", "regular_price": 1890 },
+      "inventory": { "quantity": 60 },
+      "specifications": { "materials": ["Argent 925", "Perle d'eau douce"], "weight_g": 1.5, "dimensions_mm": { "width": 8 } },
+      "media": { "mainImageUrl": "IMAGE_PLACEHOLDER_PRODUCT_MAIN_puces_perle_cla" },
+      "content": { "short_description": "Indémodables puces de perle."}, 
+      "social_proof": { "reviewCount": 0, "averageRating": 0 },
+      "shipping": { "weight_g": 10 },
+      "isNew": false,
+      "popularity": 80
+    },
+    {
+      "_id": "creole_xxl_geo", "type": "jewelry", "status": "active",
+      "basic_info": {
+        "name": "Créoles XXL Géométriques", 
+        "slug": "creoles-xxl-geometriques", 
+        "sku": "GL-CR-XXL-GEO", 
+        "collection": "Moderne", 
+        "categoryId": "creoles", 
+        "tags": ["xxl", "géométrique", "statement", "doré"], 
+        "createdAt": "TIMESTAMP"
+      },
+      "supplierInfo": { "supplierId": "cjdropshipping", "supplierProductId": "CJD202501" },
+      "pricing": { "currency": "EUR", "regular_price": 3990, "cost_price": 1200 },
+      "inventory": { "quantity": 30 },
+      "specifications": { "materials": ["Acier inoxydable", "Plaqué Or"], "weight_g": 12, "dimensions_mm": { "height": 80, "width": 5 } },
+      "media": { "mainImageUrl": "IMAGE_PLACEHOLDER_PRODUCT_MAIN_creole_xxl_geo" },
+      "content": { "short_description": "Créoles oversize à formes géométriques pour un look audacieux." },
+      "social_proof": { "reviewCount": 0, "averageRating": 0 },
+      "shipping": { "weight_g": 30 },
+      "isNew": true,
+      "popularity": 85,
+      "collections": ["Moderne", "plaque_or", "geometrique"],
+      "vibes": ["bold", "y2k"],
+      "tendances": ["xxl_statement", "geometrique"]
+    },
+    {
+      "_id": "ear_cuff_serpent", "type": "jewelry", "status": "active",
+      "basic_info": {
+        "name": "Ear Cuffs Serpent Doré", 
+        "slug": "ear-cuffs-serpent-dore", 
+        "sku": "GL-EC-SER-DOR", 
+        "collection": "Nature", 
+        "categoryId": "ear_cuffs", 
+        "tags": ["ear cuff", "serpent", "sans perçage", "doré"], 
+        "createdAt": "TIMESTAMP"
+      },
+      "supplierInfo": { "supplierId": "nihaojewelry", "supplierProductId": "NJH202501" },
+      "pricing": { "currency": "EUR", "regular_price": 2490, "cost_price": 750 },
+      "inventory": { "quantity": 45 },
+      "specifications": { "materials": ["Laiton", "Plaqué Or"], "weight_g": 3, "dimensions_mm": { "height": 25 } },
+      "media": { "mainImageUrl": "IMAGE_PLACEHOLDER_PRODUCT_MAIN_ear_cuff_serpent" },
+      "content": { "short_description": "Élégant ear cuff en forme de serpent, sans besoin de perçage." },
+      "social_proof": { "reviewCount": 8, "averageRating": 4.8 },
+      "shipping": { "weight_g": 15 },
+      "isNew": true,
+      "popularity": 92,
+      "collections": ["Nature", "plaque_or"],
+      "vibes": ["bold", "nature_inspired"],
+      "tendances": ["geometrique"]
+    },
+    {
+      "_id": "puces_etoile_zir", "type": "jewelry", "status": "active",
+      "basic_info": {
+        "name": "Puces Étoile Zirconium", 
+        "slug": "puces-etoile-zirconium", 
+        "sku": "GL-PU-ETO-ZIR", 
+        "collection": "Céleste", 
+        "categoryId": "puces", 
+        "tags": ["étoile", "zirconium", "brillant"], 
+        "createdAt": "TIMESTAMP"
+      },
+      "supplierInfo": { "supplierId": "cjdropshipping", "supplierProductId": "CJD990011" },
+      "pricing": { "currency": "EUR", "regular_price": 2290, "cost_price": 700 },
+      "inventory": { "quantity": 55 },
+      "specifications": { "materials": ["Argent 925", "Oxyde de Zirconium"], "weight_g": 1.2, "dimensions_mm": { "width": 7 } },
+      "media": { "mainImageUrl": "IMAGE_PLACEHOLDER_PRODUCT_MAIN_puces_etoile_zir" },
+      "content": { "short_description": "Scintillantes comme une étoile." },
+      "social_proof": { "reviewCount": 4, "averageRating": 4.8 },
+      "shipping": { "weight_g": 9 },
+      "isNew": true,
+      "popularity": 70,
+      "collections": ["Céleste", "argent", "pierres_colorees"],
+      "vibes": ["chic", "casual"],
+      "tendances": ["pierres_naturelles"]
+    },
+    {
+      "_id": "pendante_chaine_or", "type": "jewelry", "status": "active",
+      "basic_info": {
+        "name": "Pendantes Chaîne Fine Or", 
+        "slug": "pendantes-chaine-fine-or", 
+        "sku": "GL-PE-CHA-OR", 
+        "collection": "Minimaliste", 
+        "categoryId": "pendantes", 
+        "tags": ["chaîne", "or", "minimaliste"], 
+        "createdAt": "TIMESTAMP"
+      },
+      "supplierInfo": { "supplierId": "nihaojewelry", "supplierProductId": "NJH55667" },
+      "pricing": { "currency": "EUR", "regular_price": 3390, "cost_price": 1050 },
+      "inventory": { "quantity": 38 },
+      "specifications": { "materials": ["Acier inoxydable", "Plaqué Or"], "weight_g": 3.5, "dimensions_mm": { "length": 60 } },
+      "media": { "mainImageUrl": "IMAGE_PLACEHOLDER_PRODUCT_MAIN_pendante_chaine_or" },
+      "content": { "short_description": "Légères et aériennes." },
+      "social_proof": { "reviewCount": 1, "averageRating": 5.0 },
+      "shipping": { "weight_g": 14 },
+      "isNew": false,
+      "popularity": 40,
+      "collections": ["Minimaliste", "plaque_or"],
+      "vibes": ["minimaliste", "chic"],
+      "tendances": []
+    },
+    {
+      "_id": "pendante_chaine_or", "type": "jewelry", "status": "active",
+      "basic_info": {
+        "name": "Pendantes Chaîne Fine Or", 
+        "slug": "pendantes-chaine-fine-or", 
+        "sku": "GL-PE-CHA-OR", 
+        "collection": "Minimaliste", 
+        "categoryId": "pendantes", 
+        "tags": ["chaîne", "or", "minimaliste"], 
+        "createdAt": "TIMESTAMP"
+      },
+      "supplierInfo": { "supplierId": "nihaojewelry", "supplierProductId": "NJH55667" },
+      "pricing": { "currency": "EUR", "regular_price": 3390, "cost_price": 1050 },
+      "inventory": { "quantity": 38 },
+      "specifications": { "materials": ["Acier inoxydable", "Plaqué Or"], "weight_g": 3.5, "dimensions_mm": { "length": 60 } },
+      "media": { "mainImageUrl": "IMAGE_PLACEHOLDER_PRODUCT_MAIN_pendante_chaine_or" },
+      "content": { "short_description": "Légères et aériennes." },
+      "social_proof": { "reviewCount": 1, "averageRating": 5.0 },
+      "shipping": { "weight_g": 14 },
+      "isNew": false,
+      "popularity": 40,
+      "collections": ["Minimaliste", "plaque_or"],
+      "vibes": ["minimaliste", "chic"],
+      "tendances": []
+    },
+    {
+      "_id": "pendante_geo_orrose", "type": "jewelry", "status": "active",
+      "basic_info": {
+        "name": "Pendantes Géométriques Or Rose", 
+        "slug": "pendantes-geo-orrose", 
+        "sku": "GL-PE-GEO-ORR", 
+        "collection": "Moderne", 
+        "categoryId": "pendantes", 
+        "tags": ["géométrique", "or rose", "moderne"], 
+        "createdAt": "TIMESTAMP"
+      },
+      "supplierInfo": { "supplierId": "cjdropshipping", "supplierProductId": "CJD778899" },
+      "pricing": { "currency": "EUR", "regular_price": 3190, "cost_price": 950 },
+      "inventory": { "quantity": 35 },
+      "specifications": { "materials": ["Acier inoxydable", "Plaqué Or Rose"], "weight_g": 4, "dimensions_mm": { "length": 50 } },
+      "media": { "mainImageUrl": "IMAGE_PLACEHOLDER_PRODUCT_MAIN_pendante_geo_orrose" },
+      "content": { "short_description": "Design moderne et tendance." },
+      "social_proof": { "reviewCount": 3, "averageRating": 4.7 },
+      "shipping": { "weight_g": 18 },
+      "isNew": true,
+      "popularity": 65,
+      "collections": ["Moderne", "plaque_or", "geometrique"],
+      "vibes": ["bold", "minimaliste"],
+      "tendances": ["geometrique"]
+    },
+    {
+      "_id": "mini_hoops_perles", "type": "jewelry", "status": "active",
+      "basic_info": {
+        "name": "Mini-hoops Perles Colorées", 
+        "slug": "mini-hoops-perles-colorees", 
+        "sku": "GL-MH-PER-COL", 
+        "collection": "Éclats", 
+        "categoryId": "mini_hoops", 
+        "tags": ["mini-hoops", "perles", "coloré"], 
+        "createdAt": "TIMESTAMP"
+      },
+      "pricing": { "currency": "EUR", "regular_price": 2290, "cost_price": 680 },
+      "inventory": { "quantity": 40 },
+      "collections": ["Éclats", "perles", "pierres_colorees"],
+      "vibes": ["casual", "boheme"],
+      "tendances": ["perles_modernes"]
+    },
+    {
+      "_id": "huggies_cristal_bleu", "type": "jewelry", "status": "active",
+      "basic_info": {
+        "name": "Huggies Cristal Bleu", 
+        "slug": "huggies-cristal-bleu", 
+        "sku": "GL-HU-CRI-BLE", 
+        "collection": "Océan", 
+        "categoryId": "huggies", 
+        "tags": ["huggies", "cristal", "bleu"], 
+        "createdAt": "TIMESTAMP"
+      },
+      "pricing": { "currency": "EUR", "regular_price": 2490, "cost_price": 750 },
+      "inventory": { "quantity": 35 },
+      "collections": ["Océan", "argent", "pierres_colorees"],
+      "vibes": ["chic", "casual"],
+      "tendances": ["pierres_naturelles"]
+    },
+    {
+      "_id": "asym_lune_etoile", "type": "jewelry", "status": "active",
+      "basic_info": {
+        "name": "Boucles Asymétriques Lune & Étoile", 
+        "slug": "asymetriques-lune-etoile", 
+        "sku": "GL-AS-LUN-ETO", 
+        "collection": "Céleste", 
+        "categoryId": "asymetriques", 
+        "tags": ["asymétrique", "lune", "étoile", "dépareillées"], 
+        "createdAt": "TIMESTAMP"
+      },
+      "pricing": { "currency": "EUR", "regular_price": 2790, "cost_price": 850 },
+      "inventory": { "quantity": 30 },
+      "collections": ["Céleste", "plaque_or"],
+      "vibes": ["bold", "y2k"],
+      "tendances": ["geometrique"]
+    },
+    {
+      "_id": "bundle_trio_puces", "type": "bundle", "status": "active",
+      "basic_info": {
+        "name": "Trio de Puces Assorties", 
+        "slug": "trio-puces-assorties", 
+        "sku": "GL-BU-TRI-PUC", 
+        "collection": "Ensembles", 
+        "categoryId": "puces", 
+        "tags": ["ensemble", "trio", "quotidien"], 
+        "createdAt": "TIMESTAMP"
+      },
+      "pricing": { "currency": "EUR", "regular_price": 4990, "cost_price": 1500, "sale_price": 3990 },
+      "inventory": { "quantity": 30 },
+      "collections": ["Ensembles", "argent"],
+      "vibes": ["minimaliste", "casual"],
+      "tendances": [],
+      "bundleItems": [
+        { "productId": "puces_etoile_zir", "quantity": 1 },
+        { "productId": "puces_perle_cla", "quantity": 1 },
+        { "productId": "puces_pierre_couleur", "quantity": 1 }
+      ]
+    },{
+      "_id": "creoles_perso_initiales", "type": "jewelry", "status": "active",
+      "basic_info": {
+        "name": "Créoles Personnalisables Initiales", 
+        "slug": "creoles-personnalisables-initiales", 
+        "sku": "GL-CR-PER-INI", 
+        "collection": "Personnalisation", 
+        "categoryId": "creoles", 
+        "tags": ["personnalisable", "initiales", "sur-mesure"], 
+        "createdAt": "TIMESTAMP"
+      },
+      "pricing": { "currency": "EUR", "regular_price": 3490, "cost_price": 1100 },
+      "inventory": { "quantity": 25, "track_inventory": false },
+      "collections": ["Personnalisation", "plaque_or"],
+      "vibes": ["chic", "minimaliste"],
+      "tendances": [],
+      "isCustomizable": true,
+      "customizationOptions": [
+        { "name": "Initiale", "type": "text", "maxLength": 1 },
+        { "name": "Police", "type": "select", "options": ["Script", "Modern", "Classic"] }
+      ]
+    }
+  ],
+  "subscriptions": [
+    {
+      "_id": "subscription_box_mensuelle",
+      "type": "subscription",
+      "status": "active",
+      "basic_info": {
+        "name": "Box Bijoux Mensuelle", 
+        "slug": "box-bijoux-mensuelle", 
+        "sku": "GL-SUB-BOX-MEN", 
+        "collection": "Abonnements", 
+        "tags": ["abonnement", "box", "mensuel", "surprise"], 
+        "createdAt": "TIMESTAMP"
+      },
+      "pricing": { 
+        "currency": "EUR", 
+        "regular_price": 2990, 
+        "cost_price": 1500 
+      },
+      "inventory": { 
+        "quantity": 100, 
+        "track_inventory": false 
+      },
+      "media": { 
+        "mainImageUrl": "IMAGE_PLACEHOLDER_SUBSCRIPTION_MAIN_box_mensuelle" 
+      },
+      "content": { 
+        "short_description": "Recevez chaque mois une sélection de bijoux tendance." 
+      },
+      "subscriptionDetails": {
+        "billingCycle": "monthly",
+        "minimumTerm": 3,
+        "autoRenew": true,
+        "shippingDay": 15
+      },
+      "collections": ["Abonnements"],
+      "vibes": ["surprise", "tendance"]
+    }
+  ],
+  "reviews": [
+    {
+      "_productId": "creole_torsadee_or",
+      "userId": "user_test_1",
+      "userName": "Alice M.",
+      "rating": 5,
+      "title": "Magnifiques !",
+      "comment": "Très contente de mon achat, elles sont superbes et de bonne qualité.",
+      "reviewImageUrls": [],
+      "createdAt": "TIMESTAMP",
+      "isApproved": true,
+      "verifiedPurchase": true
+    },
+    {
+      "_productId": "creole_torsadee_or",
+      "userId": "user_test_2",
+      "userName": "Bob D.",
+      "rating": 4,
+      "title": "Jolies mais fragiles",
+      "comment": "Correspondent à la photo, mais semblent un peu fragiles.",
+      "reviewImageUrls": [],
+      "createdAt": "TIMESTAMP",
+      "isApproved": true,
+      "verifiedPurchase": true
+    },
+    {
+      "_productId": "puces_pierre_couleur", 
+      "userId": "user_test_1",
+      "userName": "Alice M.",
+      "rating": 5,
+      "title": "Super couleur !",
+      "comment": "J'ai pris les bleues, elles sont éclatantes.",
+      "reviewImageUrls": ["IMAGE_PLACEHOLDER_REVIEW_puces_pierre_couleur_0"],
+      "createdAt": "TIMESTAMP",
+      "isApproved": true,
+      "verifiedPurchase": true
+    }
+  ],
+  "orders": [
+    {
+      "_id": "order_12345",
+      "orderNumber": "GL-2025-00001",
+      "userId": "user_test_1",
+      "userEmail": "alice.martin@example.com",
+      "status": "delivered",
+      "totalAmount": 2480,
+      "currency": "EUR",
+      "shippingAddress": { "addressLine1": "12 Rue des Lilas", "city": "Paris", "postalCode": "75001", "country": "FR", "firstName": "Alice", "lastName": "Martin" },
+      "billingAddress": { "addressLine1": "12 Rue des Lilas", "city": "Paris", "postalCode": "75001", "country": "FR", "firstName": "Alice", "lastName": "Martin" },
+      "paymentMethod": "stripe",
+      "paymentIntentId": "pi_3FakeIntentId123",
+      "shippingMethod": "standard",
+      "shippingCost": 490,
+      "trackingNumber": "XYZ123456FR",
+      "createdAt": "TIMESTAMP",
+      "updatedAt": "TIMESTAMP",
+      "items": [
+        {
+          "productId": "creole_torsadee_or",
+          "productName": "Créoles Torsadées Dorées",
+          "sku": "GL-CR-TOR-DOR",
+          "quantity": 1,
+          "unitPrice": 1990,
+          "imageUrl": "IMAGE_PLACEHOLDER_PRODUCT_THUMB_creole_torsadee_or"
+        }
+      ]
+    }
+  ]
+}

@@ -28,7 +28,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
+    <html lang="fr-FR" suppressHydrationWarning>
+      <head />
       <body
         className={`${playfairDisplay.variable} ${poppins.variable} antialiased`}
       >

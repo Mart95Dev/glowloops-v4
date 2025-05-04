@@ -1,6 +1,6 @@
 export { default as Logo } from './Logo';
-export { default as SearchDesktop } from './SearchDesktop';
-export { default as SearchMobile } from './SearchMobile';
+export { default as SearchBarDesktop } from './SearchBarDesktop';
+export { default as SearchBarMobile } from './SearchBarMobile';
 export { default as SearchButton } from './SearchButton';
 export { default as MenuButton } from './MenuButton';
 export { default as FavoritesButton } from './FavoritesButton';

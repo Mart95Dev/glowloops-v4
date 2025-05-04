@@ -10,7 +10,7 @@ const PRODUCTS_COLLECTION = 'products';
 /**
  * Convertit un document Firestore en objet Product
  */
-const convertFirestoreDocToProduct = (doc: { id: string; data: () => Record<string, unknown> }): Product => {
+export const convertFirestoreDocToProduct = (doc: { id: string; data: () => Record<string, unknown> }): Product => {
   const data = doc.data();
   
   // Conversion des objets en tableaux si nécessaire
