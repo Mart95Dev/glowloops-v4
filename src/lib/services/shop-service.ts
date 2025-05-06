@@ -3,6 +3,9 @@ import { db } from '../firebase/firebase-config';
 import { ProductDisplay } from '../types/product';
 import { convertFirestoreDocToProduct, convertToProductDisplay } from './product-service';
 
+// Type personnalisé pour nos opérateurs de filtre étendus
+type CustomFilterOp = WhereFilterOp | 'in-style' | 'in-vibe' | 'in-material';
+
 // Collection Firestore pour les produits
 const PRODUCTS_COLLECTION = 'products';
 
@@ -48,39 +51,36 @@ export const getFilteredProducts = async (
     let q: Query<DocumentData> = query(productsRef);
 
     // Application des filtres
-    const filters: { field: string; operator: WhereFilterOp; value: unknown }[] = [];
+    const filters: { field: string; operator: CustomFilterOp; value: unknown }[] = [];
 
     // Filtrage par style (utilise les tags)
     if (style.length > 0) {
+      // On utilise un filtre simple pour les styles
       filters.push({
-        field: 'basic_info.tags',
-        operator: 'array-contains-any',
+        field: 'style',
+        operator: 'in-style' as CustomFilterOp,
         value: style
       });
     }
 
     // Filtrage par vibe (utilise vibes)
     if (vibe.length > 0) {
-      // Nous utilisons un champ différent pour éviter les conflits avec array-contains-any
-      for (const vibeValue of vibe) {
-        filters.push({
-          field: `vibes.${vibeValue}`,
-          operator: '==',
-          value: true
-        });
-      }
+      // On utilise un filtre simple pour les vibes
+      filters.push({
+        field: 'vibe',
+        operator: 'in-vibe' as CustomFilterOp,
+        value: vibe
+      });
     }
 
     // Filtrage par matériau
     if (material.length > 0) {
-      // Utiliser le bon chemin pour les matériaux
-      for (const materialValue of material) {
-        filters.push({
-          field: `specifications.materials`,
-          operator: 'array-contains',
-          value: materialValue
-        });
-      }
+      // On utilise un filtre simple pour les matériaux
+      filters.push({
+        field: 'material',
+        operator: 'in-material' as CustomFilterOp,
+        value: material
+      });
     }
 
     // Filtrage par prix minimum
@@ -133,59 +133,165 @@ export const getFilteredProducts = async (
     // Application des filtres en mémoire
     if (filters.length > 0) {
       // Appliquer tous les filtres en mémoire car nous avons limité les filtres Firestore au minimum
-      const filtersToApply = filters;
+      const filtersToApply = filters as { field: string; operator: CustomFilterOp; value: unknown }[];
       
-      products = products.filter(product => {
+      // Afficher les filtres appliqués
+      console.log('Filtres appliqués:', filtersToApply);
+      
+      // Si aucun filtre n'est appliqué, retourner tous les produits
+      if (filtersToApply.length === 0) {
+        return {
+          products: products.map(convertToProductDisplay),
+          lastVisible: productsSnapshot.docs.length > 0 ? productsSnapshot.docs[0] : null,
+          hasMore: false
+        };
+      }
+      
+      // Filtrer les produits
+      const filteredProducts = products.filter(product => {
         // Vérifier que le produit correspond à tous les filtres
         return filtersToApply.every(filter => {
+          // Filtre de style simplifié
+          if (filter.field === 'style' && filter.operator === 'in-style') {
+            const tags = product.basic_info?.tags || [];
+            const categoryId = product.basic_info?.categoryId || '';
+            const styleValues = Array.isArray(filter.value) 
+              ? filter.value as string[] 
+              : [filter.value as string];
+            
+            // Vérifier si au moins un style correspond aux tags ou à la catégorie
+            for (const style of styleValues) {
+              if (typeof style !== 'string') continue;
+              
+              // Vérifier dans les tags
+              for (const tag of tags) {
+                if (typeof tag === 'string' && tag.toLowerCase() === style.toLowerCase()) {
+                  return true;
+                }
+              }
+              
+              // Vérifier la catégorie
+              if (categoryId.toLowerCase() === style.toLowerCase()) {
+                return true;
+              }
+            }
+            
+            return false;
+          }
+          
+          // Filtre de vibe simplifié
+          if (filter.field === 'vibe' && filter.operator === 'in-vibe') {
+            const vibes = product.vibes;
+            const vibeValues = Array.isArray(filter.value) 
+              ? filter.value as string[] 
+              : [filter.value as string];
+            
+            // Si vibes est un objet, vérifier les propriétés
+            if (typeof vibes === 'object' && vibes !== null) {
+              for (const vibe of vibeValues) {
+                if (typeof vibe !== 'string') continue;
+                
+                const vibeObj = vibes as Record<string, unknown>;
+                if (vibeObj[vibe] === true) {
+                  return true;
+                }
+              }
+            }
+            
+            // Si vibes est un tableau, vérifier les éléments
+            if (Array.isArray(vibes)) {
+              for (const vibe of vibeValues) {
+                if (typeof vibe === 'string' && vibes.indexOf(vibe) >= 0) {
+                  return true;
+                }
+              }
+            }
+            
+            return false;
+          }
+          
+          // Filtre de matériau simplifié
+          if (filter.field === 'material' && filter.operator === 'in-material') {
+            const materials = product.specifications?.materials || [];
+            const materialValues = Array.isArray(filter.value) 
+              ? filter.value as string[] 
+              : [filter.value as string];
+            
+            // Vérifier si au moins un matériau correspond
+            for (const material of materialValues) {
+              if (typeof material !== 'string') continue;
+              
+              for (const m of materials) {
+                if (typeof m === 'string' && m.toLowerCase().includes(material.toLowerCase())) {
+                  return true;
+                }
+              }
+            }
+            
+            return false;
+          }
+          
+          // Pour les autres filtres, utiliser l'approche standard
           const fieldParts = filter.field.split('.');
-          let value: unknown = product;
+          let fieldValue: unknown = product;
           
           // Accéder à la valeur imbriquée (ex: basic_info.tags)
           for (const part of fieldParts) {
-            if (value === undefined || value === null) return false;
-            // Vérifier que value est un objet avant d'accéder à ses propriétés
-            if (typeof value === 'object') {
+            if (fieldValue === undefined || fieldValue === null) return false;
+            // Vérifier que fieldValue est un objet avant d'accéder à ses propriétés
+            if (typeof fieldValue === 'object') {
               // Utiliser une assertion de type pour accéder à la propriété de manière sécurisée
-              value = (value as Record<string, unknown>)[part];
+              fieldValue = (fieldValue as Record<string, unknown>)[part];
             } else {
-              return false; // Si value n'est pas un objet, on ne peut pas accéder à ses propriétés
+              return false; // Si fieldValue n'est pas un objet, on ne peut pas accéder à ses propriétés
             }
           }
           
           // Appliquer l'opérateur de comparaison
           switch (filter.operator) {
             case '==':
-              return value === filter.value;
+              return fieldValue === filter.value;
             case '!=':
-              return value !== filter.value;
+              return fieldValue !== filter.value;
             case '>':
               // Vérifier que les valeurs sont comparables
-              return typeof value === 'number' && typeof filter.value === 'number' ? 
-                value > filter.value : false;
+              return typeof fieldValue === 'number' && typeof filter.value === 'number' ? 
+                fieldValue > filter.value : false;
             case '>=':
-              return typeof value === 'number' && typeof filter.value === 'number' ? 
-                value >= filter.value : false;
+              return typeof fieldValue === 'number' && typeof filter.value === 'number' ? 
+                fieldValue >= filter.value : false;
             case '<':
-              return typeof value === 'number' && typeof filter.value === 'number' ? 
-                value < filter.value : false;
+              return typeof fieldValue === 'number' && typeof filter.value === 'number' ? 
+                fieldValue < filter.value : false;
             case '<=':
-              return typeof value === 'number' && typeof filter.value === 'number' ? 
-                value <= filter.value : false;
+              return typeof fieldValue === 'number' && typeof filter.value === 'number' ? 
+                fieldValue <= filter.value : false;
             case 'array-contains':
-              return Array.isArray(value) && value.includes(filter.value as unknown);
+              if (!Array.isArray(fieldValue)) return false;
+              const arrayValue = fieldValue as unknown[];
+              return arrayValue.some(item => item === filter.value);
             case 'array-contains-any':
-              return Array.isArray(value) && Array.isArray(filter.value) && 
-                     filter.value.some(v => value.includes(v as unknown));
+              if (!Array.isArray(fieldValue)) return false;
+              if (!Array.isArray(filter.value)) return false;
+              const arrayItems = fieldValue as unknown[];
+              const filterItems = filter.value as unknown[];
+              return filterItems.some(item => arrayItems.includes(item));
             case 'in':
-              return Array.isArray(filter.value) && filter.value.includes(value as unknown);
+              if (!Array.isArray(filter.value)) return false;
+              const inItems = filter.value as unknown[];
+              return inItems.includes(fieldValue);
             case 'not-in':
-              return Array.isArray(filter.value) && !filter.value.includes(value as unknown);
+              if (!Array.isArray(filter.value)) return false;
+              const notInItems = filter.value as unknown[];
+              return !notInItems.includes(fieldValue);
             default:
               return false;
           }
         });
       });
+      
+      console.log(`Nombre de produits après filtrage: ${filteredProducts.length}`);
+      products = filteredProducts;
     }
     
     // Appliquer le tri en mémoire
@@ -224,13 +330,13 @@ export const getFilteredProducts = async (
       case 'popularity':
         // Tri par popularité (si disponible) ou par nom
         products.sort((a, b) => {
-          const popA = a.popularity || 0;
-          const popB = b.popularity || 0;
-          return popB - popA;
+          const popularityA = a.popularity || 0;
+          const popularityB = b.popularity || 0;
+          return popularityB - popularityA;
         });
         break;
       default:
-        // Par défaut, tri par nom
+        // Tri par nom par défaut
         products.sort((a, b) => {
           return (a.basic_info?.name || '').localeCompare(b.basic_info?.name || '');
         });
@@ -270,32 +376,75 @@ export const getProductsByType = async (
 ): Promise<ProductDisplay[]> => {
   try {
     const productsRef = collection(db, PRODUCTS_COLLECTION);
-    let q: Query<DocumentData>;
 
+    // Nous récupérons d'abord tous les produits actifs
+    const productsQuery = query(
+      productsRef,
+      where('status', '==', 'active'),
+      limit(limitCount * 5) // Nous récupérons plus de produits pour avoir suffisamment après filtrage
+    );
+    
+    const productsSnapshot = await getDocs(productsQuery);
+    let products = productsSnapshot.docs.map(doc => convertFirestoreDocToProduct(doc));
+    
+    // Puis nous filtrons en mémoire selon le type
     switch (type) {
       case 'style':
+        // Filtrer par style (dans les tags ou la catégorie)
+        products = products.filter(product => {
+          const tags = product.basic_info?.tags || [];
+          const categoryId = product.basic_info?.categoryId || '';
+          
+          // Vérifier dans les tags
+          const matchesTag = tags.some(tag => 
+            typeof tag === 'string' && tag.toLowerCase() === value.toLowerCase()
+          );
+          
+          // Vérifier la catégorie
+          const matchesCategory = categoryId.toLowerCase() === value.toLowerCase();
+          
+          return matchesTag || matchesCategory;
+        });
+        break;
+        
       case 'vibe':
-        // Pour style et vibe, on utilise les tags
-        q = query(
-          productsRef,
-          where('basic_info.tags', 'array-contains', value),
-          limit(limitCount)
-        );
+        // Filtrer par vibe
+        products = products.filter(product => {
+          const vibes = product.vibes;
+          
+          // Si vibes est un objet
+          if (typeof vibes === 'object' && vibes !== null && !Array.isArray(vibes)) {
+            return (vibes as Record<string, unknown>)[value] === true;
+          }
+          
+          // Si vibes est un tableau
+          if (Array.isArray(vibes)) {
+            return vibes.some(v => 
+              typeof v === 'string' && v.toLowerCase() === value.toLowerCase()
+            );
+          }
+          
+          return false;
+        });
         break;
+        
       case 'material':
-        // Pour material, on utilise les matériaux
-        q = query(
-          productsRef,
-          where('specifications.materials', 'array-contains', value),
-          limit(limitCount)
-        );
+        // Filtrer par matériau
+        products = products.filter(product => {
+          const materials = product.specifications?.materials || [];
+          
+          return materials.some(m => 
+            typeof m === 'string' && m.toLowerCase().includes(value.toLowerCase())
+          );
+        });
         break;
+        
       default:
         throw new Error(`Type de filtre non supporté: ${type}`);
     }
 
-    const productsSnapshot = await getDocs(q);
-    const products = productsSnapshot.docs.map(doc => convertFirestoreDocToProduct(doc));
+    // Limiter les résultats
+    products = products.slice(0, limitCount);
     
     return products.map(convertToProductDisplay);
   } catch (error) {
@@ -314,17 +463,26 @@ export const getProductsByPriceRange = async (
 ): Promise<ProductDisplay[]> => {
   try {
     const productsRef = collection(db, PRODUCTS_COLLECTION);
-    const q = query(
+    // Récupérer les produits actifs
+    const priceQuery = query(
       productsRef,
-      where('pricing.regular_price', '>=', min),
-      where('pricing.regular_price', '<=', max),
-      limit(limitCount)
+      where('status', '==', 'active'),
+      limit(200) // Récupérer plus de produits pour le filtrage
     );
 
-    const productsSnapshot = await getDocs(q);
-    const products = productsSnapshot.docs.map(doc => convertFirestoreDocToProduct(doc));
+    const priceProductsSnapshot = await getDocs(priceQuery);
+    const priceFilteredProducts = priceProductsSnapshot.docs.map(doc => convertFirestoreDocToProduct(doc));
     
-    return products.map(convertToProductDisplay);
+    // Filtrer par plage de prix
+    const filteredByPrice = priceFilteredProducts.filter(product => {
+      const price = product.pricing?.regular_price || 0;
+      return price >= min && price <= max;
+    });
+    
+    // Limiter les résultats
+    const limitedProducts = filteredByPrice.slice(0, limitCount);
+    
+    return limitedProducts.map(convertToProductDisplay);
   } catch (error) {
     console.error(`Erreur lors de la récupération des produits par plage de prix (${min}-${max}):`, error);
     return [];
@@ -337,17 +495,17 @@ export const getProductsByPriceRange = async (
 export const getMaxProductPrice = async (): Promise<number> => {
   try {
     const productsRef = collection(db, PRODUCTS_COLLECTION);
-    const q = query(
+    const maxPriceQuery = query(
       productsRef,
       where('status', '==', 'active'),
       limit(500) // Limite élevée pour avoir une bonne idée du prix maximum
     );
 
-    const productsSnapshot = await getDocs(q);
-    const products = productsSnapshot.docs.map(doc => convertFirestoreDocToProduct(doc));
+    const maxPriceSnapshot = await getDocs(maxPriceQuery);
+    const maxPriceProducts = maxPriceSnapshot.docs.map(doc => convertFirestoreDocToProduct(doc));
     
     // Trouver le prix maximum
-    const maxPrice = Math.max(...products.map(p => p.pricing?.regular_price || 0));
+    const maxPrice = Math.max(...maxPriceProducts.map((p) => p.pricing?.regular_price || 0));
     
     // Arrondir au multiple de 50 supérieur pour avoir une valeur propre
     const roundedMaxPrice = Math.ceil(maxPrice / 50) * 50;
