@@ -46,18 +46,18 @@ const Footer: React.FC = () => {
   const slogan = 'Des boucles d\'oreilles qui font tourner les tetes. Style unique, petits prix, grands effets.';
 
   return (
-    <footer className="bg-white border-t relative print:hidden" role="contentinfo" itemScope itemType="https://schema.org/WPFooter">
+    <footer className="bg-white border-t border-gray-200 relative print:hidden" role="contentinfo" itemScope itemType="https://schema.org/WPFooter">
       {/* Bouton scroll to top */}
       <ScrollTopButton show={showScrollTop} onClick={scrollToTop} />
 
       {/* Main footer */}
-      <div className="container mx-auto py-8 md:py-12 px-4">
+      <div className="container mx-auto py-8 md:py-12 px-4 min-w-[375px]">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo et informations */}
           <FooterLogo slogan={slogan} />
 
           {/* Sections du footer */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:col-span-3">
+          <div className="grid grid-cols-1 min-[700px]:grid-cols-3 gap-8 md:col-span-3">
             <ShopSection />
             <HelpSection />
             <AboutSection />

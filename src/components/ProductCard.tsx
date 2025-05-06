@@ -9,7 +9,7 @@ interface ProductCardProps {
 export const ProductCard = ({ product }: ProductCardProps) => {
   return (
     <div className="group relative overflow-hidden rounded-lg shadow-md transition-all hover:shadow-lg">
-      <div className="aspect-square w-full overflow-hidden">
+      <div className="aspect-square w-full overflow-hidden relative">
         <Image
           src={product.imageUrl || 'https://via.placeholder.com/300x300?text=Image+non+disponible'}
           alt={product.name}

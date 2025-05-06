@@ -21,14 +21,19 @@ import {
 } from '@/components/ui/navbar';
 
 interface NavbarProps {
+  isMobileMenuOpen?: boolean;
   onMobileMenuToggle: (isOpen: boolean) => void;
 }
 
-export default function Navbar({ onMobileMenuToggle }: NavbarProps) {
+export default function Navbar({ isMobileMenuOpen: propsMobileMenuOpen, onMobileMenuToggle }: NavbarProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // Utiliser l'état fourni par le parent s'il existe, sinon utiliser un état local
+  const [localMobileMenuOpen, setLocalMobileMenuOpen] = useState(false);
+  
+  // Déterminer l'état actuel du menu mobile
+  const isMobileMenuOpen = propsMobileMenuOpen !== undefined ? propsMobileMenuOpen : localMobileMenuOpen;
   
   const router = useRouter();
   const pathname = usePathname();
@@ -58,9 +63,11 @@ export default function Navbar({ onMobileMenuToggle }: NavbarProps) {
   useEffect(() => {
     if (!isMounted) return;
     
-    setIsMobileMenuOpen(false);
+    // Fermer les menus sans délai
+    setLocalMobileMenuOpen(false);
+    onMobileMenuToggle(false); // Synchroniser l'état avec le composant parent
     setUserMenuOpen(false);
-  }, [pathname, isMounted]);
+  }, [pathname, isMounted, onMobileMenuToggle]);
 
   // Fermer le menu utilisateur lorsqu'on clique en dehors
   useEffect(() => {
@@ -80,8 +87,11 @@ export default function Navbar({ onMobileMenuToggle }: NavbarProps) {
 
   const toggleMobileMenu = () => {
     if (!isMounted) return;
+    // Inverser l'état actuel
     const newState = !isMobileMenuOpen;
-    setIsMobileMenuOpen(newState);
+    // Mettre à jour l'état local d'abord
+    setLocalMobileMenuOpen(newState);
+    // Puis notifier le parent
     onMobileMenuToggle(newState);
   };
 
@@ -115,40 +125,84 @@ export default function Navbar({ onMobileMenuToggle }: NavbarProps) {
   }
 
   return (
-    <div className={`relative bg-white ${isScrolled ? 'shadow-md' : ''}`}>
-      <div className="container mx-auto px-4 max-w-7xl">
-        <div className="flex items-center justify-between h-16 md:h-20 py-2">
-          {/* Logo */}
-          <Logo />
+    <div>
+      {/* Header principal avec logo et icônes */}
+      <div className={`py-3 px-4 bg-white ${isScrolled ? 'shadow-md' : ''} transition-shadow duration-300`}>
+        <div className="container mx-auto min-w-[375px] px-4 max-w-7xl">
+          {/* Version mobile (< 700px) */}
+          <div className="block min-[700px]:hidden">
+            <div className="flex items-center justify-between py-2">
+              {/* Logo */}
+              <Logo />
+              
+              {/* Actions */}
+              <div className="flex items-center space-x-2">
+                {/* Compte */}
+                <UserMenu 
+                  isOpen={userMenuOpen}
+                  toggleMenu={toggleUserMenu}
+                  menuRef={userMenuRef}
+                  user={user}
+                  onLogout={handleLogout}
+                />
 
-          {/* Barre de recherche */}
-          <SearchBar />
+                {/* Favoris */}
+                <FavoritesButton count={favoritesCount} />
 
-          {/* Actions */}
-          <div className="flex items-center space-x-1 md:space-x-4">
+                {/* Panier */}
+                <CartButton itemCount={totalItems} />
 
-            {/* Compte */}
-            <UserMenu 
-              isOpen={userMenuOpen}
-              toggleMenu={toggleUserMenu}
-              menuRef={userMenuRef}
-              user={user}
-              onLogout={handleLogout}
-            />
+                {/* Bouton menu mobile - affiché jusqu'à 1047px */}
+                <MenuButton 
+                  onClick={toggleMobileMenu} 
+                  isOpen={isMobileMenuOpen} 
+                  className="lg:hidden text-lilas-fonce hover:text-lilas-clair transition-colors" 
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Version desktop (>= 700px) */}
+          <div className="hidden min-[700px]:flex items-center justify-between h-20 py-2">
+            {/* Logo */}
+            <Logo />
+            
+            {/* Barre de recherche au milieu */}
+            <div className="flex-1 max-w-md mx-4">
+              <SearchBar />
+            </div>
+            
+            {/* Actions */}
+            <div className="flex items-center space-x-4">
+              {/* Compte */}
+              <UserMenu 
+                isOpen={userMenuOpen}
+                toggleMenu={toggleUserMenu}
+                menuRef={userMenuRef}
+                user={user}
+                onLogout={handleLogout}
+              />
 
-            {/* Favoris */}
-            <FavoritesButton count={favoritesCount} />
+              {/* Favoris */}
+              <FavoritesButton count={favoritesCount} />
 
-            {/* Panier */}
-            <CartButton itemCount={totalItems} />
+              {/* Panier */}
+              <CartButton itemCount={totalItems} />
 
-            {/* Bouton menu mobile */}
-            <MenuButton 
-              isOpen={isMobileMenuOpen}
-              onClick={toggleMobileMenu}
-            />
+              {/* Bouton menu mobile - affiché jusqu'à 1047px */}
+              <MenuButton 
+                onClick={toggleMobileMenu} 
+                isOpen={isMobileMenuOpen} 
+                className="lg:hidden text-lilas-fonce hover:text-lilas-clair transition-colors" 
+              />
+            </div>
           </div>
         </div>
+      </div>
+      
+      {/* Barre de recherche mobile en full width */}
+      <div className="block min-[700px]:hidden w-full bg-lilas-fonce py-3 px-4">
+        <SearchBar isMobile={true} />
       </div>
 
       {/* Navbar desktop */}
