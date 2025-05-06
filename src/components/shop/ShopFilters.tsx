@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FilterOptions } from '@/lib/services/shop-service';
+import { FilterOptions, getMaxProductPrice } from '@/lib/services/shop-service';
 import { navigationData } from '@/lib/data/navigation-data';
-import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Button } from '@/components/ui/Button';
+import { PriceRangeFilter } from '@/components/ui/PriceRangeFilter';
 import { HiChevronDown, HiChevronUp } from 'react-icons/hi';
 
 interface ShopFiltersProps {
@@ -23,6 +23,35 @@ export default function ShopFilters({ filters, updateFilters, resetFilters }: Sh
     material: true,
     price: true
   });
+  
+  // État pour stocker le prix maximum
+  const [maxPrice, setMaxPrice] = useState<number>(1000);
+  
+  // Récupération du prix maximum au chargement du composant
+  useEffect(() => {
+    const fetchMaxPrice = async () => {
+      try {
+        const maxPriceValue = await getMaxProductPrice();
+        console.log('Prix maximum récupéré:', maxPriceValue, '€');
+        setMaxPrice(maxPriceValue);
+        
+        // Initialiser le prix maximum par défaut uniquement si les filtres n'ont pas déjà une valeur
+        if (!filters.priceRange?.max) {
+          updateFilters({
+            priceRange: {
+              min: filters.priceRange?.min || 0,
+              max: maxPriceValue
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération du prix maximum:', error);
+      }
+    };
+    
+    fetchMaxPrice();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Exécution uniquement au montage du composant
 
   // Extraction des filtres de navigation
   const styleFilters = navigationData.find(cat => cat.name === 'Style')?.subcategories || [];
@@ -64,16 +93,14 @@ export default function ShopFilters({ filters, updateFilters, resetFilters }: Sh
     updateFilters({ material: newMaterials });
   };
 
-  // Gestion du filtre de prix
-  const handlePriceChange = (values: number[]) => {
-    if (values.length === 2) {
-      updateFilters({
-        priceRange: {
-          min: values[0],
-          max: values[1]
-        }
-      });
-    }
+  // Gestion du filtre de prix avec double curseur (min et max)
+  const handlePriceChange = (values: [number, number]) => {
+    updateFilters({
+      priceRange: {
+        min: values[0],
+        max: values[1]
+      }
+    });
   };
 
   // Gestion du filtre de nouveauté
@@ -104,13 +131,13 @@ export default function ShopFilters({ filters, updateFilters, resetFilters }: Sh
       <div className="mb-6">
         <h3 className="text-sm font-medium text-gray-700 mb-3">Trier par</h3>
         <select
-          value={filters.sortBy || 'newest'}
+          value={filters.sortBy || 'price-desc'}
           onChange={(e) => handleSortChange(e.target.value as FilterOptions['sortBy'])}
           className="w-full p-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-lilas-clair focus:border-lilas-fonce"
         >
-          <option value="newest">Nouveautés</option>
-          <option value="price-asc">Prix croissant</option>
           <option value="price-desc">Prix décroissant</option>
+          <option value="price-asc">Prix croissant</option>
+          <option value="newest">Nouveautés</option>
           <option value="popularity">Popularité</option>
         </select>
       </div>
@@ -269,17 +296,17 @@ export default function ShopFilters({ filters, updateFilters, resetFilters }: Sh
             transition={{ duration: 0.3 }}
             className="px-2"
           >
-            <Slider
-              defaultValue={[filters.priceRange?.min || 0, filters.priceRange?.max || 100]}
-              min={0}
-              max={100}
-              step={5}
-              onValueChange={handlePriceChange}
-              className="my-6"
-            />
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>{filters.priceRange?.min || 0}€</span>
-              <span>{filters.priceRange?.max || 100}€</span>
+            <div className="pt-4 pb-2">
+              <p className="text-sm text-gray-700 mb-2 font-medium">Plage de prix:</p>
+              <PriceRangeFilter
+                min={0}
+                max={maxPrice}
+                value={[filters.priceRange?.min || 0, filters.priceRange?.max || maxPrice]}
+                step={10}
+                onChange={handlePriceChange}
+                formatLabel={(value) => `${value}€`}
+                className="my-4"
+              />
             </div>
           </motion.div>
         )}

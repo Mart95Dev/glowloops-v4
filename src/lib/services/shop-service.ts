@@ -37,7 +37,7 @@ export const getFilteredProducts = async (
       material = [],
       priceRange,
       isNew,
-      sortBy = 'newest',
+      sortBy = 'price-desc', // Tri par prix décroissant par défaut
       // Nous ignorons lastVisible car nous récupérons tous les produits et filtrons en mémoire
       // lastVisible,
       pageSize = 12
@@ -116,8 +116,8 @@ export const getFilteredProducts = async (
     // Nous appliquons uniquement un filtre simple sur le statut pour récupérer les produits actifs
     q = query(q, where('status', '==', 'active'));
     
-    // Limitation du nombre de résultats
-    q = query(q, limit(100));
+    // Limitation du nombre de résultats - augmentation pour avoir plus de produits
+    q = query(q, limit(200));
 
     // Exécution de la requête
     const productsSnapshot = await getDocs(q);
@@ -125,6 +125,10 @@ export const getFilteredProducts = async (
     // Conversion des documents en objets Product
     let products = productsSnapshot.docs
       .map(doc => convertFirestoreDocToProduct(doc));
+    
+    // Déterminer le prix maximum pour le slider
+    const maxPrice = Math.max(...products.map(p => p.pricing?.regular_price || 0));
+    console.log(`Prix maximum trouvé: ${maxPrice} EUR`);
     
     // Application des filtres en mémoire
     if (filters.length > 0) {
@@ -324,5 +328,35 @@ export const getProductsByPriceRange = async (
   } catch (error) {
     console.error(`Erreur lors de la récupération des produits par plage de prix (${min}-${max}):`, error);
     return [];
+  }
+};
+
+/**
+ * Récupère le prix maximum des produits pour le slider de filtrage
+ */
+export const getMaxProductPrice = async (): Promise<number> => {
+  try {
+    const productsRef = collection(db, PRODUCTS_COLLECTION);
+    const q = query(
+      productsRef,
+      where('status', '==', 'active'),
+      limit(500) // Limite élevée pour avoir une bonne idée du prix maximum
+    );
+
+    const productsSnapshot = await getDocs(q);
+    const products = productsSnapshot.docs.map(doc => convertFirestoreDocToProduct(doc));
+    
+    // Trouver le prix maximum
+    const maxPrice = Math.max(...products.map(p => p.pricing?.regular_price || 0));
+    
+    // Arrondir au multiple de 50 supérieur pour avoir une valeur propre
+    const roundedMaxPrice = Math.ceil(maxPrice / 50) * 50;
+    
+    console.log(`Prix maximum trouvé: ${maxPrice} EUR, arrondi à: ${roundedMaxPrice} EUR`);
+    
+    return roundedMaxPrice > 0 ? roundedMaxPrice : 1000; // Valeur par défaut si aucun produit n'est trouvé
+  } catch (error) {
+    console.error('Erreur lors de la récupération du prix maximum:', error);
+    return 1000; // Valeur par défaut en cas d'erreur
   }
 };
