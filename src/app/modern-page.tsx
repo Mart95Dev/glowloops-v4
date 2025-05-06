@@ -18,16 +18,14 @@ import {
   ModernNewsletterForm
 } from '@/components/home/modern-index';
 
-export default async function Home() {
+export default async function ModernHome() {
   // Récupération des données
   const newArrivalsData = await getNewArrivals(8);
-  const collectionsRawData = await getActiveCollections(6);
-  // S'assurer que toutes les collections ont une URL d'image valide
-  const collectionsData = collectionsRawData.filter(collection => !!collection.imageUrl);
+  const collectionsData = await getActiveCollections(6);
   const popularProductsData = await getPopularProducts(8);
   const instagramPostsData = await getRecentInstagramPosts(6);
   const faqsData = await getFrequentFaqs(5);
-  const advantagesData = await getActiveAdvantages(5);
+  const advantagesData = await getActiveAdvantages(3);
   
   // Récupération de la bannière hero depuis Firestore
   const heroBanners = await bannerService.getActiveBanners('hero');
@@ -41,11 +39,11 @@ export default async function Home() {
     id: advantage.id,
     title: advantage.title,
     description: advantage.description,
-    icon: <AdvantageIcon iconName={advantage.iconName} className="h-8 w-8 text-lilas-fonce" />
+    icon: <AdvantageIcon iconName={advantage.iconName} className="h-8 w-8 text-white" />
   }));
 
   return (
-    <div className="min-w-[375px] min-h-screen">
+    <div className="min-h-screen">
       <main>
         {/* Hero Banner - Design moderne et immersif */}
         <Suspense fallback={<div className="h-[85vh] w-full bg-gray-200 animate-pulse"></div>}>
@@ -76,7 +74,10 @@ export default async function Home() {
           />
         </Suspense>
 
-
+        {/* Avantages - Design moderne avec icônes et animations */}
+        <Suspense fallback={<div className="h-64 w-full bg-gray-200 animate-pulse"></div>}>
+          <ModernAdvantagesBanner advantages={advantagesWithIcons} />
+        </Suspense>
 
         {/* Produits populaires - Grille moderne avec effets au survol */}
         <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
@@ -113,11 +114,6 @@ export default async function Home() {
             buttonText="S'inscrire"
             successMessage="Merci pour votre inscription ! Vous recevrez bientôt nos dernières nouveautés."
           />
-        </Suspense>
-        
-        {/* Avantages - Design moderne avec icônes et animations - Placé avant le footer */}
-        <Suspense fallback={<div className="h-64 w-full bg-gray-200 animate-pulse"></div>}>
-          <ModernAdvantagesBanner advantages={advantagesWithIcons} />
         </Suspense>
       </main>
     </div>

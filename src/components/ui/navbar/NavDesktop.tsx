@@ -53,8 +53,8 @@ export const NavDesktop = ({ navigationData, pathname }: NavDesktopProps) => {
   };
 
   return (
-    <div className="hidden md:block border-t border-gray-200 bg-lilas-fonce text-white">
-      <div className="container mx-auto px-4 max-w-7xl">
+    <div className="hidden lg:block border-t border-gray-200 bg-lilas-fonce text-white">
+      <div className="container mx-auto px-4 max-w-7xl min-w-[375px]">
         <div className="flex items-center justify-center h-12">
           <nav className="flex space-x-6" aria-label="Navigation principale">
             {navigationData.map((category) => (

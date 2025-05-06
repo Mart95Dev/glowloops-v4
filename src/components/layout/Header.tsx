@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PromoBanner from './PromoBanner';
 import MobileMenu from './MobileMenu';
 import Navbar from './Navbar';
@@ -24,10 +24,11 @@ const Header: React.FC = () => {
     }
   }, []);
   
-  const toggleMobileMenu = (isOpen: boolean) => {
+  // Utiliser useCallback pour mémoriser la fonction et éviter les re-rendus inutiles
+  const toggleMobileMenu = useCallback((isOpen: boolean) => {
     if (!isMounted) return;
     setIsMobileMenuOpen(isOpen);
-  };
+  }, [isMounted]);
   
   // Si pas encore monté côté client, ne rien afficher
   if (!isMounted) {
@@ -46,11 +47,17 @@ const Header: React.FC = () => {
         />
       )}
       
-      {/* Navbar modulaire */}
-      <Navbar onMobileMenuToggle={toggleMobileMenu} />
+      {/* Navbar modulaire avec menu mobile intégré */}
+      <Navbar 
+        isMobileMenuOpen={isMobileMenuOpen}
+        onMobileMenuToggle={toggleMobileMenu} 
+      />
 
       {/* Menu mobile */}
-      <MobileMenu isOpen={isMobileMenuOpen} onClose={() => toggleMobileMenu(false)} />
+      <MobileMenu 
+        isOpen={isMobileMenuOpen} 
+        onClose={() => toggleMobileMenu(false)} 
+      />
     </header>
   );
 };

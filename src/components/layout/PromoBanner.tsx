@@ -1,22 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Clock, ExternalLink } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 interface PromoBannerProps {
   message: string;
   endDate: Date;
   variant?: 'default' | 'success' | 'warning';
   link?: string;
-  id?: string; // Identifiant unique pour la promo (pour le stockage local)
+  // id supprimé car non utilisé
 }
 
 export default function PromoBanner({ 
   message, 
   endDate, 
   variant = 'default', 
-  link,
-  id = 'default-promo' // Identifiant par défaut
+  link
+  // id supprimé car non utilisé
 }: PromoBannerProps) {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -24,20 +24,15 @@ export default function PromoBanner({
     minutes: 0,
     seconds: 0
   });
-  const [isVisible, setIsVisible] = useState(true);
+  // Bannière toujours visible
+  const isVisible = true;
   const [isExpired, setIsExpired] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Vérifier si la bannière a été fermée précédemment
+  // Initialiser le montage côté client
   useEffect(() => {
     setIsMounted(true);
-    
-    // Vérifier si la bannière a été fermée
-    const isClosed = localStorage.getItem(`promo-closed-${id}`);
-    if (isClosed) {
-      setIsVisible(false);
-    }
-  }, [id]);
+  }, []);
   
   // Calculer le temps restant de manière optimisée
   const calculateTimeLeft = useCallback(() => {
@@ -79,16 +74,11 @@ export default function PromoBanner({
     return () => clearInterval(timer);
   }, [isMounted, calculateTimeLeft]);
   
-  // Masquer la bannière si la promo est expirée
+  // La bannière reste visible même après expiration
+  // Nous pourrions ici ajouter une logique pour modifier l'apparence
+  // de la bannière lorsque le compte à rebours est terminé
   useEffect(() => {
-    if (isExpired) {
-      // Attendre un peu avant de masquer pour montrer "00:00:00"
-      const timeout = setTimeout(() => {
-        setIsVisible(false);
-      }, 2000);
-      
-      return () => clearTimeout(timeout);
-    }
+    // Aucune action nécessaire car la bannière reste toujours visible
   }, [isExpired]);
 
   // Définir les couleurs en fonction de la variante
@@ -103,11 +93,7 @@ export default function PromoBanner({
     }
   };
 
-  const handleClose = () => {
-    // Stocker l'état fermé dans localStorage
-    localStorage.setItem(`promo-closed-${id}`, 'true');
-    setIsVisible(false);
-  };
+  // Fonction de fermeture supprimée car la bannière est permanente
 
   // Si pas encore monté côté client, ne rien afficher
   if (!isMounted) {
@@ -117,9 +103,9 @@ export default function PromoBanner({
   const bannerContent = (
     <>
       <span className="font-medium">{message}</span>
-      <span className="hidden sm:inline mx-2">|</span>
+      <span className="hidden md:inline mx-2">|</span>
       <div className="inline-flex items-center">
-        <Clock size={14} className="mr-1 hidden sm:inline" />
+        <Clock size={14} className="mr-1 hidden md:inline" />
         <span className="font-mono">
           {timeLeft.days > 0 && (
             <span className="inline-flex items-center mr-1">
@@ -134,11 +120,7 @@ export default function PromoBanner({
           <span>{String(timeLeft.seconds).padStart(2, '0')}</span>
         </span>
       </div>
-      {link && (
-        <span className="hidden sm:inline-flex items-center ml-2 text-xs font-semibold hover:underline">
-          Voir <ExternalLink size={12} className="ml-0.5" />
-        </span>
-      )}
+      {/* Lien "Voir" supprimé */}
     </>
   );
 
@@ -154,24 +136,17 @@ export default function PromoBanner({
           className={`overflow-hidden ${getVariantClasses()}`}
         >
           <div className="py-3 px-4 text-center text-sm font-medium relative">
-            <div className="container mx-auto flex justify-center items-center max-w-7xl">
+            <div className="container mx-auto flex flex-col md:flex-row justify-center items-center max-w-7xl">
               {link ? (
-                <Link href={link} className="hover:underline flex-1 text-center flex justify-center items-center">
+                <Link href={link} className="hover:underline flex-1 text-center flex flex-col md:flex-row justify-center items-center gap-2 md:gap-0">
                   {bannerContent}
                 </Link>
               ) : (
-                <div className="flex-1 text-center flex justify-center items-center">
+                <div className="flex-1 text-center flex flex-col md:flex-row justify-center items-center gap-2 md:gap-0">
                   {bannerContent}
                 </div>
               )}
-              
-              <button 
-                onClick={handleClose}
-                className="absolute right-4 text-current opacity-70 hover:opacity-100 transition-opacity min-h-[44px] min-w-[44px] flex items-center justify-center"
-                aria-label="Fermer"
-              >
-                <X size={18} />
-              </button>
+              {/* Bouton de fermeture supprimé */}
             </div>
           </div>
         </motion.div>

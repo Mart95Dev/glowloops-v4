@@ -20,7 +20,11 @@ interface CategoryResult {
   url: string;
 }
 
-const SearchBar: React.FC = () => {
+interface SearchBarProps {
+  isMobile?: boolean;
+}
+
+const SearchBar: React.FC<SearchBarProps> = ({ isMobile = false }) => {
   const { isSearchOpen, toggleSearch, closeSearch } = useUIStore();
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -109,28 +113,45 @@ const SearchBar: React.FC = () => {
 
   return (
     <>
-      <div className="relative">
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Rechercher"
-          onClick={toggleSearch}
-          className="sm:hidden"
-        >
-          <Search size={24} />
-        </Button>
-        
-        <div className="hidden sm:block">
+      {!isMobile ? (
+        <div className="relative">
           <Button
-            variant="outline"
-            className="w-64 justify-start text-sm text-muted-foreground"
+            variant="ghost"
+            size="icon"
+            aria-label="Rechercher"
             onClick={toggleSearch}
+            className="sm:hidden"
           >
-            <Search className="mr-2 h-4 w-4" />
-            <span>Rechercher...</span>
+            <Search size={24} />
           </Button>
+          
+          <div className="hidden sm:block">
+            <Button
+              variant="outline"
+              className="w-64 justify-start text-sm text-muted-foreground"
+              onClick={toggleSearch}
+            >
+              <Search className="mr-2 h-4 w-4" />
+              <span>Rechercher...</span>
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="relative w-full flex justify-center">
+          <div className="relative w-full max-w-md">
+            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+              <Search className="w-4 h-4 text-gray-500" />
+            </div>
+            <input
+              type="text"
+              placeholder="Rechercher..."
+              className="w-full py-2 pl-10 pr-4 bg-white border border-gray-300 rounded-full text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-lilas-fonce/60"
+              onClick={toggleSearch}
+              readOnly
+            />
+          </div>
+        </div>
+      )}
 
       <Dialog 
         open={isSearchOpen} 
@@ -148,7 +169,7 @@ const SearchBar: React.FC = () => {
             </div>
             <input
               type="text"
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lilas-fonce focus:border-transparent"
+              className={`w-full px-4 py-2 pl-10 border rounded-full focus:outline-none focus:ring-2 focus:ring-lilas-fonce/60 text-sm ${isMobile ? 'bg-white text-gray-800 border-white' : ''}`}
               placeholder="Rechercher des produits, catégories..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

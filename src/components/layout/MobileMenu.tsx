@@ -84,25 +84,27 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
     return null;
   }
   
-  // Variants pour les animations Framer Motion
+  // Variants simplifiés pour les animations Framer Motion
   const menuVariants = {
     hidden: { x: '100%', opacity: 0 },
     visible: { 
       x: 0, 
       opacity: 1,
       transition: { 
-        type: 'tween',
-        duration: 0.3,
-        ease: 'easeOut'
+        type: 'spring',
+        stiffness: 300,
+        damping: 30,
+        duration: 0.5
       }
     },
     exit: { 
       x: '100%', 
       opacity: 0,
       transition: { 
-        type: 'tween',
-        duration: 0.2,
-        ease: 'easeIn'
+        type: 'spring',
+        stiffness: 300,
+        damping: 30,
+        duration: 0.3
       }
     }
   };
@@ -151,7 +153,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/40 z-40 md:hidden"
+            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
             onClick={onClose}
           />
           
@@ -161,7 +163,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
             animate="visible"
             exit="exit"
             variants={menuVariants}
-            className="fixed top-0 right-0 h-full w-4/5 max-w-sm bg-lilas-fonce text-white shadow-xl z-50 md:hidden overflow-hidden"
+            className="fixed top-0 right-0 h-full w-4/5 max-w-sm bg-lilas-fonce text-white shadow-xl z-50 lg:hidden overflow-hidden"
           >
             <div className="flex flex-col h-full">
               {/* En-tête du menu */}
