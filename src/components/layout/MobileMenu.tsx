@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronRight, ChevronLeft, User, LogOut, ShoppingBag, Heart, Settings } from 'lucide-react';
 import { useAuth } from '@/lib/firebase/auth';
 import { authService } from '@/lib/firebase/auth-service';
-import { navigationData } from '@/lib/data/navigation-data';
+import { navigationData } from '../../lib/data/navigation-data';
 import { toast } from '@/lib/utils/toast';
 import { useRouter } from 'next/navigation';
 

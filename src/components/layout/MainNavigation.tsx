@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { navigationData } from '@/lib/data/navigation-data';
+import { navigationData } from '../../lib/data/navigation-data';
 
 const MainNavigation: React.FC = () => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);

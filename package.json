@@ -2,13 +2,17 @@
   "name": "glowloops-v3",
   "version": "0.1.0",
   "private": true,
+
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "init-data": "node src/scripts/init-data.js",
+    "generate-data": "node src/scripts/generate-firestore-data.js"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-dialog": "^1.1.11",
     "@radix-ui/react-dropdown-menu": "^2.1.12",
     "@radix-ui/react-tabs": "^1.1.9",

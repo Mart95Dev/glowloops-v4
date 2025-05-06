@@ -7,7 +7,7 @@ import { useCartStore } from '@/lib/store/cart-store';
 import { useFavoritesCount } from '@/lib/store/favoritesStore';
 import { toast } from '@/lib/utils/toast';
 import { authService } from '@/lib/firebase/auth-service';
-import { navigationData } from '@/lib/data/navigation-data';
+import { navigationData } from '../../lib/data/navigation-data';
 import SearchBar from '@/components/layout/SearchBar';
 
 // Import des micro-composants

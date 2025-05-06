@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Fonction pour vérifier si l'utilisateur est administrateur
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+    
+    // Fonction pour vérifier si l'utilisateur est connecté
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Règles pour les collections publiques
+    match /banners/{bannerId} {
+      allow read: if true; // Tout le monde peut lire les bannières
+      allow write: if isAdmin(); // Seuls les administrateurs peuvent modifier
+    }
+    
+    match /collections/{collectionId} {
+      allow read: if true; // Tout le monde peut lire les collections
+      allow write: if isAdmin(); // Seuls les administrateurs peuvent modifier
+    }
+    
+    match /faqs/{faqId} {
+      allow read: if true; // Tout le monde peut lire les FAQs
+      allow write: if isAdmin(); // Seuls les administrateurs peuvent modifier
+    }
+    
+    match /instagram_posts/{postId} {
+      allow read: if true; // Tout le monde peut lire les posts Instagram
+      allow write: if isAdmin(); // Seuls les administrateurs peuvent modifier
+    }
+    
+    match /advantages/{advantageId} {
+      allow read: if true; // Tout le monde peut lire les avantages
+      allow write: if isAdmin(); // Seuls les administrateurs peuvent modifier
+    }
+    
+    // Règles pour les produits
+    match /products/{productId} {
+      allow read: if true; // Tout le monde peut lire les produits
+      allow write: if isAdmin(); // Seuls les administrateurs peuvent modifier
+    }
+    
+    // Règles pour les catégories
+    match /categories/{categoryId} {
+      allow read: if true; // Tout le monde peut lire les catégories
+      allow write: if isAdmin(); // Seuls les administrateurs peuvent modifier
+    }
+    
+    // Règles pour les commandes
+    match /orders/{orderId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Règles pour les utilisateurs
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && userId == request.auth.uid;
+      allow update: if isAuthenticated() && (userId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+    
+    // Règles pour les abonnements
+    match /subscriptions/{subscriptionId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+    
+    // Règles pour les bundles (packs)
+    match /bundles/{bundleId} {
+      allow read: if true; // Tout le monde peut lire les bundles
+      allow write: if isAdmin(); // Seuls les administrateurs peuvent modifier
+    }
+  }
+}

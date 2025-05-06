@@ -3,7 +3,7 @@ import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { Category } from '@/lib/data/navigation-data';
+import { Category } from '../../../lib/data/navigation-data';
 
 interface NavDesktopProps {
   navigationData: Category[];
