@@ -140,6 +140,31 @@ Cette structure et ces conventions doivent être strictement respectées pour ma
 - Formulaires simplifiés avec auto-suggestion
 - Résumé de commande collapse/expand
 
+Principes de structure mobile-first identifiés
+Largeur minimale définie : Tous les composants utilisent min-w-[375px] pour garantir une largeur minimale sur les petits écrans.
+Système de grille responsive :
+Utilisation de grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 pour adapter le nombre d'éléments par ligne selon la taille d'écran
+Passage de 1 colonne (mobile) à 2 (tablette) puis 4 (desktop)
+Taille de texte adaptative :
+Utilisation de classes comme text-2xl md:text-3xl pour augmenter progressivement la taille du texte
+Hiérarchie typographique respectée sur tous les appareils
+Espacement progressif :
+Utilisation de gap-4 md:gap-6 pour augmenter l'espacement sur les grands écrans
+Marges et paddings adaptés avec des valeurs plus petites sur mobile
+Images optimisées :
+Utilisation de l'attribut sizes pour optimiser le chargement des images selon la taille d'écran
+Utilisation de object-cover pour garantir un bon rendu quelle que soit la taille
+Disposition adaptative :
+Passage de flex-col à flex-row pour les éléments comme les boutons d'action
+Hauteurs adaptatives avec h-[180px] sm:h-[250px] md:h-[300px]
+Animations et transitions :
+Utilisation de Framer Motion pour des animations fluides
+Animations déclenchées au scroll avec useInView
+Chargement optimisé :
+Utilisation de Suspense pour le chargement progressif
+Fallbacks avec animations de chargement
+
+
 ## Optimisation et Bonnes Pratiques
 
 ### 1. Performance
