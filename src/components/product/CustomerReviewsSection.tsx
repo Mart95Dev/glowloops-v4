@@ -134,7 +134,7 @@ export default function CustomerReviewsSection({ product }: CustomerReviewsSecti
             className="rounded-full border-lilas-fonce text-lilas-fonce hover:bg-lilas-clair/10"
             onClick={() => setShowAllReviews(true)}
           >
-            Voir plus d'avis
+            Voir plus d&apos;avis
           </Button>
         </div>
       )}

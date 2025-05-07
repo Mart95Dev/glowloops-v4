@@ -239,7 +239,7 @@ export default function ProductTabs({ product }: ProductTabsProps) {
             <div>
               <h4 className="text-base font-medium text-gray-800 mb-2">Politique de retour</h4>
               <p className="mb-2">
-                Vous n'êtes pas satisfait(e) de votre achat ? Pas de problème ! Vous disposez de 14 jours à compter de la réception de votre commande pour nous retourner votre article.
+                Vous n&apos;êtes pas satisfait(e) de votre achat ? Pas de problème ! Vous disposez de 14 jours à compter de la réception de votre commande pour nous retourner votre article.
               </p>
               <ul className="space-y-2">
                 <li className="flex items-start gap-2">
@@ -264,7 +264,7 @@ export default function ProductTabs({ product }: ProductTabsProps) {
                 Tous nos produits sont garantis 12 mois contre les défauts de fabrication.
               </p>
               <p className="text-sm">
-                L'extension de garantie (option) prolonge cette période à 24 mois.
+                L&apos;extension de garantie (option) prolonge cette période à 24 mois.
               </p>
             </div>
           </div>

@@ -33,7 +33,12 @@ const MediaSchema = z.object({
   mainImageUrl: z.string().url().optional(),
   thumbnailUrl: z.string().url().optional(),
   galleryImageUrls: z.record(z.string()).optional(),
-  modelWearingImageUrls: z.record(z.string()).optional()
+  modelWearingImageUrls: z.record(z.string()).optional(),
+  customerPhotos: z.record(z.object({
+    url: z.string(),
+    customerName: z.string(),
+    rating: z.number()
+  })).optional()
 });
 
 // Schéma pour le contenu
