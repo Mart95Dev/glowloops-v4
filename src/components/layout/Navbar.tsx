@@ -15,7 +15,7 @@ import {
   Logo,
   MenuButton,
   FavoritesButton,
-  CartButton,
+  CartButtonClassic,
   UserMenu,
   NavDesktop
 } from '@/components/ui/navbar';
@@ -149,8 +149,8 @@ export default function Navbar({ isMobileMenuOpen: propsMobileMenuOpen, onMobile
                 {/* Favoris */}
                 <FavoritesButton count={favoritesCount} />
 
-                {/* Panier */}
-                <CartButton itemCount={totalItems} />
+                {/* Panier - Version classique */}
+                <CartButtonClassic itemCount={totalItems} />
 
                 {/* Bouton menu mobile - affiché jusqu'à 1047px */}
                 <MenuButton 
@@ -186,8 +186,8 @@ export default function Navbar({ isMobileMenuOpen: propsMobileMenuOpen, onMobile
               {/* Favoris */}
               <FavoritesButton count={favoritesCount} />
 
-              {/* Panier */}
-              <CartButton itemCount={totalItems} />
+              {/* Panier - Version classique */}
+              <CartButtonClassic itemCount={totalItems} />
 
               {/* Bouton menu mobile - affiché jusqu'à 1047px */}
               <MenuButton 

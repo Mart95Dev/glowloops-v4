@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Poppins } from "next/font/google";
 import { Header, Footer } from "@/components/layout";
-import CartDrawer from "@/components/layout/CartDrawer";
 import "./globals.css";
 
 // Désactiver le client-side JavaScript pour les composants qui ne sont pas explicitement marqués comme client
@@ -41,7 +40,6 @@ export default function RootLayout({
         <Header />
         <main className="pt-32 pb-16 min-h-screen">{children}</main>
         <Footer />
-        <CartDrawer />
       </body>
     </html>
   );

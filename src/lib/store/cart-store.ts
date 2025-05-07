@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { Cart, ShippingFee, Discount } from '@/lib/types/cart';
+import { syncCartWithFirestore, getUserCartFromFirestore } from '@/lib/services/cart-service';
+import { auth } from '@/lib/firebase/auth';
 
 export type CartItem = {
   id: string;
@@ -19,20 +22,24 @@ export type CartItem = {
 type CartState = {
   // État
   items: CartItem[];
-  isOpen: boolean;
+  shipping: ShippingFee | null;
+  discount: Discount | null;
   
   // Calculs
   totalItems: number;
   subtotal: number;
+  total: number;
   
   // Actions
   addItem: (item: Omit<CartItem, 'id'>) => void;
   updateItemQuantity: (id: string, quantity: number) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
-  openCart: () => void;
-  closeCart: () => void;
-  toggleCart: () => void;
+  setShipping: (shipping: ShippingFee | null) => void;
+  setDiscount: (discount: Discount | null) => void;
+  syncWithFirestore: () => Promise<void>;
+  loadFromFirestore: () => Promise<void>;
+  toCart: () => Cart;
 };
 
 export const useCartStore = create<CartState>()(
@@ -40,7 +47,8 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       // État initial
       items: [],
-      isOpen: false,
+      shipping: null,
+      discount: null,
       
       // Calculs
       get totalItems() {
@@ -53,6 +61,40 @@ export const useCartStore = create<CartState>()(
           const garantieTotal = item.garantie ? item.garantie.price * item.quantity : 0;
           return total + itemTotal + garantieTotal;
         }, 0);
+      },
+
+      get total() {
+        const { subtotal, shipping, discount } = get();
+        let total = subtotal;
+        
+        // Ajouter les frais de livraison si présents
+        if (shipping) {
+          total += shipping.price;
+        }
+        
+        // Appliquer la réduction si présente
+        if (discount) {
+          if (discount.type === 'percentage') {
+            total = total * (1 - discount.amount / 100);
+          } else {
+            total = Math.max(0, total - discount.amount);
+          }
+        }
+        
+        return total;
+      },
+      
+      // Conversion vers l'objet Cart
+      toCart: () => {
+        const { items, subtotal, shipping, discount, total } = get();
+        return {
+          items,
+          subtotal,
+          shipping: shipping || undefined,
+          discount: discount || undefined,
+          total,
+          updatedAt: new Date().toISOString()
+        };
       },
       
       // Actions
@@ -103,14 +145,64 @@ export const useCartStore = create<CartState>()(
         items: state.items.filter((item) => item.id !== id)
       })),
       
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], shipping: null, discount: null }),
       
-      openCart: () => set({ isOpen: true }),
-      closeCart: () => set({ isOpen: false }),
-      toggleCart: () => set((state) => ({ isOpen: !state.isOpen }))
+      setShipping: (shipping) => set({ shipping }),
+      
+      setDiscount: (discount) => set({ discount }),
+      
+      // Synchronisation avec Firestore
+      syncWithFirestore: async () => {
+        const cart = get().toCart();
+        const updatedCart = await syncCartWithFirestore(cart);
+        
+        // Mettre à jour l'état local si nécessaire
+        if (updatedCart !== cart) {
+          set({
+            items: updatedCart.items,
+            shipping: updatedCart.shipping || null,
+            discount: updatedCart.discount || null
+          });
+        }
+      },
+      
+      // Charger le panier depuis Firestore
+      loadFromFirestore: async () => {
+        const currentUser = auth.currentUser;
+        if (!currentUser) return;
+        
+        try {
+          const userId = currentUser.uid;
+          const remoteCart = await getUserCartFromFirestore(userId);
+          
+          if (remoteCart) {
+            set({
+              items: remoteCart.items || [],
+              shipping: remoteCart.shipping || null,
+              discount: remoteCart.discount || null
+            });
+            console.log('Panier chargé depuis Firestore');
+          }
+        } catch (error) {
+          console.error('Erreur lors du chargement du panier:', error);
+        }
+      }
     }),
     {
       name: 'glowloops-cart-storage'
     }
   )
 );
+
+// Hook d'écoute d'authentification pour synchroniser le panier
+export const setupCartAuthListener = () => {
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      // Utilisateur connecté, charger son panier depuis Firestore
+      useCartStore.getState().loadFromFirestore();
+    } else {
+      // Utilisateur déconnecté, on ne fait rien (le panier local reste inchangé)
+      console.log('Utilisateur déconnecté, utilisation du panier local');
+    }
+  });
+};

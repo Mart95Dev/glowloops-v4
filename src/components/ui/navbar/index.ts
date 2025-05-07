@@ -4,6 +4,6 @@ export { default as SearchBarMobile } from './SearchBarMobile';
 export { default as SearchButton } from './SearchButton';
 export { default as MenuButton } from './MenuButton';
 export { default as FavoritesButton } from './FavoritesButton';
-export { default as CartButton } from './CartButton';
+export { default as CartButtonClassic } from './CartButtonClassic';
 export { default as UserMenu } from './UserMenu';
 export { default as NavDesktop } from './NavDesktop';
