@@ -5,9 +5,10 @@ import { Product } from '@/lib/types/product';
 import { HiOutlineShoppingBag, HiOutlineHeart, HiHeart } from 'react-icons/hi';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { Separator } from '@/components/ui/Separator';
-import { QuantitySelector } from '@/components/ui/QuantitySelector';
-import { Switch } from '@/components/ui/Switch';
+import { Separator } from '@/components/ui/separator';
+// import { QuantitySelector } from '@/components/ui/QuantitySelector';
+import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/Input';
 
 interface ProductInfoProps {
   product: Product;
@@ -68,7 +69,7 @@ export default function ProductInfo({
           </Badge>
         )}
         {hasDiscount && (
-          <Badge variant="destructive" className="bg-dore text-white">
+          <Badge variant="error" className="bg-dore text-white">
             -{discountPercentage}%
           </Badge>
         )}
@@ -179,13 +180,40 @@ export default function ProductInfo({
       <div className="mb-6">
         <div className="flex justify-between items-center mb-2">
           <span className="font-medium text-gray-800">Quantité</span>
-          <QuantitySelector
-            value={quantity}
-            onChange={onQuantityChange}
-            min={1}
-            max={isInStock ? Math.min(stockCount, 10) : 1}
-            disabled={!isInStock}
-          />
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
+              disabled={!isInStock || quantity <= 1}
+              className="h-8 w-8 rounded-full border-lilas-fonce text-lilas-fonce"
+            >
+              -
+            </Button>
+            <Input 
+              type="number"
+              value={quantity}
+              onChange={(e) => {
+                const value = parseInt(e.target.value);
+                if (!isNaN(value) && value >= 1 && value <= (isInStock ? Math.min(stockCount, 10) : 1)) {
+                  onQuantityChange(value);
+                }
+              }}
+              className="w-14 text-center h-8"
+              disabled={!isInStock}
+              min={1}
+              max={isInStock ? Math.min(stockCount, 10) : 1}
+            />
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => onQuantityChange(Math.min(isInStock ? stockCount : 1, Math.min(quantity + 1, 10)))}
+              disabled={!isInStock || quantity >= Math.min(stockCount, 10)}
+              className="h-8 w-8 rounded-full border-lilas-fonce text-lilas-fonce"
+            >
+              +
+            </Button>
+          </div>
         </div>
       </div>
 

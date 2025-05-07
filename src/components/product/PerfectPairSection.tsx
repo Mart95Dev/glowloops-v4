@@ -214,7 +214,7 @@ export default function PerfectPairSection({ productId }: PerfectPairSectionProp
               className="bg-lilas-fonce hover:bg-lilas-fonce/90 text-white rounded-full flex items-center justify-center gap-2"
             >
               <HiOutlineShoppingBag className="h-4 w-4" />
-              <span>Ajouter l'ensemble au panier</span>
+              <span>Ajouter l&apos;ensemble au panier</span>
             </Button>
           </div>
         </div>

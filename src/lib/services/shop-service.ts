@@ -19,7 +19,7 @@ export interface FilterOptions {
   };
   isNew?: boolean;
   sortBy?: 'newest' | 'price-asc' | 'price-desc' | 'popularity';
-  lastVisible?: QueryDocumentSnapshot<DocumentData>;
+  lastVisible?: QueryDocumentSnapshot<DocumentData> | null;
   pageSize?: number;
 }
 
