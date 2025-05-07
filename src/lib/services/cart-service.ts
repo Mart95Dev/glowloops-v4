@@ -1,9 +1,9 @@
-import { collection, doc, setDoc, updateDoc, getDoc, deleteDoc, query, where, getDocs } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, deleteDoc, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase-config';
 import { auth } from '@/lib/firebase/auth';
-import { Cart, CartItem } from '@/lib/types/cart';
+import { Cart } from '@/lib/types/cart';
 import { getProductById } from './product-service';
-import { convertFirestoreData, timestampToDate } from '@/lib/utils/firestore-helpers';
+import { convertFirestoreData } from '@/lib/utils/firestore-helpers';
 import { Product } from '@/lib/types/product';
 
 // Collection Firestore pour les paniers
