@@ -43,15 +43,12 @@ const DualRangeSlider = React.forwardRef<
           min={min}
           max={max}
           step={step}
+          className="relative flex w-full touch-none select-none items-center"
           {...props}
           onValueChange={(value) => {
             setLocalValues(value)
             props.onValueChange?.(value)
           }}
-          className={cn(
-            "relative flex w-full touch-none select-none items-center",
-            props.className
-          )}
         >
           <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
             <SliderPrimitive.Range className="absolute h-full bg-lilas-fonce" />

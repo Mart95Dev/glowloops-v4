@@ -38,6 +38,10 @@ const MediaSchema = z.object({
     url: z.string(),
     customerName: z.string(),
     rating: z.number()
+  })).optional(),
+  howToWearImages: z.record(z.object({
+    url: z.string(),
+    caption: z.string().optional()
   })).optional()
 });
 
