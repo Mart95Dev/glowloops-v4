@@ -16,6 +16,8 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { useCartStore } from '@/lib/store/cart-store';
+import { toast } from '@/lib/utils/toast';
 
 interface ProductPageContentProps {
   productId: string;
@@ -28,6 +30,7 @@ export default function ProductPageContent({ productId }: ProductPageContentProp
   const [quantity, setQuantity] = useState(1);
   const [hasWarrantyExtension, setHasWarrantyExtension] = useState(false);
   const [stockCount, setStockCount] = useState(0);
+  const { addItem } = useCartStore();
   
   // États pour PerfectPairSection
   const [relatedProducts, setRelatedProducts] = useState<ProductDisplay[]>([]);
@@ -130,11 +133,29 @@ export default function ProductPageContent({ productId }: ProductPageContentProp
   };
 
   const handleAddToCart = () => {
-    // Logique d'ajout au panier à implémenter
-    console.log('Ajout au panier:', {
-      product,
-      quantity,
-      hasWarrantyExtension
+    if (!product) return;
+    
+    console.log('ProductPage: Ajout au panier', product.id, quantity);
+    
+    // Récupérer les informations du produit nécessaires pour l'ajout au panier
+    const productToAdd = {
+      productId: product.id,
+      name: product.basic_info?.name || 'Produit sans nom',
+      price: product.pricing?.regular_price || 0,
+      quantity: quantity,
+      image: product.media?.mainImageUrl || '',
+      // Ajouter les options si sélectionnées
+      garantie: hasWarrantyExtension ? {
+        id: 'warranty-extension',
+        name: 'Extension de garantie',
+        price: 9.99, // Prix fixe pour l'extension de garantie
+      } : undefined
+    };
+    
+    addItem(productToAdd);
+    
+    toast.success("Produit ajouté au panier", {
+      description: product.basic_info?.name
     });
   };
   
@@ -165,6 +186,42 @@ export default function ProductPageContent({ productId }: ProductPageContentProp
     return price.toFixed(2).replace('.', ',') + ' €';
   };
 
+  // Calculer les totaux pour PerfectPairSection
+  const { originalPrice, discountedPrice, count } = calculateTotals();
+
+  // Ajouter l'ensemble au panier
+  const handleAddSetToCart = () => {
+    const selectedProductsList = relatedProducts.filter(product => selectedProducts[product.id]);
+    
+    // Ajouter le produit principal au panier
+    if (product) {
+      addItem({
+        productId: product.id,
+        name: product.basic_info?.name || 'Produit sans nom',
+        price: product.pricing?.regular_price || 0,
+        quantity: 1,
+        image: product.media?.mainImageUrl || ''
+      });
+    }
+    
+    // Ajouter les produits complémentaires avec prix réduit
+    selectedProductsList.forEach(product => {
+      addItem({
+        productId: product.id,
+        name: product.name,
+        // Appliquer la réduction de 20%
+        price: product.price * (1 - discountPercentage / 100),
+        quantity: 1,
+        image: product.imageUrl
+      });
+    });
+    
+    // Afficher une notification pour confirmer l'ajout de l'ensemble au panier
+    toast.success("Ensemble ajouté au panier", {
+      description: `${selectedProductsList.length + 1} produits ajoutés`
+    });
+  };
+
   if (isLoading) {
     return <div className="container mx-auto py-8 px-4 animate-pulse">
       <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
@@ -187,9 +244,6 @@ export default function ProductPageContent({ productId }: ProductPageContentProp
     </div>;
   }
   
-  // Calculer les totaux pour PerfectPairSection
-  const { originalPrice, discountedPrice, count } = calculateTotals();
-
   return (
     <div className="min-w-[375px] py-20 px-4 bg-white">
       <div className="container mx-auto">
@@ -397,6 +451,7 @@ export default function ProductPageContent({ productId }: ProductPageContentProp
                     
                     <Button 
                       className="bg-lilas-fonce hover:bg-lilas-fonce/90 text-white rounded-full flex items-center justify-center gap-2 shadow-md transition-all duration-300 hover:shadow-lg mt-2 md:mt-0"
+                      onClick={handleAddSetToCart}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />

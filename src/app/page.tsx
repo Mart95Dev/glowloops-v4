@@ -1,8 +1,10 @@
+"use client";
+
 // Forcer le rendu statique pour éviter les problèmes de promesse
 export const dynamic = 'force-static';
 export const dynamicParams = false;
 
-import { Suspense } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { getNewArrivals, getPopularProducts } from '@/lib/services/product-service';
 import { getActiveCollections } from '@/lib/services/collection-service';
 import { getRecentInstagramPosts } from '@/lib/services/instagram-service';
@@ -21,36 +23,92 @@ import {
   ModernAdvantagesBanner,
   ModernNewsletterForm
 } from '@/components/home/modern-index';
+import { CartTester } from '@/components/test/CartTester';
+// import Hero from '@/components/home/Hero';
+// import Reviews from '@/components/home/Reviews';
+// import {
+//   ModernShowcase,
+//   ModernValuePropositions,
+//   ModernCollectionsDisplay,
+//   ModernInstagramGallery
+// } from '@/components/home/modern-index';
 
-export default async function Home() {
-  // Récupération des données
-  const newArrivalsData = await getNewArrivals(8);
-  const collectionsRawData = await getActiveCollections(6);
-  // S'assurer que toutes les collections ont une URL d'image valide
-  const collectionsData = collectionsRawData.filter(collection => !!collection.imageUrl);
-  const popularProductsData = await getPopularProducts(8);
-  const instagramPostsData = await getRecentInstagramPosts(6);
-  const faqsData = await getFrequentFaqs(5);
-  const advantagesData = await getActiveAdvantages(5);
-  
-  // Récupération de la bannière hero depuis Firestore
-  const heroBanners = await bannerService.getActiveBanners('hero');
-  
-  // Conversion des produits au format d'affichage
-  const newArrivals = newArrivalsData.map(convertToProductDisplay);
-  const popularProducts = popularProductsData.map(convertToProductDisplay);
-  
-  // Préparation des avantages avec les icônes
-  const advantagesWithIcons = advantagesData.map(advantage => ({
-    id: advantage.id,
-    title: advantage.title,
-    description: advantage.description,
-    icon: <AdvantageIcon iconName={advantage.iconName} className="h-8 w-8 text-lilas-fonce" />
-  }));
+export default function Home() {
+  // État pour stocker les données
+  const [newArrivals, setNewArrivals] = useState<any[]>([]);
+  const [collectionsData, setCollectionsData] = useState<any[]>([]);
+  const [popularProducts, setPopularProducts] = useState<any[]>([]);
+  const [instagramPostsData, setInstagramPostsData] = useState<any[]>([]);
+  const [faqsData, setFaqsData] = useState<any[]>([]);
+  const [advantagesWithIcons, setAdvantagesWithIcons] = useState<any[]>([]);
+  const [heroBanners, setHeroBanners] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Charger les données au chargement du composant
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Récupération des données
+        const newArrivalsData = await getNewArrivals(8);
+        const collectionsRawData = await getActiveCollections(6);
+        // S'assurer que toutes les collections ont une URL d'image valide
+        const filteredCollections = collectionsRawData.filter(collection => !!collection.imageUrl);
+        const popularProductsData = await getPopularProducts(8);
+        const instagramPosts = await getRecentInstagramPosts(6);
+        const faqs = await getFrequentFaqs(5);
+        const advantagesData = await getActiveAdvantages(5);
+        
+        // Récupération de la bannière hero depuis Firestore
+        const banners = await bannerService.getActiveBanners('hero');
+        
+        // Conversion des produits au format d'affichage
+        const convertedNewArrivals = newArrivalsData.map(convertToProductDisplay);
+        const convertedPopularProducts = popularProductsData.map(convertToProductDisplay);
+        
+        // Préparation des avantages avec les icônes
+        const advantagesIcons = advantagesData.map(advantage => ({
+          id: advantage.id,
+          title: advantage.title,
+          description: advantage.description,
+          icon: <AdvantageIcon iconName={advantage.iconName} className="h-8 w-8 text-lilas-fonce" />
+        }));
+
+        // Mettre à jour les états
+        setNewArrivals(convertedNewArrivals);
+        setCollectionsData(filteredCollections);
+        setPopularProducts(convertedPopularProducts);
+        setInstagramPostsData(instagramPosts);
+        setFaqsData(faqs);
+        setAdvantagesWithIcons(advantagesIcons);
+        setHeroBanners(banners);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Erreur lors du chargement des données:", error);
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Afficher un indicateur de chargement si les données ne sont pas encore prêtes
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="h-32 w-32 bg-lilas-clair/30 rounded-full mb-4"></div>
+          <div className="h-6 w-48 bg-lilas-clair/30 rounded-md"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-w-[375px] min-h-screen">
       <main>
+        {/* Composant de test pour le panier */}
+        <CartTester />
+        
         {/* Hero Banner - Design moderne et immersif */}
         <Suspense fallback={<div className="h-[85vh] w-full bg-gray-200 animate-pulse"></div>}>
           {heroBanners.length > 0 && (
@@ -79,8 +137,6 @@ export default async function Home() {
             title="Nos collections"
           />
         </Suspense>
-
-
 
         {/* Produits populaires - Grille moderne avec effets au survol */}
         <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>

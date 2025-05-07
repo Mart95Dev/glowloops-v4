@@ -10,6 +10,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { getCartRecommendations } from '@/lib/services/cart-service';
 import { Product } from '@/lib/types/product';
 import { motion } from 'framer-motion';
+import { HiOutlineTrash } from 'react-icons/hi';
+import { toast } from '@/lib/utils/toast';
 
 const CartPage: React.FC = () => {
   const { 
@@ -28,6 +30,7 @@ const CartPage: React.FC = () => {
 
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   // Charger les recommandations au chargement de la page
   useEffect(() => {
@@ -49,6 +52,10 @@ const CartPage: React.FC = () => {
     syncWithFirestore();
   }, [items, shipping, discount, syncWithFirestore]);
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Gérer la finalisation de la commande
   const handleCheckout = () => {
     setIsLoading(true);
@@ -58,6 +65,23 @@ const CartPage: React.FC = () => {
       window.location.href = '/paiement';
     }, 500);
   };
+
+  // Calcul du total du panier
+  const cartTotal = items.reduce((total, item) => {
+    const itemPrice = item.price * item.quantity;
+    const garantiePrice = item.garantie ? item.garantie.price * item.quantity : 0;
+    return total + itemPrice + garantiePrice;
+  }, 0);
+  
+  // Nombre total d'articles
+  const itemCount = items.reduce((count, item) => count + item.quantity, 0);
+  
+  useEffect(() => {
+    if (isClient) {
+      console.log('Panier - Nombre d\'articles :', itemCount);
+      console.log('Panier - Total :', cartTotal.toFixed(2), '€');
+    }
+  }, [isClient, itemCount, cartTotal]);
 
   // Si le panier est vide, afficher un message
   if (items.length === 0) {
@@ -138,7 +162,7 @@ const CartPage: React.FC = () => {
           <Card className="mb-6">
             <CardHeader className="pb-2">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-lg">Articles ({items.length})</CardTitle>
+                <CardTitle className="text-lg">Articles ({itemCount})</CardTitle>
                 <button 
                   onClick={() => clearCart()}
                   className="text-sm text-gray-500 hover:text-lilas-fonce transition-colors"
@@ -206,11 +230,14 @@ const CartPage: React.FC = () => {
                         </div>
                         
                         <button
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => {
+                            removeItem(item.id);
+                            toast.success("Article retiré du panier");
+                          }}
                           className="text-xs sm:text-sm text-gray-500 hover:text-red-500 transition-colors"
                           aria-label="Supprimer"
                         >
-                          Supprimer
+                          <HiOutlineTrash size={20} />
                         </button>
                       </div>
                     </div>

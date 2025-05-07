@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { useState } from 'react';
 import { HiOutlineHeart, HiHeart, HiOutlineShoppingBag } from 'react-icons/hi';
+import { useCartStore } from '@/lib/store/cart-store';
+import { toast } from '@/lib/utils/toast';
 
 interface ModernBestSellersSectionProps {
   products: ProductDisplay[];
@@ -26,6 +28,7 @@ export default function ModernBestSellersSection({
   });
 
   const [isFavorite, setIsFavorite] = useState<Record<string, boolean>>({});
+  const { addItem } = useCartStore();
 
   const toggleFavorite = (productId: string) => {
     setIsFavorite(prev => ({
@@ -53,6 +56,27 @@ export default function ModernBestSellersSection({
         duration: 0.5,
       },
     },
+  };
+
+  // Fonction pour ajouter un produit au panier
+  const handleAddToCart = (product: ProductDisplay, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    console.log('BestSellers: Ajout au panier', product);
+    
+    addItem({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+      image: product.imageUrl,
+    });
+    
+    // Afficher une notification pour confirmer l'ajout au panier
+    toast.success("Produit ajouté au panier", {
+      description: product.name
+    });
   };
 
   return (
@@ -138,6 +162,7 @@ export default function ModernBestSellersSection({
                   <Button 
                     className="w-full rounded-full bg-lilas-fonce hover:bg-lilas-fonce/90 text-white flex items-center justify-center gap-2"
                     size="sm"
+                    onClick={(e) => handleAddToCart(product, e)}
                   >
                     <HiOutlineShoppingBag className="h-4 w-4" />
                     <span>Ajouter au panier</span>

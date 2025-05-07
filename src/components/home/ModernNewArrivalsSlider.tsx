@@ -6,8 +6,10 @@ import { ProductDisplay } from '@/lib/types/product';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
-import { HiChevronLeft, HiChevronRight, HiOutlineHeart, HiHeart } from 'react-icons/hi';
+import { HiChevronLeft, HiChevronRight, HiOutlineHeart, HiHeart, HiOutlineShoppingBag } from 'react-icons/hi';
 import { useInView } from 'react-intersection-observer';
+import { useCartStore } from '@/lib/store/cart-store';
+import { toast } from '@/lib/utils/toast';
 
 interface ModernNewArrivalsSliderProps {
   products: ProductDisplay[];
@@ -22,6 +24,7 @@ export default function ModernNewArrivalsSlider({ products, title }: ModernNewAr
     triggerOnce: true,
     threshold: 0.1,
   });
+  const { addItem } = useCartStore();
 
   const toggleFavorite = (productId: string) => {
     setIsFavorite(prev => ({
@@ -89,6 +92,27 @@ export default function ModernNewArrivalsSlider({ products, title }: ModernNewAr
         duration: 0.5,
       },
     },
+  };
+
+  // Fonction pour ajouter un produit au panier
+  const handleAddToCart = (product: ProductDisplay, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    console.log('NewArrivals: Ajout au panier', product);
+    
+    addItem({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+      image: product.imageUrl,
+    });
+    
+    // Afficher une notification pour confirmer l'ajout au panier
+    toast.success("Produit ajouté au panier", {
+      description: product.name
+    });
   };
 
   return (
@@ -173,7 +197,7 @@ export default function ModernNewArrivalsSlider({ products, title }: ModernNewAr
                   <div className="p-4 flex flex-col flex-grow">
                     <h3 className="font-medium text-sm mb-1 text-gray-800">{product.name}</h3>
                     <span className="text-xs text-gray-500">{product.category}</span>
-                    <div className="mt-auto flex justify-between items-center">
+                    <div className="mt-auto flex justify-between items-center mb-3">
                       <span className="font-bold text-lilas-fonce">{product.price.toFixed(2)} €</span>
                       {false && (
                         <span className="text-sm line-through text-gray-400">
@@ -181,6 +205,14 @@ export default function ModernNewArrivalsSlider({ products, title }: ModernNewAr
                         </span>
                       )}
                     </div>
+                    <Button 
+                      className="w-full rounded-full bg-lilas-fonce hover:bg-lilas-fonce/90 text-white flex items-center justify-center gap-2"
+                      size="sm"
+                      onClick={(e) => handleAddToCart(product, e)}
+                    >
+                      <HiOutlineShoppingBag className="h-4 w-4" />
+                      <span>Ajouter au panier</span>
+                    </Button>
                   </div>
                 </div>
               </motion.div>

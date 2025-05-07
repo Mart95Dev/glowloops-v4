@@ -126,7 +126,10 @@ export default function Navbar({ isMobileMenuOpen: propsMobileMenuOpen, onMobile
   
   const router = useRouter();
   const pathname = usePathname();
+  
+  // Récupérer le nombre d'articles directement du store
   const totalItems = useCartStore((state) => state.totalItems);
+  
   const { user } = useAuth();
   const { count: favoritesCount } = useFavoritesCount();
   
@@ -224,10 +227,31 @@ export default function Navbar({ isMobileMenuOpen: propsMobileMenuOpen, onMobile
               {/* Logo */}
               <Logo />
               
+              {/* Test Button - TEMPORAIRE */}
+              <button
+                onClick={() => {
+                  const { addItem } = useCartStore.getState();
+                  console.log('Test: Ajout au panier depuis bouton test');
+                  
+                  addItem({
+                    productId: 'test-' + Date.now(),
+                    name: 'Produit Test',
+                    price: 19.99,
+                    quantity: 1,
+                    image: '/images/placeholder.jpg',
+                  });
+                  
+                  toast.success("Produit test ajouté au panier");
+                }}
+                className="bg-green-500 text-white text-xs p-1 rounded absolute left-1/2 transform -translate-x-1/2"
+              >
+                Test+
+              </button>
+              
               {/* Actions */}
               <div className="flex items-center space-x-2">
                 {/* Menu regroupé pour les écrans < 450px */}
-                <div className="block max-[450px]:block hidden">
+                <div className="hidden max-[450px]:block">
                   <MobileActions 
                     userMenuOpen={userMenuOpen}
                     toggleUserMenu={toggleUserMenu}
