@@ -1,0 +1,56 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Règle de développement pour la cohérence du design
+
+## Objectif
+Maintenir une cohérence totale entre les nouveaux composants développés et les composants existants sauvegardés dans le dossier `old_components`.
+Imperatif : Navigation du header maintenir une cohérence avec le dossier old_components/old-new-glowloops-v2
+
+## Processus
+1. Avant de développer un nouveau composant, toujours consulter le dossier `old_components` pour rechercher si un composant similaire existe déjà.
+2. Si un composant similaire existe, l'utiliser comme référence exacte pour :
+   - Le style visuel (classes TailwindCSS, animations, couleurs)
+   - Les patterns d'interaction
+   - L'accessibilité (aria-labels, focus management)
+   - La structure des données et props
+
+3. Lors de l'importation de composants, privilégier l'utilisation des composants existants comme :
+   - `Button` de `@/components/ui/button`
+   - `AnimatedButton` de `@/components/ui/button-animated`
+   - `Card` de `@/components/ui/card`
+   - Les composants de formulaire existants
+
+4. Respecter la palette de couleurs existante définie dans les variables CSS, notamment :
+   - `--lilas-clair`
+   - `--lilas-fonce`
+   - `--menthe`
+   - `--dore`
+   - `--creme-nude`
+
+5. Maintenir les animations Framer Motion cohérentes avec les existantes
+   - Utiliser les variants définis dans `/lib/animations`
+   - Conserver les transitions et durations utilisées dans les composants existants
+
+6. Maintenir la cohérence responsive
+   - Respecter les breakpoints utilisés dans les composants existants
+   - Suivre les patterns de layout mobile-first
+
+## Éléments de design à préserver
+- La typographie avec les polices Playfair Display et Poppins
+- Les boutons arrondis (`rounded-full` ou `rounded-lg`)
+- Les ombrages doux (`shadow-sm`, `hover:shadow-md`)
+- Les animations de transition au survol
+- Le système de grille responsive
+- Les cartes produits avec leurs animations
+- La navigation et structure de header/footer
+
+## Utilisation des hooks personnalisés
+Privilégier l'utilisation des hooks personnalisés existants comme :
+- `useAuth` pour la gestion de l'authentification
+- `useCart` pour la gestion du panier
+
+
+- `useWishlist` pour la gestion des favoris

@@ -1,0 +1,191 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Règles de Développement GlowLoops V4
+
+## Principes Fondamentaux
+
+### 1. Mobile-First (PRIORITÉ ABSOLUE)
+- **TOUTE conception DOIT commencer par le mobile (375px)**
+- Adapter ensuite pour tablette (768px) puis desktop (1024px+)
+- ❌ NE JAMAIS commencer par la version desktop
+- ❌ NE JAMAIS ajouter le mobile comme une "adaptation" après coup
+
+### 2. Cohérence du Design
+- Maintenir une cohérence totale avec les composants existants dans `old_components`
+- **Impératif** : La navigation du header doit maintenir une cohérence avec les composants dans `old_components/old-new-glowloops-v2`
+
+### 3. TypeScript Strict
+- Utiliser TypeScript en mode strict
+- ❌ NE JAMAIS utiliser le type `any`
+
+## Stack Technique
+
+| Technologie | Version | Utilisation |
+|-------------|---------|-------------|
+| Next.js | 14.2.28 | Framework React avec routage App Router |
+| TypeScript | ^5 | Typage strict (sans utilisation de "any") |
+| Firebase | 11.6.1 | Base de données, authentification, stockage |
+| Firebase Admin | 13.3.0 | Accès administrateur à Firebase |
+| Zustand | 5.0.3 | Gestion d'état global |
+| Tailwind CSS | 3.4.1 | Styling CSS utilitaire |
+| Radix UI | ^1.1.x | Composants d'interface accessibles |
+| React Hook Form | 7.47.0 | Gestion des formulaires |
+| Zod | 3.24.3 | Validation des données et typage |
+| Framer Motion | 10.16.4 | Animations |
+
+## Structure du Projet
+
+```
+glowloops-v4/
+├── .env.local             # Variables d'environnement locales (non versionnées)
+├── .gitignore             # Fichiers exclus du versionnement
+├── next.config.js         # Configuration Next.js
+├── package.json           # Dépendances et scripts
+├── postcss.config.mjs     # Configuration PostCSS pour Tailwind
+├── tailwind.config.ts     # Configuration Tailwind CSS
+├── tsconfig.json          # Configuration TypeScript
+│
+└── src/                   # Code source de l'application
+    ├── app/               # Routes et pages Next.js (App Router)
+    │   ├── api/           # Routes API
+    │   ├── [routes]/      # Pages de l'application
+    │   ├── layout.tsx     # Layout principal
+    │   └── page.tsx       # Page d'accueil
+    │
+    ├── components/        # Composants React réutilisables
+    │   ├── ui/            # Composants d'interface génériques
+    │   └── [feature]/     # Composants spécifiques aux fonctionnalités
+    │
+    └── lib/               # Logique métier et utilitaires
+        ├── firebase/      # Configuration et services Firebase
+        ├── services/      # Services métier
+        ├── store/         # Stores Zustand
+        ├── types/         # Types et schémas TypeScript/Zod
+        └── utils/         # Fonctions utilitaires
+```
+
+## Charte Graphique
+
+### Palette de Couleurs
+- `--lilas-clair` : Couleur principale claire
+- `--lilas-fonce` : Couleur principale foncée
+- `--menthe` : Couleur d'accent
+- `--dore` : Couleur d'accent secondaire
+- `--creme-nude` : Couleur de fond
+
+### Typographie
+- **Polices** : Playfair Display (titres) et Poppins (corps)
+- **Échelles typographiques mobiles** :
+  - Titres h1: 1.75rem (28px)
+  - Titres h2: 1.5rem (24px)
+  - Titres h3: 1.25rem (20px)
+  - Corps: 1rem (16px)
+  - Petit texte: 0.875rem (14px)
+
+### Éléments de Design
+- Boutons arrondis (`rounded-full` ou `rounded-lg`)
+- Ombrages doux (`shadow-sm`, `hover:shadow-md`)
+- Animations de transition au survol
+- Système de grille responsive
+- Cartes produits avec animations
+
+## Règles de Développement Mobile-First
+
+### 1. Structure et Grille
+- Utiliser des unités flexibles (%, rem, vh/vw) plutôt que des pixels fixes
+- Adopter une grille de 4px pour tous les espacements
+- Définir une largeur maximale de composant à 375px pour la conception initiale
+
+### 2. Touches et Interactions
+- Zone tactile minimale: 44×44px pour tout élément interactif
+- Espacement minimal entre éléments interactifs: 8px
+- Réduire le nombre d'étapes pour compléter une action
+
+### 3. Contenu et Hiérarchie
+- Prioriser le contenu essentiel (produits, CTA, prix)
+- Simplifier les menus et la navigation
+- Utiliser des composants empilés verticalement
+- Éviter les tableaux complexes
+
+### 4. Images et Médias
+- Utiliser des ratios d'aspect fixes pour maintenir la mise en page stable
+- Optimiser les images pour le chargement mobile (format WebP)
+- Utiliser lazy loading pour toutes les images hors écran
+
+### 5. Conventions Spécifiques GlowLoops
+
+#### Navigation
+- Menu hamburger fonctionnel sur mobile
+- Barre de recherche compacte et extensible
+- Panier et favoris toujours accessibles
+
+#### Catalogue Produits
+- 2 produits par ligne maximum sur mobile
+- Filtres dans un drawer accessible via bouton
+- Trier et filtrer en popover plutôt qu'en sidebar
+
+#### Page Produit
+- Galerie en slider (pas de thumbnails visibles)
+- Options produit en accordéon si nombreuses
+- Bouton CTA sticky en bas d'écran
+
+#### Checkout
+- Une étape par écran
+- Formulaires simplifiés avec auto-suggestion
+- Résumé de commande collapse/expand
+
+## Optimisation et Bonnes Pratiques
+
+### 1. Performance
+- Minimiser l'utilisation de `'use client'`, `useEffect`, et `setState`
+- Favoriser les React Server Components (RSC) et les fonctionnalités SSR de Next.js
+- Implémenter les imports dynamiques pour le fractionnement du code
+
+### 2. Gestion d'État
+- Utiliser Zustand pour la gestion d'état global
+- Utiliser les hooks personnalisés existants :
+  - `useAuth` pour la gestion de l'authentification
+  - `useCart` pour la gestion du panier
+  - `useWishlist` pour la gestion des favoris
+
+### 3. Validation des Données
+- Utiliser Zod pour la validation des données et la définition des schémas
+- Implémenter une gestion d'erreur robuste avec retours anticipés pour les conditions d'erreur
+
+### 4. Sécurité
+- Ne jamais exposer les clés Firebase ou autres informations sensibles dans le code versionné
+- Stocker les clés API et autres secrets dans des variables d'environnement
+
+## Conventions de Nommage
+
+- **Fichiers** : PascalCase pour les composants React (ex: `ProductCard.tsx`), kebab-case pour les autres fichiers (ex: `product-service.ts`)
+- **Composants** : PascalCase (ex: `ProductCard`)
+- **Fonctions** : camelCase (ex: `getProducts`)
+- **Types/Interfaces** : PascalCase (ex: `Product`)
+- **Stores** : camelCase avec suffixe "Store" (ex: `productStore`)
+- **Dossiers** : lowercase avec tirets (ex: `components/auth-wizard`)
+
+## Validation et Assurance Qualité
+
+### Checklist Obligatoire
+Avant toute validation, chaque composant/page doit être vérifié selon :
+- Fonctionnalité complète sur écrans 320-375px
+- Utilisabilité tactile (zones de touche suffisantes)
+- Performance (temps de chargement < 3s sur 3G)
+- Accessibilité (navigable au clavier, lecteur d'écran)
+
+### Tests Requis
+- Test sur vrais appareils Android et iOS
+- Test d'orientation (portrait/paysage)
+- Test de zoom jusqu'à 200%
+
+## RAPPEL FINAL
+
+La qualité de l'expérience mobile est notre priorité absolue. Tout design qui ne respecte pas l'approche mobile-first sera automatiquement rejeté.
+
+Cette règle s'applique à tous les membres de l'équipe sans exception, des designers aux développeurs en passant par les product managers.
+

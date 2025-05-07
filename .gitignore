@@ -38,9 +38,7 @@ yarn-error.log*
 next-env.d.ts
 
 # Firebase credentials
-**/firebase-adminsdk*.json
-**/serviceAccountKey*.json
-**/*-firebase-adminsdk-*.json
+/src/lib/firebase/firebase-adminsdk.json
 
 # Secrets and API keys
 **/*.key
