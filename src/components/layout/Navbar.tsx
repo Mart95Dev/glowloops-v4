@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, RefObject } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/firebase/auth';
 import { useCartStore } from '@/lib/store/cart-store';
@@ -9,6 +9,8 @@ import { toast } from '@/lib/utils/toast';
 import { authService } from '@/lib/firebase/auth-service';
 import { navigationData } from '../../lib/data/navigation-data';
 import SearchBar from '@/components/layout/SearchBar';
+import { MoreVertical } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Import des micro-composants
 import {
@@ -24,6 +26,93 @@ interface NavbarProps {
   isMobileMenuOpen?: boolean;
   onMobileMenuToggle: (isOpen: boolean) => void;
 }
+
+// Nouveau composant pour les actions mobiles regroupées
+interface MobileActionsProps {
+  userMenuOpen: boolean;
+  toggleUserMenu: () => void;
+  userMenuRef: RefObject<HTMLDivElement>;
+  user: { displayName?: string | null; email?: string | null } | null;
+  handleLogout: () => Promise<void>;
+  favoritesCount: number;
+  totalItems: number;
+}
+
+const MobileActions = ({ 
+  userMenuOpen, 
+  toggleUserMenu, 
+  userMenuRef, 
+  user, 
+  handleLogout, 
+  favoritesCount, 
+  totalItems 
+}: MobileActionsProps) => {
+  const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
+  const actionsMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+        setActionsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <div className="relative" ref={actionsMenuRef}>
+      <button 
+        onClick={() => setActionsMenuOpen(!actionsMenuOpen)} 
+        className="text-lilas-fonce hover:text-lilas-clair transition-colors p-2 rounded-full hover:bg-lilas-clair/20 min-h-[44px] min-w-[44px] flex items-center justify-center border border-lilas-clair"
+        aria-label="Actions du compte"
+        aria-expanded={actionsMenuOpen}
+      >
+        <MoreVertical size={24} />
+      </button>
+      
+      <AnimatePresence>
+        {actionsMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="absolute right-0 mt-2 w-auto bg-white rounded-lg shadow-lg overflow-hidden z-50 border border-gray-200 py-3 px-2"
+          >
+            <div className="flex flex-col gap-4">
+              {/* Compte */}
+              <div className="flex items-center justify-start">
+                <UserMenu 
+                  isOpen={userMenuOpen}
+                  toggleMenu={toggleUserMenu}
+                  menuRef={userMenuRef}
+                  user={user}
+                  onLogout={handleLogout}
+                />
+                <span className="ml-2">Compte</span>
+              </div>
+              
+              {/* Favoris */}
+              <div className="flex items-center justify-start">
+                <FavoritesButton count={favoritesCount} />
+                <span className="ml-2">Favoris</span>
+              </div>
+              
+              {/* Panier */}
+              <div className="flex items-center justify-start">
+                <CartButtonClassic itemCount={totalItems} />
+                <span className="ml-2">Panier</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 export default function Navbar({ isMobileMenuOpen: propsMobileMenuOpen, onMobileMenuToggle }: NavbarProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -137,20 +226,36 @@ export default function Navbar({ isMobileMenuOpen: propsMobileMenuOpen, onMobile
               
               {/* Actions */}
               <div className="flex items-center space-x-2">
-                {/* Compte */}
-                <UserMenu 
-                  isOpen={userMenuOpen}
-                  toggleMenu={toggleUserMenu}
-                  menuRef={userMenuRef}
-                  user={user}
-                  onLogout={handleLogout}
-                />
+                {/* Menu regroupé pour les écrans < 450px */}
+                <div className="block max-[450px]:block hidden">
+                  <MobileActions 
+                    userMenuOpen={userMenuOpen}
+                    toggleUserMenu={toggleUserMenu}
+                    userMenuRef={userMenuRef}
+                    user={user}
+                    handleLogout={handleLogout}
+                    favoritesCount={favoritesCount}
+                    totalItems={totalItems}
+                  />
+                </div>
 
-                {/* Favoris */}
-                <FavoritesButton count={favoritesCount} />
+                {/* Actions individuelles pour les écrans >= 450px */}
+                <div className="hidden min-[450px]:flex items-center space-x-2">
+                  {/* Compte */}
+                  <UserMenu 
+                    isOpen={userMenuOpen}
+                    toggleMenu={toggleUserMenu}
+                    menuRef={userMenuRef}
+                    user={user}
+                    onLogout={handleLogout}
+                  />
 
-                {/* Panier - Version classique */}
-                <CartButtonClassic itemCount={totalItems} />
+                  {/* Favoris */}
+                  <FavoritesButton count={favoritesCount} />
+
+                  {/* Panier - Version classique */}
+                  <CartButtonClassic itemCount={totalItems} />
+                </div>
 
                 {/* Bouton menu mobile - affiché jusqu'à 1047px */}
                 <MenuButton 
