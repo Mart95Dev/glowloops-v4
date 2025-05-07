@@ -7,7 +7,7 @@ import { ProductImage } from '@/lib/types/product-image';
 import ProductGallery from './ProductGallery';
 import ProductInfo from './ProductInfo';
 import ProductTabs from './ProductTabs';
-// import CompleteSetSection from './CompleteSetSection';
+import CompleteSetSection from './CompleteSetSection';
 import HowToWearSection from './HowToWearSection';
 import CustomerReviewsSection from './CustomerReviewsSection';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
@@ -411,9 +411,9 @@ export default function ProductPageContent({ productId }: ProductPageContentProp
         </section>
 
         {/* Section "Ensemble complet recommandé" */}
-        {/* <section className="mb-12">
+        <section className="mb-12">
           <CompleteSetSection productId={product.id} />
-        </section> */}
+        </section>
 
         {/* Section "Comment les porter" */}
         <section className="mb-12">
