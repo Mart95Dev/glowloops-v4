@@ -4,6 +4,11 @@ import { Header, Footer } from "@/components/layout";
 import CartDrawer from "@/components/layout/CartDrawer";
 import "./globals.css";
 
+// Désactiver le client-side JavaScript pour les composants qui ne sont pas explicitement marqués comme client
+export const dynamic = 'force-static';
+// Forcer le rendu statique pour éviter les problèmes de promesse
+export const dynamicParams = false;
+
 const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair-display",

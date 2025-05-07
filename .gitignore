@@ -38,9 +38,7 @@ yarn-error.log*
 next-env.d.ts
 
 # Firebase credentials
-**/firebase-adminsdk*.json
-**/serviceAccountKey*.json
-**/*-firebase-adminsdk-*.json
+/src/lib/firebase/firebase-adminsdk.json
 
 # Secrets and API keys
 **/*.key
@@ -50,8 +48,10 @@ next-env.d.ts
 **/*secret*
 **/*credential*
 
-# old components
 /old_components
+/old_components/*
+/old_glowloops
+/old_glowloops/*
 .vercel
 
 

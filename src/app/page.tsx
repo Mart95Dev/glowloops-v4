@@ -1,3 +1,7 @@
+// Forcer le rendu statique pour éviter les problèmes de promesse
+export const dynamic = 'force-static';
+export const dynamicParams = false;
+
 import { Suspense } from 'react';
 import { getNewArrivals, getPopularProducts } from '@/lib/services/product-service';
 import { getActiveCollections } from '@/lib/services/collection-service';

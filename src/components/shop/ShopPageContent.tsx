@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { getFilteredProducts, FilterOptions } from '@/lib/services/shop-service';
 import { ProductDisplay } from '@/lib/types/product';
 import ShopFilters from './ShopFilters';
@@ -65,7 +64,7 @@ export default function ShopPageContent() {
     };
 
     loadProducts();
-  }, [filters.style, filters.vibe, filters.material, filters.priceRange, filters.sortBy, filters.isNew]);
+  }, [filters]);
 
   // Mise à jour de l'URL avec les filtres
   useEffect(() => {
@@ -154,11 +153,11 @@ export default function ShopPageContent() {
   };
 
   return (
-    <div className="min-w-[375px] py-8 px-4 bg-white">
+    <div className="min-w-[375px] py-20 px-4 bg-white">
       <div className="container mx-auto">
         <ShopHeader 
           title="Boutique GlowLoops" 
-          subtitle="Découvrez notre collection de boucles d'oreilles artisanales"
+          subtitle="Découvrez notre collection de boucles d'oreilles fashion"
           viewMode={viewMode}
           setViewMode={setViewMode}
           toggleFilters={toggleFilters}
