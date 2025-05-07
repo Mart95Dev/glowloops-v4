@@ -24,6 +24,13 @@ import {
   ModernNewsletterForm
 } from '@/components/home/modern-index';
 import { CartTester } from '@/components/test/CartTester';
+import { ProductDisplay } from '@/lib/types/product';
+// Import des interfaces pour les types
+import type { Collection } from '@/lib/services/collection-service';
+import type { InstagramPost } from '@/lib/services/instagram-service';
+import type { FaqItem } from '@/lib/services/faq-service';
+import type { Advantage } from '@/lib/services/advantages-service';
+import type { Banner } from '@/lib/services/firestore-service';
 // import Hero from '@/components/home/Hero';
 // import Reviews from '@/components/home/Reviews';
 // import {
@@ -35,13 +42,13 @@ import { CartTester } from '@/components/test/CartTester';
 
 export default function Home() {
   // État pour stocker les données
-  const [newArrivals, setNewArrivals] = useState<any[]>([]);
-  const [collectionsData, setCollectionsData] = useState<any[]>([]);
-  const [popularProducts, setPopularProducts] = useState<any[]>([]);
-  const [instagramPostsData, setInstagramPostsData] = useState<any[]>([]);
-  const [faqsData, setFaqsData] = useState<any[]>([]);
-  const [advantagesWithIcons, setAdvantagesWithIcons] = useState<any[]>([]);
-  const [heroBanners, setHeroBanners] = useState<any[]>([]);
+  const [newArrivals, setNewArrivals] = useState<ProductDisplay[]>([]);
+  const [collectionsData, setCollectionsData] = useState<Collection[]>([]);
+  const [popularProducts, setPopularProducts] = useState<ProductDisplay[]>([]);
+  const [instagramPostsData, setInstagramPostsData] = useState<InstagramPost[]>([]);
+  const [faqsData, setFaqsData] = useState<FaqItem[]>([]);
+  const [advantagesWithIcons, setAdvantagesWithIcons] = useState<Array<Advantage & { icon: JSX.Element }>>([]);
+  const [heroBanners, setHeroBanners] = useState<Banner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Charger les données au chargement du composant
@@ -70,6 +77,9 @@ export default function Home() {
           id: advantage.id,
           title: advantage.title,
           description: advantage.description,
+          iconName: advantage.iconName,
+          order: advantage.order,
+          isActive: advantage.isActive,
           icon: <AdvantageIcon iconName={advantage.iconName} className="h-8 w-8 text-lilas-fonce" />
         }));
 
