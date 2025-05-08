@@ -75,14 +75,14 @@ export const UserMenu = ({ isOpen, toggleMenu, menuRef, user, onLogout }: UserMe
             ) : (
               <div className="py-1">
                 <Link 
-                  href="/connexion" 
+                  href="/auth/login" 
                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   onClick={toggleMenu}
                 >
                   Connexion
                 </Link>
                 <Link 
-                  href="/inscription" 
+                  href="/auth/register" 
                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   onClick={toggleMenu}
                 >
