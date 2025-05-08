@@ -48,7 +48,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   const handleLogout = async () => {
     try {
       await authService.signOut();
-      
+      setShowUserMenu(false);
       onClose();
       
       toast.success("Vous êtes déconnecté", {
@@ -261,7 +261,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                             </button>
                           ) : (
                             <button
-                              onClick={() => navigateTo('/connexion')}
+                              onClick={() => navigateTo('/auth/login')}
                               className="flex items-center w-full px-6 py-4 text-left text-lg text-white hover:bg-white/5 transition-colors"
                             >
                               <User size={20} className="mr-2" />
