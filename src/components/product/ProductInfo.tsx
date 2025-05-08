@@ -14,8 +14,8 @@ interface ProductInfoProps {
   product: Product;
   quantity: number;
   onQuantityChange: (quantity: number) => void;
-  hasWarrantyExtension?: boolean;
-  onToggleWarrantyExtension?: () => void;
+  hasGlowCare?: boolean;
+  onToggleGlowCare?: () => void;
   onAddToCart: () => void;
   stockCount: number;
 }
@@ -24,13 +24,38 @@ export default function ProductInfo({
   product,
   quantity,
   onQuantityChange,
+  hasGlowCare: propHasGlowCare,
+  onToggleGlowCare,
   onAddToCart,
   stockCount
 }: ProductInfoProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedShipping, setSelectedShipping] = useState('');
+  const [localHasGlowCare, setLocalHasGlowCare] = useState(false);
   const [hasExtraInsurance, setHasExtraInsurance] = useState(false);
   const [hasPremiumPackaging, setHasPremiumPackaging] = useState(false);
+
+  // Utiliser soit la prop externe, soit l'état local
+  const hasGlowCare = propHasGlowCare !== undefined ? propHasGlowCare : localHasGlowCare;
+
+  // Utiliser le handler externe s'il existe, sinon utiliser le handler local
+  const handleGlowCareChange = (checked: boolean) => {
+    if (onToggleGlowCare) {
+      onToggleGlowCare();
+    } else {
+      setLocalHasGlowCare(checked);
+    }
+  };
+
+  // Gestionnaire pour la sélection/désélection de la livraison garantie
+  const handleShippingChange = (value: string) => {
+    // Si l'option est déjà sélectionnée, on la désélectionne
+    if (selectedShipping === value) {
+      setSelectedShipping('');
+    } else {
+      setSelectedShipping(value);
+    }
+  };
 
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
@@ -49,18 +74,20 @@ export default function ProductInfo({
   const shippingPrices: Record<string, number> = {
     standard: 0,
     express: 0,
-    garantie: 2.00 + 2.90 // Garantie + prix standard
+    garantie: 2.00 // Prix de la livraison garantie uniquement
   };
+  const glowCarePrice = 2.00; // Prix de la protection GlowCare
   const extraInsurancePrice = 1.90;
   const premiumPackagingPrice = 2.90;
   
   // Prix total
   const basePrice = finalPrice * quantity;
   const shippingPrice = shippingPrices[selectedShipping] || shippingPrices.standard;
+  const glowCarePriceTotal = hasGlowCare ? glowCarePrice : 0;
   const insurancePrice = hasExtraInsurance ? extraInsurancePrice : 0;
   const packagingPrice = hasPremiumPackaging ? premiumPackagingPrice : 0;
   
-  const totalPrice = basePrice + shippingPrice + insurancePrice + packagingPrice;
+  const totalPrice = basePrice + shippingPrice + glowCarePriceTotal + insurancePrice + packagingPrice;
 
   // Formater le prix en euros
   const formatPrice = (price: number) => {
@@ -207,47 +234,52 @@ export default function ProductInfo({
 
       <Separator className="my-6" />
 
-      {/* Extension de garantie */}
-      <div className="mb-6 p-4 bg-lilas-clair/10 rounded-lg border border-lilas-clair shadow-md">
-        <div className="flex items-start justify-between mb-3">
-          <div>
-            <h3 className="font-medium text-gray-800 flex items-center">
-              <span className="mr-2">Protection GlowCare</span>
-              <Badge variant="success">
-                Recommandé
-              </Badge>
-            </h3>
-            <p className="text-sm text-gray-600 mt-1">Profitez d&apos;une tranquillité d&apos;esprit totale</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-lilas-fonce">+{formatPrice(2.00)}</span>
-            <Switch
-              checked={selectedShipping === 'garantie'}
-              onCheckedChange={(checked) => setSelectedShipping(checked ? 'garantie' : 'standard')}
-              className="data-[state=checked]:bg-green-600"
-            />
-          </div>
-        </div>
+      {/* Extension de garantie - section améliorée et indépendante */}
+      <div className="mb-6 p-4 bg-gradient-to-r from-lilas-clair/20 to-lilas-fonce/10 rounded-lg border border-lilas-clair shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-24 h-24 bg-lilas-clair/20 rounded-full -mr-12 -mt-12 z-0"></div>
+        <div className="absolute bottom-0 left-0 w-16 h-16 bg-menthe/10 rounded-full -ml-8 -mb-8 z-0"></div>
         
-        <div className="text-xs text-gray-600 space-y-2">
-          <p className="font-medium">Avec la protection GlowCare, vous bénéficiez de :</p>
-          <div className="flex items-start gap-2">
-            <svg className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            <span>Protection étendue à 6 mois (au lieu de 2)</span>
+        <div className="relative z-10">
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <h3 className="font-semibold text-lg text-gray-800 flex items-center">
+                <span className="mr-2">Protection GlowCare</span>
+                <Badge variant="success" className="animate-pulse">
+                  Recommandé
+                </Badge>
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">Profitez d&apos;une tranquillité d&apos;esprit totale</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-lilas-fonce">+{formatPrice(glowCarePrice)}</span>
+              <Switch
+                checked={hasGlowCare}
+                onCheckedChange={handleGlowCareChange}
+                className="data-[state=checked]:bg-green-600"
+              />
+            </div>
           </div>
-          <div className="flex items-start gap-2">
-            <svg className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            <span>Remplacement gratuit en cas de casse accidentelle</span>
-          </div>
-          <div className="flex items-start gap-2">
-            <svg className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            <span>Protection contre la décoloration et la perte d&apos;éléments</span>
+          
+          <div className="text-xs text-gray-600 space-y-2">
+            <p className="font-medium">Avec la protection GlowCare, vous bénéficiez de :</p>
+            <div className="flex items-start gap-2">
+              <svg className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Protection étendue à 6 mois (au lieu de 2)</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <svg className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Remplacement gratuit en cas de casse accidentelle</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <svg className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Protection contre la décoloration et la perte d&apos;éléments</span>
+            </div>
           </div>
         </div>
       </div>
@@ -270,32 +302,16 @@ export default function ProductInfo({
       <div className="mb-6">
         <h3 className="font-medium text-base md:text-lg text-gray-800 mb-4">Options de livraison et services</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {/* <div className="flex items-start gap-2">
-            <input 
-              type="radio" 
-              className="mt-1 accent-lilas-fonce appearance-none w-4 h-4 border border-lilas-fonce checked:bg-lilas-fonce checked:border-lilas-fonce focus:outline-none" 
-              name="livraison" 
-              id="livraison-standard" 
-              checked={selectedShipping === 'standard'}
-              onChange={() => setSelectedShipping('standard')}
-            />
-            <label htmlFor="livraison-standard" className="w-full">
-              <div className="font-medium">Livraison standard</div>
-              <div className="text-gray-600 text-sm flex items-center">
-                <Badge className="mr-2 whitespace-nowrap" variant="secondary">Gratuite</Badge>
-                <span>Recevez sous 2-4 jours</span>
-              </div>
-            </label>
-          </div> */}
+          
           
           <div className="flex items-start gap-2">
             <input 
-              type="radio" 
+              type="checkbox" 
               className="mt-1 accent-lilas-fonce appearance-none w-4 h-4 border border-lilas-fonce checked:bg-lilas-fonce checked:border-lilas-fonce focus:outline-none" 
               name="livraison" 
               id="livraison-garantie" 
               checked={selectedShipping === 'garantie'}
-              onChange={() => setSelectedShipping('garantie')}
+              onChange={() => handleShippingChange('garantie')}
             />
             <label htmlFor="livraison-garantie" className="w-full">
               <div className="font-medium flex items-center">

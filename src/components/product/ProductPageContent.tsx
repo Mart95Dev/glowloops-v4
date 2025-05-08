@@ -28,7 +28,7 @@ export default function ProductPageContent({ productId }: ProductPageContentProp
   const [images, setImages] = useState<ProductImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
-  const [hasWarrantyExtension, setHasWarrantyExtension] = useState(false);
+  const [hasGlowCare, setHasGlowCare] = useState(false);
   const [stockCount, setStockCount] = useState(0);
   const { addItem } = useCartStore();
   
@@ -128,8 +128,8 @@ export default function ProductPageContent({ productId }: ProductPageContentProp
     setQuantity(newQuantity);
   };
 
-  const toggleWarrantyExtension = () => {
-    setHasWarrantyExtension(!hasWarrantyExtension);
+  const toggleGlowCare = () => {
+    setHasGlowCare(!hasGlowCare);
   };
 
   const handleAddToCart = () => {
@@ -145,10 +145,10 @@ export default function ProductPageContent({ productId }: ProductPageContentProp
       quantity: quantity,
       image: product.media?.mainImageUrl || '',
       // Ajouter les options si sélectionnées
-      garantie: hasWarrantyExtension ? {
-        id: 'warranty-extension',
-        name: 'Extension de garantie',
-        price: 9.99, // Prix fixe pour l'extension de garantie
+      garantie: hasGlowCare ? {
+        id: 'glow-care',
+        name: 'Protection GlowCare',
+        price: 2.00, // Prix fixe pour la protection GlowCare
       } : undefined
     };
     
@@ -274,8 +274,8 @@ export default function ProductPageContent({ productId }: ProductPageContentProp
               product={product}
               quantity={quantity}
               onQuantityChange={handleQuantityChange}
-              hasWarrantyExtension={hasWarrantyExtension}
-              onToggleWarrantyExtension={toggleWarrantyExtension}
+              hasGlowCare={hasGlowCare}
+              onToggleGlowCare={toggleGlowCare}
               onAddToCart={handleAddToCart}
               stockCount={stockCount}
             />
