@@ -72,7 +72,20 @@ export const authService = {
   async loginWithGoogle(): Promise<User> {
     try {
       const provider = new GoogleAuthProvider();
+      // Ajouter des paramètres pour améliorer l'expérience d'authentification Google
+      provider.setCustomParameters({
+        prompt: 'select_account', // Forcer la sélection du compte
+      });
+      
+      console.log("Tentative de connexion avec Google...");
       const userCredential = await signInWithPopup(auth, provider);
+      console.log("Connexion Google réussie pour l'utilisateur:", userCredential.user.email);
+      
+      // Forcer un rafraîchissement du token pour s'assurer de la persistance
+      if (userCredential.user) {
+        await userCredential.user.getIdToken(true);
+      }
+      
       return userCredential.user;
     } catch (error) {
       console.error('Erreur lors de la connexion avec Google:', error);

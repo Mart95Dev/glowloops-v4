@@ -330,10 +330,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                         </div>
                         <nav className="py-2">
                           {[
-                            { icon: <User size={20} />, label: 'Mon profil', href: '/compte/profil' },
-                            { icon: <ShoppingBag size={20} />, label: 'Mes commandes', href: '/compte/commandes' },
-                            { icon: <Heart size={20} />, label: 'Mes favoris', href: '/compte/favoris' },
-                            { icon: <Settings size={20} />, label: 'Paramètres', href: '/compte/parametres' },
+                            { icon: <User size={20} />, label: 'Tableau de bord', href: '/mon-compte' },
+                            { icon: <ShoppingBag size={20} />, label: 'Mes commandes', href: '/mon-compte/commandes' },
+                            { icon: <Heart size={20} />, label: 'Mes favoris', href: '/mon-compte/favoris' },
+                            { icon: <Settings size={20} />, label: 'Notifications', href: '/mon-compte/notifications' },
                           ].map((item, index) => (
                             <motion.div 
                               key={item.href}

@@ -48,21 +48,28 @@ export const UserMenu = ({ isOpen, toggleMenu, menuRef, user, onLogout }: UserMe
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     onClick={toggleMenu}
                   >
-                    Mon compte
+                    Tableau de bord
                   </Link>
                   <Link 
-                    href="/mes-commandes" 
+                    href="/mon-compte/commandes" 
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     onClick={toggleMenu}
                   >
                     Mes commandes
                   </Link>
                   <Link 
-                    href="/favoris" 
+                    href="/mon-compte/favoris" 
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     onClick={toggleMenu}
                   >
                     Mes favoris
+                  </Link>
+                  <Link 
+                    href="/mon-compte/notifications" 
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={toggleMenu}
+                  >
+                    Notifications
                   </Link>
                   <button
                     onClick={onLogout}

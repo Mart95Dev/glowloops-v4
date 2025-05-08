@@ -1,6 +1,6 @@
 // Hook d'authentification Firebase
 import { useState, useEffect } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { auth } from './firebase-config';
 
 // Interface pour le résultat du hook useAuth
@@ -22,20 +22,48 @@ export function useAuth(): AuthState {
   });
 
   useEffect(() => {
+    // Définir la persistance sur LOCAL pour garder l'utilisateur connecté
+    // même après fermeture du navigateur
+    setPersistence(auth, browserLocalPersistence)
+      .then(() => {
+        console.log("Persistance d'authentification définie sur LOCAL");
+      })
+      .catch((error) => {
+        console.error("Erreur lors de la définition de la persistance:", error);
+      });
+    
+    console.log("Initialisation de l'écouteur d'authentification Firebase");
+    
     // Souscrire aux changements d'état d'authentification
     const unsubscribe = onAuthStateChanged(
       auth,
       (user) => {
+        console.log("État d'authentification changé:", user ? "Utilisateur connecté" : "Non connecté");
+        if (user) {
+          console.log("Informations utilisateur:", {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            providerId: user.providerData[0]?.providerId || 'inconnu'
+          });
+        }
         setState({ user, loading: false, error: null });
       },
       (error) => {
-        console.error('Erreur d\'authentification:', error);
+        console.error("Erreur d'authentification:", error);
         setState({ user: null, loading: false, error });
       }
     );
 
+    // Vérifier l'utilisateur courant immédiatement
+    const currentUser = auth.currentUser;
+    console.log("Utilisateur courant lors de l'initialisation:", currentUser ? "Présent" : "Absent");
+
     // Nettoyer l'abonnement lors du démontage du composant
-    return () => unsubscribe();
+    return () => {
+      console.log("Nettoyage de l'écouteur d'authentification");
+      unsubscribe();
+    };
   }, []);
 
   return state;
