@@ -53,7 +53,7 @@ type OrderFront = {
   items: {
     id: string;
     productName: string;
-    imageUrl?: string;
+    imageUrl: string;
     quantity: number;
   }[];
 };
@@ -208,7 +208,7 @@ export function useUserData() {
               items: order.items?.map(item => ({
                 id: item.productId,
                 productName: item.productName,
-                imageUrl: item.imageUrl,
+                imageUrl: item.imageUrl ?? '',
                 quantity: item.quantity
               })) ?? []
             };
@@ -216,12 +216,7 @@ export function useUserData() {
           setRecentOrders(mappedOrders);
           
           // Initialiser les statistiques utilisateur
-          setUserStats({
-            orderCount: recentOrders.length,
-            favoriteCount: 0, // Sera mis à jour après la récupération des favoris
-            unreadNotificationCount: 2, // Valeur fictive pour l'instant
-            totalSpent: recentOrders.reduce((total, order) => total + order.totalAmount, 0)
-          });
+          generateOrderNotifications(mappedOrders);
           
           // Récupérer les produits favoris via le service
           try {
@@ -229,21 +224,17 @@ export function useUserData() {
             setFavorites(userFavorites);
             
             // Mettre à jour les stats avec le nombre réel de favoris
-            setUserStats(prev => {
-              if (!prev) return null;
-              return {
-                ...prev,
-                favoriteCount: userFavorites.length
-              };
+            setUserStats({
+              orderCount: mappedOrders.length,
+              favoriteCount: userFavorites.length,
+              unreadNotificationCount: notifications.filter(n => !n.isRead).length,
+              totalSpent: mappedOrders.reduce((total, order) => total + order.totalAmount, 0)
             });
           } catch (error) {
             console.error("❌ Erreur lors de la récupération des favoris:", error);
             // Génération de données fictives en cas d'erreur, pour le développement
             generateFakeFavorites();
           }
-          
-          // Pour les notifications, on utilise toujours des données fictives pour le moment
-          generateFakeNotifications();
         } else {
           throw new Error("Format de données utilisateur invalide");
         }
@@ -281,30 +272,61 @@ export function useUserData() {
       console.log("❤️ Favoris simulés:", fakeFavorites);
     }
     
-    function generateFakeNotifications() {
-      // Notifications simulées
-      const now = new Date();
-      const fakeNotifications: NotificationItemProps[] = [
-        {
-          id: "notif1",
-          type: "order",
-          title: "Commande expédiée",
-          message: "Votre commande GL-2025-00001 a été expédiée. Livraison prévue dans 2-3 jours.",
-          date: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 jours avant
-          isRead: false
-        },
-        {
-          id: "notif2",
-          type: "promo",
-          title: "Offre exclusive",
-          message: "Profitez de -20% sur votre prochaine commande avec le code SUMMER.",
-          date: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000), // 4 jours avant
-          isRead: true
+    function generateOrderNotifications(orders: OrderFront[]) {
+      const notifications: NotificationItemProps[] = [];
+      orders.forEach(order => {
+        if (order.status === 'pending') {
+          notifications.push({
+            id: `notif-pending-${order.id}`,
+            type: 'order',
+            title: 'Commande en attente',
+            message: `Votre commande ${order.orderNumber} est en attente de traitement.`,
+            date: order.date,
+            isRead: false
+          });
         }
-      ];
-      
-      setNotifications(fakeNotifications);
-      console.log("🔔 Notifications simulées:", fakeNotifications);
+        if (order.status === 'processing') {
+          notifications.push({
+            id: `notif-processing-${order.id}`,
+            type: 'order',
+            title: 'Commande en préparation',
+            message: `Votre commande ${order.orderNumber} est en cours de préparation.`,
+            date: order.date,
+            isRead: false
+          });
+        }
+        if (order.status === 'shipped') {
+          notifications.push({
+            id: `notif-shipped-${order.id}`,
+            type: 'order',
+            title: 'Commande expédiée',
+            message: `Votre commande ${order.orderNumber} a été expédiée.`,
+            date: order.date,
+            isRead: false
+          });
+        }
+        if (order.status === 'delivered') {
+          notifications.push({
+            id: `notif-delivered-${order.id}`,
+            type: 'order',
+            title: 'Commande livrée',
+            message: `Votre commande ${order.orderNumber} a été livrée.`,
+            date: order.date,
+            isRead: false
+          });
+        }
+        if (order.status === 'cancelled') {
+          notifications.push({
+            id: `notif-cancelled-${order.id}`,
+            type: 'order',
+            title: 'Commande annulée',
+            message: `Votre commande ${order.orderNumber} a été annulée.`,
+            date: order.date,
+            isRead: false
+          });
+        }
+      });
+      setNotifications(notifications);
     }
     
     fetchUserDataAndOrders();

@@ -80,7 +80,7 @@ export default function ProfilePage() {
             <ShoppingBag className="w-4 h-4" />
             <span className="text-sm font-medium">Commandes</span>
           </div>
-          <div className="text-2xl font-medium">{userStats?.orderCount || 0}</div>
+          <div className="text-2xl font-medium">{recentOrders.length}</div>
         </div>
         
         <div className="bg-purple-100 p-3 rounded-lg">
@@ -236,11 +236,18 @@ export default function ProfilePage() {
             <div>
               <h4 className="text-sm font-medium text-gray-500 mb-1">Membre depuis</h4>
               <p className="font-medium">
-                {userData?.createdAt.toLocaleDateString('fr-FR', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
+                {userData?.createdAt &&
+                  (
+                    userData.createdAt instanceof Date
+                      ? userData.createdAt
+                      : 'toDate' in userData.createdAt
+                        ? userData.createdAt.toDate()
+                        : new Date(userData.createdAt)
+                  ).toLocaleDateString('fr-FR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
               </p>
             </div>
           </div>
