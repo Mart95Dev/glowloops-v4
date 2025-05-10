@@ -37,22 +37,57 @@ const LoginForm = () => {
   });
   
   // Gérer la soumission du formulaire
-  const handleFormSubmit = (data: LoginFormValues) => {
+  const handleFormSubmit = async (data: LoginFormValues) => {
     setIsSubmitting(true);
     
-    authService.loginWithEmailPassword(data.email, data.password)
-      .then(() => {
-        toast.success('Connexion réussie !');
+    try {
+      console.log("📝 Tentative de connexion avec:", data.email);
+      const user = await authService.loginWithEmailPassword(data.email, data.password);
+      
+      console.log("✅ Connexion réussie pour:", user.email);
+      toast.success('Connexion réussie !');
+      
+      // Attendre un court instant pour que les données d'authentification soient enregistrées
+      setTimeout(() => {
+        // Vérifier explicitement que la session est bien enregistrée
+        if (typeof window !== 'undefined') {
+          // Vérifier si le localStorage contient les informations Firebase
+          const firebaseAuthKey = Object.keys(localStorage).find(key => 
+            key.startsWith('firebase:authUser:')
+          );
+          
+          if (firebaseAuthKey) {
+            console.log("✅ Clé Firebase trouvée dans localStorage, navigation vers:", redirectTo);
+          } else {
+            console.warn("⚠️ Aucune clé Firebase trouvée dans localStorage, vérification de notre système personnalisé");
+            
+            // Sauvegarder manuellement les données dans notre système local
+            const customDataKey = 'glowloops_auth_persistent';
+            const customAuthData = localStorage.getItem(customDataKey);
+            
+            if (!customAuthData) {
+              console.warn("⚠️ Aucune donnée dans notre système personnalisé, sauvegarde manuelle");
+              localStorage.setItem(customDataKey, JSON.stringify({
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+                photoURL: user.photoURL,
+                lastAuthenticated: Date.now(),
+                expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 jours
+              }));
+            }
+          }
+        }
+        
         router.push(redirectTo);
-      })
-      .catch((error) => {
-        const errorCode = extractFirebaseErrorCode(error);
-        const errorMessage = getAuthErrorMessage(errorCode);
-        toast.error(errorMessage);
-      })
-      .finally(() => {
-        setIsSubmitting(false);
-      });
+      }, 500);
+    } catch (error) {
+      console.error("❌ Erreur lors de la connexion:", error);
+      const errorCode = extractFirebaseErrorCode(error);
+      const errorMessage = getAuthErrorMessage(errorCode);
+      toast.error(errorMessage);
+      setIsSubmitting(false);
+    }
   };
   
   // Vérifier manuellement la validation du formulaire
@@ -65,114 +100,107 @@ const LoginForm = () => {
   };
   
   return (
-    <div className="space-y-6">
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-        {/* Email */}
-        <div className="space-y-2">
-          <label 
-            htmlFor="email" 
-            className="block text-sm font-medium text-gray-700"
-          >
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            placeholder="votre@email.com"
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lilas-clair focus:border-transparent transition-all ${
-              errors.email ? 'border-red-500' : 'border-gray-300'
-            }`}
-            {...register('email', { 
-              required: 'Email requis',
-              validate: validateEmail
-            })}
-            disabled={isSubmitting}
-          />
-          {errors.email && (
-            <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
-          )}
-        </div>
-        
-        {/* Mot de passe */}
-        <div className="space-y-2">
-          <label 
-            htmlFor="password" 
-            className="block text-sm font-medium text-gray-700"
-          >
-            Mot de passe
-          </label>
-          <div className="relative">
-            <input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="••••••••"
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lilas-clair focus:border-transparent transition-all ${
-                errors.password ? 'border-red-500' : 'border-gray-300'
-              }`}
-              {...register('password', {
-                required: 'Mot de passe requis',
-                validate: validatePassword
-              })}
-              disabled={isSubmitting}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-            >
-              {showPassword ? (
-                <EyeOffIcon size={20} />
-              ) : (
-                <EyeIcon size={20} />
-              )}
-            </button>
-          </div>
-          {errors.password && (
-            <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
-          )}
-        </div>
-        
-        {/* Remember me & Mot de passe oublié */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <input
-              id="rememberMe"
-              type="checkbox"
-              className="h-4 w-4 text-lilas-fonce focus:ring-lilas-clair border-gray-300 rounded"
-              {...register('rememberMe')}
-              disabled={isSubmitting}
-            />
-            <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
-              Se souvenir de moi
-            </label>
-          </div>
-          <div className="text-sm">
-            <Link
-              href="/auth/forgot-password"
-              className="text-lilas-fonce hover:text-lilas-clair transition-colors"
-            >
-              Mot de passe oublié?
-            </Link>
-          </div>
-        </div>
-        
-        {/* Bouton de connexion */}
-        <button
-          type="submit"
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      {/* Champ email */}
+      <div>
+        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+          Adresse email
+        </label>
+        <input
+          id="email"
+          type="email"
+          autoComplete="email"
           disabled={isSubmitting}
-          className="w-full bg-lilas-fonce hover:bg-lilas-clair text-white font-medium py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lilas-clair disabled:opacity-70 flex items-center justify-center"
+          {...register('email', { required: 'Email requis', validate: validateEmail })}
+          className="block w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 focus:ring-lilas-clair focus:border-lilas-clair"
+        />
+        {errors.email && (
+          <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+        )}
+      </div>
+      
+      {/* Champ mot de passe */}
+      <div>
+        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+          Mot de passe
+        </label>
+        <div className="relative">
+          <input
+            id="password"
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="current-password"
+            disabled={isSubmitting}
+            {...register('password', { required: 'Mot de passe requis', validate: validatePassword })}
+            className="block w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 focus:ring-lilas-clair focus:border-lilas-clair"
+          />
+          <button
+            type="button"
+            className="absolute inset-y-0 right-0 flex items-center px-4 text-gray-600"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? (
+              <EyeOffIcon className="h-5 w-5" />
+            ) : (
+              <EyeIcon className="h-5 w-5" />
+            )}
+          </button>
+        </div>
+        {errors.password && (
+          <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+        )}
+      </div>
+      
+      {/* Mémoriser la session */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <input
+            id="rememberMe"
+            type="checkbox"
+            {...register('rememberMe')}
+            className="h-4 w-4 text-lilas-fonce rounded border-gray-300 focus:ring-lilas-clair"
+          />
+          <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
+            Se souvenir de moi
+          </label>
+        </div>
+        
+        <Link
+          href="/auth/forgot-password"
+          className="text-sm text-lilas-fonce hover:text-lilas-clair transition-colors"
         >
-          {isSubmitting ? (
-            <>
-              <Loader2 size={20} className="animate-spin mr-2" />
-              Connexion...
-            </>
-          ) : (
-            'Se connecter'
-          )}
-        </button>
-      </form>
-    </div>
+          Mot de passe oublié ?
+        </Link>
+      </div>
+      
+      {/* Bouton de connexion */}
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full flex justify-center items-center py-3 px-4 rounded-full bg-lilas-fonce text-white hover:bg-lilas-clair font-medium transition-colors disabled:opacity-70"
+      >
+        {isSubmitting ? (
+          <>
+            <Loader2 size={20} className="animate-spin mr-2" />
+            Connexion en cours...
+          </>
+        ) : (
+          'Se connecter'
+        )}
+      </button>
+      
+      {/* Lien d'inscription */}
+      <div className="text-center mt-4">
+        <p className="text-sm text-gray-600">
+          Pas encore de compte ?{' '}
+          <Link
+            href="/auth/register"
+            className="text-lilas-fonce hover:text-lilas-clair transition-colors font-medium"
+          >
+            S&apos;inscrire
+          </Link>
+        </p>
+      </div>
+    </form>
   );
 };
 

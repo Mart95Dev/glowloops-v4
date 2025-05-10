@@ -1,35 +1,64 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/firebase/auth';
+import { isAuthenticated, getAuthenticatedUser, AuthSession } from '@/lib/firebase/auth-session';
+import { User } from 'firebase/auth';
+
+// Type pour les données utilisateur récupérées du localStorage
+interface StoredUserData {
+  uid: string;
+  email?: string | null;
+  displayName?: string | null;
+  photoURL?: string | null;
+}
+
+// Type pour l'utilisateur forcé (quand auth.currentUser est null mais on a une session)
+interface ForcedUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  isForced: boolean;
+}
 
 /**
- * Hook pour protéger les routes côté client
+ * Hook pour gérer l'authentification requise pour accéder à une page
  * Redirige vers la page de connexion si l'utilisateur n'est pas authentifié
- * @param redirectTo URL vers laquelle rediriger après connexion
  */
-export function useRequireAuth(redirectTo?: string) {
-  const { user, loading } = useAuth();
+export function useRequireAuth(redirectPath = '/mon-compte') {
+  const { user, loading, error } = useAuth();
+  const [isForceAuth, setIsForceAuth] = useState(false);
   const router = useRouter();
-  const [authChecked, setAuthChecked] = useState(false);
-
+  
+  console.log("🔐 useRequireAuth - Initialisation avec user:", user, "loading:", loading, "error:", error);
+  
+  // Vérifier le mode force auth pour le développement
   useEffect(() => {
-    // Ne rien faire tant que le chargement est en cours
-    if (loading) return;
-    
-    // Ajouter un court délai pour permettre à Firebase de récupérer l'état d'authentification persistant
-    const authCheckTimeout = setTimeout(() => {
-      // Si l'utilisateur n'est pas connecté après le délai, rediriger vers la page de connexion
-      if (!user) {
-        const loginPath = '/auth/login';
-        // Si un redirectTo est fourni, l'ajouter en paramètre d'URL
-        const redirectPath = redirectTo ? `${loginPath}?redirectTo=${encodeURIComponent(redirectTo)}` : loginPath;
-        router.push(redirectPath);
-      }
-      setAuthChecked(true);
-    }, 500); // Délai de 500ms pour laisser le temps à Firebase
-    
-    return () => clearTimeout(authCheckTimeout);
-  }, [user, loading, router, redirectTo]);
+    if (typeof window !== 'undefined') {
+      const forceAuth = sessionStorage.getItem('force_auth_bypass');
+      const hasForceAuth = forceAuth === 'true';
+      console.log("🔐 useRequireAuth - Vérification force_auth_bypass:", hasForceAuth);
+      setIsForceAuth(hasForceAuth);
+    }
+  }, []);
+  
+  // Effet de vérification d'authentification
+  useEffect(() => {
+    // Ne rien faire pendant le chargement ou si on est en mode force auth
+    if (loading) {
+      console.log("⏳ useRequireAuth - Chargement en cours, attente...");
+      return;
+    }
 
-  return { user, loading: loading || !authChecked };
+    // Si le chargement est terminé et qu'il n'y a pas d'utilisateur ou qu'il y a une erreur, rediriger
+    if (!loading && !user && !isForceAuth) {
+      console.log("⚠️ useRequireAuth - Utilisateur non authentifié, redirection vers /auth/login");
+      const redirectTo = encodeURIComponent(redirectPath);
+      router.push(`/auth/login?redirectTo=${redirectTo}`);
+    } else {
+      console.log("✅ useRequireAuth - Utilisateur authentifié:", user);
+    }
+  }, [user, loading, router, redirectPath, isForceAuth]);
+
+  return { user, loading, error, isForceAuth };
 } 

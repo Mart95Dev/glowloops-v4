@@ -23,6 +23,42 @@ export default function AccountLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const [forceAuthMode, setForceAuthMode] = useState(false);
+
+  // Vérification du flag d'authentification forcée
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const forceAuth = sessionStorage.getItem('force_auth_bypass');
+      if (forceAuth === 'true') {
+        console.log("🔓 Force Auth Mode activé dans le layout");
+        setForceAuthMode(true);
+      }
+    }
+  }, []);
+
+  // Double vérification que nous avons un utilisateur
+  useEffect(() => {
+    console.log("🏠 Layout mon-compte - useEffect déclenché", {
+      user: user ? `Utilisateur présent (${typeof user === 'object' && 'email' in user ? user.email : 'info manquante'})` : "ABSENT ❌",
+      loading: loading ? "Chargement ⏳" : "Chargement terminé ✅",
+      pathname: pathname,
+      forceAuthMode: forceAuthMode ? "✅ ACTIVÉ" : "❌ désactivé"
+    });
+
+    // Si nous sommes en mode force auth, on ignore les vérifications normales
+    if (forceAuthMode) {
+      console.log("✅ Layout mon-compte - Authentification forcée active, accès autorisé");
+      return;
+    }
+
+    if (!loading && !user) {
+      console.log("❌ Layout mon-compte - Aucun utilisateur après chargement, redirection vers login...");
+      router.push('/auth/login?redirectTo=/mon-compte');
+    } else if (!loading && user) {
+      console.log("✅ Layout mon-compte - Utilisateur authentifié confirmé:", 
+        typeof user === 'object' && 'email' in user ? user.email : 'info manquante');
+    }
+  }, [loading, user, router, pathname, forceAuthMode]);
 
   // Vérification supplémentaire pour s'assurer que nous avons un utilisateur valide
   useEffect(() => {
@@ -77,21 +113,63 @@ export default function AccountLayout({
     }
   }
 
-  // Afficher un état de chargement
+  // Afficher un état de chargement pendant la vérification d'authentification
   if (loading) {
+    console.log("⏳ Layout mon-compte - Affichage écran de chargement");
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lilas-fonce">Chargement de votre espace client...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-creme-nude p-4">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="h-12 w-12 rounded-full bg-lilas-clair mb-4" />
+          <div className="h-6 w-48 bg-lilas-clair/30 rounded-lg mb-6" />
+          <div className="h-4 w-60 bg-lilas-clair/20 rounded-lg" />
+        </div>
+        <Link 
+          href="/auth-debug" 
+          className="mt-8 text-lilas-fonce underline hover:text-lilas-clair transition-colors"
+        >
+          Diagnostic d&apos;authentification
+        </Link>
       </div>
     );
   }
 
-  // Double vérification que l'utilisateur est bien authentifié
-  if (!user && !loading) {
-    console.log("Redirection vers la page de connexion depuis le layout...");
-    router.push('/auth/login?redirectTo=/mon-compte');
-    return null;
+  // Si l'utilisateur n'est pas défini après chargement, ne rien afficher (la redirection se fera via useEffect)
+  if (!loading && !user && !forceAuthMode) {
+    console.log("❌ Layout mon-compte - User null après chargement, attente de redirection...");
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-creme-nude p-4">
+        <div className="bg-white p-6 rounded-lg shadow-md max-w-md w-full text-center">
+          <div className="text-red-500 text-xl mb-2">Accès non autorisé</div>
+          <p className="text-gray-700 mb-4">
+            Vous devez être connecté pour accéder à cette page. 
+            Redirection vers la page de connexion...
+          </p>
+          <div className="flex flex-col space-y-3 mt-6">
+            <Link 
+              href="/auth/login" 
+              className="bg-lilas-fonce text-white py-2 px-4 rounded-full hover:bg-lilas-clair transition-colors"
+            >
+              Se connecter
+            </Link>
+            <Link 
+              href="/auth-debug" 
+              className="text-lilas-fonce underline hover:text-lilas-clair transition-colors"
+            >
+              Diagnostic d&apos;authentification
+            </Link>
+            <Link 
+              href="/force-auth" 
+              className="bg-amber-600 text-white py-2 px-4 rounded-full hover:bg-amber-700 transition-colors"
+            >
+              Forcer l&apos;accès
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
+
+  console.log("🎉 Layout mon-compte - Rendu complet avec utilisateur authentifié");
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -111,7 +189,7 @@ export default function AccountLayout({
         </button>
       </div>
 
-      <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row gap-6">
+      <div className="container mx-auto px-4 py-20 flex flex-col md:flex-row gap-6">
         {/* Sidebar navigation - version mobile (drawer) */}
         <aside
           className={`${

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Playfair_Display, Poppins } from "next/font/google";
 import { Header, Footer } from "@/components/layout";
 import "./globals.css";
+import { Toaster } from '@/components/ui/toast-utils';
+import AuthInitializer from './_app';
 
 // Désactiver le client-side JavaScript pour les composants qui ne sont pas explicitement marqués comme client
 export const dynamic = 'force-static';
@@ -10,20 +12,21 @@ export const dynamicParams = false;
 
 const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
-  variable: "--font-playfair-display",
+  variable: "--font-playfair",
+  weight: ["400", "500", "600", "700", "900"],
   display: "swap",
 });
 
 const poppins = Poppins({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
   variable: "--font-poppins",
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "GlowLoops - Bijoux Fantaisie Tendance",
-  description: "Découvrez notre collection de bijoux fantaisie tendance et accessoires pour sublimer votre style au quotidien.",
+  title: "GlowLoops | Bijoux en résine époxy faits main",
+  description: "Boutique artisanale de bijoux en résine époxy personnalisés, faits à la main avec des matériaux de qualité.",
 };
 
 export default function RootLayout({
@@ -32,14 +35,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr-FR" suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning>
       <head />
       <body
         className={`${playfairDisplay.variable} ${poppins.variable} antialiased`}
       >
+        <AuthInitializer />
         <Header />
         <main className="pt-32 pb-16 min-h-screen">{children}</main>
         <Footer />
+        <Toaster />
       </body>
     </html>
   );

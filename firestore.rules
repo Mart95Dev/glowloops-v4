@@ -1,4 +1,5 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
     // Fonction pour vérifier si l'utilisateur est administrateur
@@ -78,5 +79,19 @@ service cloud.firestore {
       allow read: if true; // Tout le monde peut lire les bundles
       allow write: if isAdmin(); // Seuls les administrateurs peuvent modifier
     }
+    
+    // Règles de développement - À NE PAS utiliser en production!
+    
+    // Règle globale pour le mode développement
+    match /{document=**} {
+      // Autoriser la lecture de toutes les collections pendant le développement
+      allow read: if true;
+      
+      // Autoriser l'écriture uniquement pour les utilisateurs authentifiés
+      allow write: if request.auth != null;
+    }
+    
+    // En production, ces règles devraient être remplacées par des règles plus restrictives
+    // comme celles présentes dans old_components/brazelts/firestore.rules
   }
 }

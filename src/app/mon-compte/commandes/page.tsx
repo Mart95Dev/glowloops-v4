@@ -5,10 +5,14 @@ import { useUserData } from '@/lib/hooks/use-user-data';
 import { OrderSummary } from '@/components/account/order-summary';
 import { ShoppingBag, Search, Filter } from 'lucide-react';
 
+// Type d'onglet actif
+type TabType = 'en-cours' | 'historique';
+
 export default function OrdersPage() {
   const { loading, error, recentOrders } = useUserData();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<TabType>('en-cours');
   
   // Afficher un état de chargement
   if (loading) {
@@ -41,8 +45,46 @@ export default function OrdersPage() {
     );
   }
 
-  // Filtrer les commandes
-  const filteredOrders = recentOrders.filter((order) => {
+  // Séparation des commandes entre "En cours" et "Historique"
+  const currentOrders = recentOrders.filter(order => 
+    order.status === 'pending' || order.status === 'processing' || order.status === 'shipped'
+  );
+  
+  const historyOrders = recentOrders.filter(order => 
+    order.status === 'delivered' || order.status === 'cancelled'
+  );
+
+  console.log("🔍 Toutes les commandes:", recentOrders.map(o => ({id: o.id, status: o.status, orderNumber: o.orderNumber})));
+  console.log("🔍 Commandes en cours:", currentOrders.map(o => ({id: o.id, status: o.status, orderNumber: o.orderNumber})));
+  console.log("🔍 Historique commandes:", historyOrders.map(o => ({id: o.id, status: o.status, orderNumber: o.orderNumber})));
+
+  // Vérification explicite des statuts des commandes
+  console.log("🧪 DIAGNOSTIC - Répartition des commandes par statut:");
+  const statusCounts = {
+    pending: recentOrders.filter(o => o.status === 'pending').length,
+    processing: recentOrders.filter(o => o.status === 'processing').length,
+    shipped: recentOrders.filter(o => o.status === 'shipped').length,
+    delivered: recentOrders.filter(o => o.status === 'delivered').length,
+    cancelled: recentOrders.filter(o => o.status === 'cancelled').length,
+    total: recentOrders.length
+  };
+  console.log("📊 Répartition:", statusCounts);
+
+  // Test temporaire : forcer l'affichage d'une commande dans l'historique
+  // Regardez dans la console si cette commande apparaît pour diagnostiquer le problème
+  if (recentOrders.length > 0 && historyOrders.length === 0) {
+    // Test avec première commande (temporairement forcée en "delivered")
+    const testOrder = {...recentOrders[0], status: 'delivered'};
+    console.log("🧪 TEST - Commande forcée en 'delivered':", testOrder);
+    console.log("🧪 TEST - Cette commande serait-elle dans l'historique:", 
+      testOrder.status === 'delivered' || testOrder.status === 'cancelled');
+  }
+
+  // Filtrer les commandes en fonction de l'onglet actif et des filtres
+  const ordersToDisplay = activeTab === 'en-cours' ? currentOrders : historyOrders;
+  
+  // Appliquer les filtres de recherche et de statut
+  const filteredOrders = ordersToDisplay.filter((order) => {
     const matchesSearch = searchQuery 
       ? order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase())
       : true;
@@ -59,6 +101,30 @@ export default function OrdersPage() {
       <h1 className="text-xl md:text-2xl font-playfair text-lilas-fonce mb-6">
         Mes commandes
       </h1>
+      
+      {/* Onglets de commandes */}
+      <div className="flex border-b border-gray-200 mb-6">
+        <button
+          className={`py-2 px-4 font-medium text-sm border-b-2 ${
+            activeTab === 'en-cours'
+              ? 'border-lilas-fonce text-lilas-fonce'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          }`}
+          onClick={() => setActiveTab('en-cours')}
+        >
+          Commandes en cours ({currentOrders.length})
+        </button>
+        <button
+          className={`py-2 px-4 font-medium text-sm border-b-2 ${
+            activeTab === 'historique'
+              ? 'border-lilas-fonce text-lilas-fonce'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          }`}
+          onClick={() => setActiveTab('historique')}
+        >
+          Historique ({historyOrders.length})
+        </button>
+      </div>
       
       {/* Filtres et recherche */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -85,11 +151,18 @@ export default function OrdersPage() {
             onChange={(e) => setStatusFilter(e.target.value)}
           >
             <option value="all">Tous les statuts</option>
-            <option value="pending">En attente</option>
-            <option value="processing">En préparation</option>
-            <option value="shipped">Expédiée</option>
-            <option value="delivered">Livrée</option>
-            <option value="cancelled">Annulée</option>
+            {activeTab === 'en-cours' ? (
+              <>
+                <option value="pending">En attente</option>
+                <option value="processing">En préparation</option>
+                <option value="shipped">Expédiée</option>
+              </>
+            ) : (
+              <>
+                <option value="delivered">Livrée</option>
+                <option value="cancelled">Annulée</option>
+              </>
+            )}
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
             <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -129,16 +202,32 @@ export default function OrdersPage() {
             </>
           ) : (
             <>
-              <h3 className="text-gray-700 font-medium mb-1">Pas encore de commande</h3>
+              <h3 className="text-gray-700 font-medium mb-1">
+                {activeTab === 'en-cours' 
+                  ? "Pas de commandes en cours" 
+                  : "Pas d'historique de commandes"}
+              </h3>
               <p className="text-gray-500 text-sm mb-4">
-                Vous n&apos;avez pas encore passé de commande
+                {activeTab === 'en-cours'
+                  ? "Vous n'avez pas de commandes en cours actuellement"
+                  : "Votre historique de commandes est vide"}
               </p>
-              <a
-                href="/shop"
-                className="bg-lilas-fonce text-white px-4 py-2 rounded-lg hover:bg-lilas-clair transition-colors"
-              >
-                Explorer la boutique
-              </a>
+              {activeTab === 'historique' && historyOrders.length === 0 && currentOrders.length > 0 && (
+                <button
+                  onClick={() => setActiveTab('en-cours')}
+                  className="bg-lilas-fonce text-white px-4 py-2 rounded-lg hover:bg-lilas-clair transition-colors"
+                >
+                  Voir mes commandes en cours
+                </button>
+              )}
+              {currentOrders.length === 0 && historyOrders.length === 0 && (
+                <a
+                  href="/shop"
+                  className="bg-lilas-fonce text-white px-4 py-2 rounded-lg hover:bg-lilas-clair transition-colors"
+                >
+                  Explorer la boutique
+                </a>
+              )}
             </>
           )}
         </div>
