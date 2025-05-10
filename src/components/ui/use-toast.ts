@@ -1,3 +1,5 @@
+'use client';
+
 // Adapté de https://ui.shadcn.com/docs/components/toast
 import * as React from "react";
 

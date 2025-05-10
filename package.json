@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "init-data": "node src/scripts/init-data.js",
-    "generate-data": "node src/scripts/generate-firestore-data.js"
+    "generate-data": "node src/scripts/generate-firestore-data.js",
+    "deploy:rules:dev": "firebase deploy --only firestore:rules"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",

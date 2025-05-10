@@ -1,6 +1,13 @@
 /old_components
 /old_components/*
 
+/test-cart
+/test-cart/*
+/testOrders
+/testOrders/*
+/test-panier
+/test-panier/*
+
 .windsurf
 .windsurf/*
 

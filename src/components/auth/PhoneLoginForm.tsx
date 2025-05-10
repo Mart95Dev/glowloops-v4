@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { authService } from '@/lib/firebase/auth-service';
+import { userService } from '@/lib/services/user-service';
 import { extractFirebaseErrorCode, getAuthErrorMessage } from '@/lib/utils/auth-error-utils';
 import { toast } from '@/lib/utils/toast';
 import { ChevronLeft, Loader2, Phone, ArrowRight } from 'lucide-react';
@@ -113,7 +114,21 @@ const PhoneLoginForm = () => {
     
     try {
       // Vérifier le code et se connecter
-      await authService.verifyPhoneCode(confirmation, data.verificationCode);
+      const user = await authService.verifyPhoneCode(confirmation, data.verificationCode);
+      
+      // Créer un document utilisateur dans Firestore si c'est une première connexion
+      try {
+        await userService.createUserDocument(user, {
+          // Le numéro de téléphone est normalement déjà dans user.phoneNumber
+          // mais on le stocke aussi explicitement
+          firstName: '',
+          lastName: ''
+        });
+        console.log("✅ Document utilisateur créé après connexion par téléphone");
+      } catch (error) {
+        console.error("❌ Erreur lors de la création du document utilisateur:", error);
+        // On continue même en cas d'erreur pour ne pas bloquer la connexion
+      }
       
       toast.success('Connexion réussie !');
       router.push(redirectTo);

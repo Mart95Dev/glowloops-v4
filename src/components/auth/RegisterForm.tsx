@@ -1,21 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { z } from 'zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { authService } from '@/lib/firebase/auth-service';
+import { userService } from '@/lib/services/user-service';
 import { extractFirebaseErrorCode, getAuthErrorMessage } from '@/lib/utils/auth-error-utils';
 import { toast } from '@/lib/utils/toast';
-import { EyeIcon, EyeOffIcon, Loader2 } from 'lucide-react';
+import { EyeIcon, EyeOffIcon, Loader2, CheckCircle, XCircle } from 'lucide-react';
 
 // Schéma de validation du formulaire
 const registerSchema = z.object({
-  fullName: z.string().min(2, 'Le nom complet doit contenir au moins 2 caractères'),
+  firstName: z.string().min(2, 'Le prénom doit contenir au moins 2 caractères'),
+  lastName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
   email: z.string().email('Adresse email invalide'),
-  password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
+  phoneNumber: z.string().optional(),
+  password: z.string()
+    .min(6, 'Le mot de passe doit contenir au moins 6 caractères')
+    .refine(value => /[A-Z]/.test(value), {
+      message: 'Le mot de passe doit contenir au moins une lettre majuscule'
+    })
+    .refine(value => /[0-9]/.test(value), {
+      message: 'Le mot de passe doit contenir au moins un chiffre'
+    }),
   confirmPassword: z.string().min(6, 'Veuillez confirmer votre mot de passe'),
   acceptTerms: z.boolean().refine(val => val === true, {
     message: 'Vous devez accepter les conditions générales',
@@ -27,52 +36,144 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
+// Interface pour les critères de mot de passe
+interface PasswordCriteria {
+  id: string;
+  label: string;
+  validator: (password: string) => boolean;
+  isValid: boolean;
+}
+
 const RegisterForm = () => {
   const router = useRouter();
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState(0);
+  
+  // Critères de mot de passe
+  const [passwordCriteria, setPasswordCriteria] = useState<PasswordCriteria[]>([
+    {
+      id: 'length',
+      label: 'Au moins 6 caractères',
+      validator: (password) => password.length >= 6,
+      isValid: false
+    },
+    {
+      id: 'uppercase',
+      label: 'Au moins une lettre majuscule',
+      validator: (password) => /[A-Z]/.test(password),
+      isValid: false
+    },
+    {
+      id: 'number',
+      label: 'Au moins un chiffre',
+      validator: (password) => /[0-9]/.test(password),
+      isValid: false
+    },
+    {
+      id: 'match',
+      label: 'Les mots de passe correspondent',
+      validator: () => false, // Sera mis à jour dans l'effet
+      isValid: false
+    }
+  ]);
   
   // Configuration du formulaire avec React Hook Form
   const {
     register,
     handleSubmit,
     formState: { errors },
+    control,
+    watch
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      fullName: '',
+      firstName: '',
+      lastName: '',
       email: '',
+      phoneNumber: '',
       password: '',
       confirmPassword: '',
       acceptTerms: false,
     },
+    mode: 'onChange'
   });
+  
+  // Observer les changements de mot de passe
+  const password = watch('password');
+  const confirmPassword = watch('confirmPassword');
+  
+  // Mettre à jour les critères de mot de passe et la force
+  useEffect(() => {
+    if (password) {
+      // Mettre à jour les critères
+      const updatedCriteria = passwordCriteria.map(criterion => {
+        if (criterion.id === 'match') {
+          return {
+            ...criterion,
+            isValid: password === confirmPassword && password !== '',
+            validator: () => password === confirmPassword && password !== ''
+          };
+        }
+        return {
+          ...criterion,
+          isValid: criterion.validator(password)
+        };
+      });
+      
+      setPasswordCriteria(updatedCriteria);
+      
+      // Calculer la force du mot de passe (0-100)
+      let strength = 0;
+      
+      // Critère de longueur (0-40 points)
+      if (password.length >= 6) strength += 20;
+      if (password.length >= 8) strength += 10;
+      if (password.length >= 10) strength += 10;
+      
+      // Critère de complexité (0-60 points)
+      if (/[A-Z]/.test(password)) strength += 20; // Majuscule
+      if (/[0-9]/.test(password)) strength += 20; // Chiffre
+      if (/[^A-Za-z0-9]/.test(password)) strength += 20; // Caractère spécial
+      
+      setPasswordStrength(strength);
+    } else {
+      // Réinitialiser si le mot de passe est vide
+      setPasswordCriteria(passwordCriteria.map(criterion => ({
+        ...criterion,
+        isValid: false
+      })));
+      setPasswordStrength(0);
+    }
+  }, [password, confirmPassword]);
+  
+  // Fonction pour obtenir la couleur de la barre de force
+  const getStrengthColor = (strength: number): string => {
+    if (strength < 40) return 'bg-red-500';
+    if (strength < 70) return 'bg-yellow-500';
+    return 'bg-green-500';
+  };
   
   // Gérer la soumission du formulaire
   const onSubmit = async (data: RegisterFormValues) => {
     setIsSubmitting(true);
     
     try {
-      await authService.registerWithEmailPassword(data.email, data.password, data.fullName);
-      toast.success('Inscription réussie !');
-      router.push('/');
-    } catch (error) {
-      const errorCode = extractFirebaseErrorCode(error);
-      const errorMessage = getAuthErrorMessage(errorCode);
-      toast.error(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
-  // Gérer l'inscription avec Google
-  const handleGoogleRegister = async () => {
-    setIsSubmitting(true);
-    
-    try {
-      await authService.loginWithGoogle();
+      // On construit le displayName à partir du prénom et du nom
+      const displayName = `${data.firstName} ${data.lastName}`;
+      
+      // Inscription avec Firebase Auth
+      const firebaseUser = await authService.registerWithEmailPassword(data.email, data.password, displayName);
+      
+      // Créer un document utilisateur dans Firestore
+      await userService.createUserDocument(firebaseUser, {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phoneNumber: data.phoneNumber || null
+      });
+      
       toast.success('Inscription réussie !');
       router.push('/');
     } catch (error) {
@@ -85,219 +186,252 @@ const RegisterForm = () => {
   };
   
   return (
-    <div className="space-y-6">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Nom complet */}
-        <div className="space-y-2">
-          <label 
-            htmlFor="fullName" 
-            className="block text-sm font-medium text-gray-700"
-          >
-            Nom complet
-          </label>
-          <input
-            id="fullName"
-            type="text"
-            placeholder="John Doe"
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lilas-clair focus:border-transparent transition-all ${
-              errors.fullName ? 'border-red-500' : 'border-gray-300'
-            }`}
-            {...register('fullName')}
-            disabled={isSubmitting}
-          />
-          {errors.fullName && (
-            <p className="text-red-500 text-xs mt-1">{errors.fullName.message}</p>
-          )}
-        </div>
-        
-        {/* Email */}
-        <div className="space-y-2">
-          <label 
-            htmlFor="email" 
-            className="block text-sm font-medium text-gray-700"
-          >
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            placeholder="votre@email.com"
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lilas-clair focus:border-transparent transition-all ${
-              errors.email ? 'border-red-500' : 'border-gray-300'
-            }`}
-            {...register('email')}
-            disabled={isSubmitting}
-          />
-          {errors.email && (
-            <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
-          )}
-        </div>
-        
-        {/* Mot de passe */}
-        <div className="space-y-2">
-          <label 
-            htmlFor="password" 
-            className="block text-sm font-medium text-gray-700"
-          >
-            Mot de passe
-          </label>
-          <div className="relative">
-            <input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="••••••••"
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lilas-clair focus:border-transparent transition-all ${
-                errors.password ? 'border-red-500' : 'border-gray-300'
-              }`}
-              {...register('password')}
-              disabled={isSubmitting}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-            >
-              {showPassword ? (
-                <EyeOffIcon size={20} />
-              ) : (
-                <EyeIcon size={20} />
-              )}
-            </button>
-          </div>
-          {errors.password && (
-            <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
-          )}
-        </div>
-        
-        {/* Confirmer mot de passe */}
-        <div className="space-y-2">
-          <label 
-            htmlFor="confirmPassword" 
-            className="block text-sm font-medium text-gray-700"
-          >
-            Confirmer le mot de passe
-          </label>
-          <div className="relative">
-            <input
-              id="confirmPassword"
-              type={showConfirmPassword ? 'text' : 'password'}
-              placeholder="••••••••"
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lilas-clair focus:border-transparent transition-all ${
-                errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-              }`}
-              {...register('confirmPassword')}
-              disabled={isSubmitting}
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-            >
-              {showConfirmPassword ? (
-                <EyeOffIcon size={20} />
-              ) : (
-                <EyeIcon size={20} />
-              )}
-            </button>
-          </div>
-          {errors.confirmPassword && (
-            <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>
-          )}
-        </div>
-        
-        {/* Accepter les conditions */}
-        <div className="flex items-start">
-          <div className="flex items-center h-5">
-            <input
-              id="acceptTerms"
-              type="checkbox"
-              className="h-4 w-4 text-lilas-fonce focus:ring-lilas-clair border-gray-300 rounded"
-              {...register('acceptTerms')}
-              disabled={isSubmitting}
-            />
-          </div>
-          <div className="ml-3 text-sm">
-            <label htmlFor="acceptTerms" className="text-gray-700">
-              J&apos;accepte les{' '}
-              <Link
-                href="/conditions-generales"
-                className="text-lilas-fonce hover:text-lilas-clair transition-colors"
-              >
-                conditions générales
-              </Link>
-              {' '}de vente
-            </label>
-            {errors.acceptTerms && (
-              <p className="text-red-500 text-xs mt-1">{errors.acceptTerms.message}</p>
-            )}
-          </div>
-        </div>
-        
-        {/* Bouton d'inscription */}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-lilas-fonce hover:bg-lilas-clair text-white font-medium py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lilas-clair disabled:opacity-70 flex items-center justify-center"
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      {/* Prénom */}
+      <div className="space-y-2">
+        <label 
+          htmlFor="firstName" 
+          className="block text-sm font-medium text-gray-700"
         >
-          {isSubmitting ? (
-            <>
-              <Loader2 size={20} className="animate-spin mr-2" />
-              Inscription...
-            </>
-          ) : (
-            'S&apos;inscrire'
-          )}
-        </button>
-      </form>
-      
-      {/* Séparateur */}
-      <div className="flex items-center my-4">
-        <div className="flex-grow border-t border-gray-300"></div>
-        <span className="mx-4 text-sm text-gray-500">ou</span>
-        <div className="flex-grow border-t border-gray-300"></div>
+          Prénom
+        </label>
+        <input
+          id="firstName"
+          type="text"
+          placeholder="Jean"
+          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lilas-clair focus:border-transparent transition-all ${
+            errors.firstName ? 'border-red-500' : 'border-gray-300'
+          }`}
+          {...register('firstName')}
+          disabled={isSubmitting}
+        />
+        {errors.firstName && (
+          <p className="text-red-500 text-xs mt-1">{errors.firstName.message}</p>
+        )}
       </div>
       
-      {/* Inscription avec Google */}
-      <button
-        type="button"
-        onClick={handleGoogleRegister}
-        disabled={isSubmitting}
-        className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lilas-clair disabled:opacity-70"
-      >
-        <svg className="w-5 h-5" viewBox="0 0 24 24">
-          <path
-            fill="#4285F4"
-            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-          />
-          <path
-            fill="#34A853"
-            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-          />
-          <path
-            fill="#FBBC05"
-            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-          />
-          <path
-            fill="#EA4335"
-            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-          />
-        </svg>
-        Continuer avec Google
-      </button>
+      {/* Nom */}
+      <div className="space-y-2">
+        <label 
+          htmlFor="lastName" 
+          className="block text-sm font-medium text-gray-700"
+        >
+          Nom
+        </label>
+        <input
+          id="lastName"
+          type="text"
+          placeholder="Dupont"
+          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lilas-clair focus:border-transparent transition-all ${
+            errors.lastName ? 'border-red-500' : 'border-gray-300'
+          }`}
+          {...register('lastName')}
+          disabled={isSubmitting}
+        />
+        {errors.lastName && (
+          <p className="text-red-500 text-xs mt-1">{errors.lastName.message}</p>
+        )}
+      </div>
       
-      {/* Lien de connexion */}
-      <div className="text-center mt-6">
-        <p className="text-sm text-gray-600">
-          Déjà un compte?{' '}
-          <Link
-            href="/auth/login"
-            className="text-lilas-fonce hover:text-lilas-clair transition-colors font-medium"
+      {/* Email */}
+      <div className="space-y-2">
+        <label 
+          htmlFor="email" 
+          className="block text-sm font-medium text-gray-700"
+        >
+          Email
+        </label>
+        <input
+          id="email"
+          type="email"
+          placeholder="votre@email.com"
+          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lilas-clair focus:border-transparent transition-all ${
+            errors.email ? 'border-red-500' : 'border-gray-300'
+          }`}
+          {...register('email')}
+          disabled={isSubmitting}
+        />
+        {errors.email && (
+          <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+        )}
+      </div>
+      
+      {/* Téléphone (optionnel) */}
+      <div className="space-y-2">
+        <label 
+          htmlFor="phoneNumber" 
+          className="block text-sm font-medium text-gray-700"
+        >
+          Téléphone <span className="text-gray-400 text-xs">(optionnel)</span>
+        </label>
+        <input
+          id="phoneNumber"
+          type="tel"
+          placeholder="+33 6 12 34 56 78"
+          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lilas-clair focus:border-transparent transition-all ${
+            errors.phoneNumber ? 'border-red-500' : 'border-gray-300'
+          }`}
+          {...register('phoneNumber')}
+          disabled={isSubmitting}
+        />
+        {errors.phoneNumber && (
+          <p className="text-red-500 text-xs mt-1">{errors.phoneNumber.message}</p>
+        )}
+      </div>
+      
+      {/* Mot de passe */}
+      <div className="space-y-2">
+        <label 
+          htmlFor="password" 
+          className="block text-sm font-medium text-gray-700"
+        >
+          Mot de passe
+        </label>
+        <div className="relative">
+          <input
+            id="password"
+            type={showPassword ? 'text' : 'password'}
+            placeholder="••••••••"
+            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lilas-clair focus:border-transparent transition-all ${
+              errors.password ? 'border-red-500' : password && passwordStrength >= 70 ? 'border-green-500' : 'border-gray-300'
+            }`}
+            {...register('password')}
+            disabled={isSubmitting}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
           >
-            Se connecter
-          </Link>
-        </p>
+            {showPassword ? (
+              <EyeOffIcon size={20} />
+            ) : (
+              <EyeIcon size={20} />
+            )}
+          </button>
+        </div>
+        
+        {/* Barre de force du mot de passe */}
+        {password && (
+          <div className="mt-2">
+            <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+              <div 
+                className={`h-full ${getStrengthColor(passwordStrength)} transition-all duration-300`}
+                style={{ width: `${passwordStrength}%` }}
+              ></div>
+            </div>
+            <p className={`text-xs mt-1 ${
+              passwordStrength < 40 ? 'text-red-500' : 
+              passwordStrength < 70 ? 'text-yellow-500' : 'text-green-500'
+            }`}>
+              {passwordStrength < 40 ? 'Mot de passe faible' : 
+               passwordStrength < 70 ? 'Mot de passe moyen' : 'Mot de passe fort'}
+            </p>
+          </div>
+        )}
+        
+        {/* Critères du mot de passe */}
+        <div className="mt-2 space-y-1.5">
+          {passwordCriteria.map((criterion) => (
+            <div key={criterion.id} className="flex items-center text-xs">
+              {criterion.isValid ? (
+                <CheckCircle size={14} className="text-green-500 mr-1.5" />
+              ) : (
+                <XCircle size={14} className="text-gray-300 mr-1.5" />
+              )}
+              <span className={criterion.isValid ? 'text-green-600' : 'text-gray-500'}>
+                {criterion.label}
+              </span>
+            </div>
+          ))}
+        </div>
+        
+        {errors.password && (
+          <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+        )}
       </div>
-    </div>
+      
+      {/* Confirmer mot de passe */}
+      <div className="space-y-2">
+        <label 
+          htmlFor="confirmPassword" 
+          className="block text-sm font-medium text-gray-700"
+        >
+          Confirmer le mot de passe
+        </label>
+        <div className="relative">
+          <input
+            id="confirmPassword"
+            type={showConfirmPassword ? 'text' : 'password'}
+            placeholder="••••••••"
+            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-lilas-clair focus:border-transparent transition-all ${
+              errors.confirmPassword ? 'border-red-500' : 
+              password && confirmPassword && password === confirmPassword ? 'border-green-500' : 'border-gray-300'
+            }`}
+            {...register('confirmPassword')}
+            disabled={isSubmitting}
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+          >
+            {showConfirmPassword ? (
+              <EyeOffIcon size={20} />
+            ) : (
+              <EyeIcon size={20} />
+            )}
+          </button>
+        </div>
+        {errors.confirmPassword && (
+          <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>
+        )}
+      </div>
+      
+      {/* Accepter les conditions */}
+      <div className="flex items-start">
+        <div className="flex items-center h-5">
+          <input
+            id="acceptTerms"
+            type="checkbox"
+            className="h-4 w-4 text-lilas-fonce focus:ring-lilas-clair border-gray-300 rounded"
+            {...register('acceptTerms')}
+            disabled={isSubmitting}
+          />
+        </div>
+        <div className="ml-3 text-sm">
+          <label htmlFor="acceptTerms" className="text-gray-700">
+            J&apos;accepte les{' '}
+            <a
+              href="/conditions-generales"
+              className="text-lilas-fonce hover:text-lilas-clair transition-colors"
+            >
+              conditions générales
+            </a>
+            {' '}de vente
+          </label>
+          {errors.acceptTerms && (
+            <p className="text-red-500 text-xs mt-1">{errors.acceptTerms.message}</p>
+          )}
+        </div>
+      </div>
+      
+      {/* Bouton d'inscription */}
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full bg-lilas-fonce hover:bg-lilas-clair text-white font-medium py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lilas-clair disabled:opacity-70 flex items-center justify-center"
+      >
+        {isSubmitting ? (
+          <>
+            <Loader2 size={20} className="animate-spin mr-2" />
+            Inscription...
+          </>
+        ) : (
+          'S&apos;inscrire'
+        )}
+      </button>
+    </form>
   );
 };
 
