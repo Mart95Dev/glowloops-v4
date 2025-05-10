@@ -236,7 +236,7 @@ export default function ProfilePage() {
             <div>
               <h4 className="text-sm font-medium text-gray-500 mb-1">Membre depuis</h4>
               <p className="font-medium">
-                {userData?.createdAt &&
+                {userData?.createdAt && 
                   (
                     userData.createdAt instanceof Date
                       ? userData.createdAt
@@ -247,7 +247,8 @@ export default function ProfilePage() {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
-                  })}
+                  })
+                }
               </p>
             </div>
           </div>

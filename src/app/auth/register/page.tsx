@@ -1,5 +1,6 @@
 import RegisterForm from '@/components/auth/RegisterForm';
 import AuthLayout from '@/components/auth/AuthLayout';
+import SocialRegisterOptions from '@/components/auth/SocialRegisterOptions';
 
 export const metadata = {
   title: 'Inscription | GlowLoops',
@@ -11,6 +12,7 @@ export default function RegisterPage() {
     <AuthLayout 
       title="Créer un compte" 
       subtitle="Rejoignez la communauté GlowLoops"
+      sideContent={<SocialRegisterOptions />}
     >
       <RegisterForm />
     </AuthLayout>

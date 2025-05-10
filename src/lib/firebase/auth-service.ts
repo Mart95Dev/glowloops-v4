@@ -84,9 +84,46 @@ export const authService = {
     }
   },
 
-  // Méthode simplifiée pour l'inscription avec email/mot de passe
-  async registerWithEmailPassword(email: string, password: string, displayName?: string): Promise<User> {
-    return this.register({ email, password, displayName });
+  // Inscription avec email et mot de passe
+  async registerWithEmailPassword(
+    email: string,
+    password: string,
+    displayName?: string
+  ): Promise<User> {
+    console.log("🔍 authService - Tentative d'inscription avec email:", email);
+    
+    if (!email || !password) {
+      throw new Error('Email et mot de passe requis pour l\'inscription');
+    }
+    
+    try {
+      // Configurer la persistance locale
+      await setPersistence(auth, browserLocalPersistence);
+      
+      // Créer le compte utilisateur
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log("✅ authService - Inscription réussie pour:", email);
+      
+      // Mettre à jour le profil avec le nom complet si fourni
+      if (displayName && userCredential.user) {
+        await updateProfile(userCredential.user, {
+          displayName: displayName,
+        });
+        console.log("✅ authService - Profil mis à jour avec displayName:", displayName);
+      }
+      
+      // Forcer un rafraîchissement du token
+      if (userCredential.user) {
+        await userCredential.user.getIdToken(true);
+        // Sauvegarder l'utilisateur en session
+        saveUserToSession(userCredential.user);
+      }
+      
+      return userCredential.user;
+    } catch (error) {
+      console.error('❌ authService - Erreur lors de l\'inscription:', error);
+      throw error;
+    }
   },
 
   // Connexion d'un utilisateur existant
@@ -142,6 +179,35 @@ export const authService = {
       return userCredential.user;
     } catch (error) {
       console.error('❌ authService - Erreur lors de la connexion avec Google:', error);
+      throw error;
+    }
+  },
+
+  // Inscription avec Google (similaire à la connexion mais avec un commentaire différent pour la clarté)
+  async registerWithGoogle(): Promise<User> {
+    console.log("📝 authService - Tentative d'inscription avec Google...");
+    
+    try {
+      // La logique est similaire à loginWithGoogle car Firebase gère automatiquement
+      // la création ou la récupération du compte selon que l'email existe déjà ou non
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        prompt: 'select_account', // Forcer la sélection du compte
+      });
+      
+      const userCredential = await signInWithPopup(auth, provider);
+      console.log("✅ authService - Inscription Google réussie pour:", userCredential.user.email);
+      
+      // Forcer un rafraîchissement du token pour s'assurer de la persistance
+      if (userCredential.user) {
+        await userCredential.user.getIdToken(true);
+        // Sauvegarder l'utilisateur en session
+        saveUserToSession(userCredential.user);
+      }
+      
+      return userCredential.user;
+    } catch (error) {
+      console.error('❌ authService - Erreur lors de l\'inscription avec Google:', error);
       throw error;
     }
   },

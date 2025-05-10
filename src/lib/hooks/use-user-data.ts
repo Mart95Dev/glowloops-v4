@@ -174,7 +174,8 @@ export function useUserData() {
             createdAt: createdAtDate,
             updatedAt: updatedAtDate,
             shippingAddresses: userDocData.shippingAddresses || [],
-            billingAddress: userDocData.billingAddress || null
+            billingAddress: userDocData.billingAddress || null,
+            favoriteProductIds: userDocData.favoriteProductIds || []
           };
           
           console.log("🧩 Données utilisateur formatées:", userDataFormatted);
@@ -220,7 +221,9 @@ export function useUserData() {
           
           // Récupérer les produits favoris via le service
           try {
+            // Utiliser le service pour récupérer les favoris réels de l'utilisateur
             const userFavorites = await favoritesService.getUserFavorites(userDoc.id);
+            console.log("❤️ Favoris récupérés pour l'utilisateur:", userFavorites);
             setFavorites(userFavorites);
             
             // Mettre à jour les stats avec le nombre réel de favoris
@@ -232,8 +235,16 @@ export function useUserData() {
             });
           } catch (error) {
             console.error("❌ Erreur lors de la récupération des favoris:", error);
-            // Génération de données fictives en cas d'erreur, pour le développement
-            generateFakeFavorites();
+            // En cas d'erreur, initialiser une liste vide (pas de données fictives)
+            setFavorites([]);
+            
+            // Mettre à jour les stats sans favoris
+            setUserStats({
+              orderCount: mappedOrders.length,
+              favoriteCount: 0,
+              unreadNotificationCount: notifications.filter(n => !n.isRead).length,
+              totalSpent: mappedOrders.reduce((total, order) => total + order.totalAmount, 0)
+            });
           }
         } else {
           throw new Error("Format de données utilisateur invalide");
@@ -244,32 +255,6 @@ export function useUserData() {
       } finally {
         setLoading(false);
       }
-    }
-    
-    // Séparation des fonctions de génération de données fictives
-    function generateFakeFavorites() {
-      // Favoris simulés avec des URLs d'images Placeholder
-      const fakeFavorites: FavoriteProduct[] = [
-        {
-          id: "creole_torsadee_or",
-          name: "Créoles Torsadées Dorées",
-          price: 1990,
-          imageUrl: "https://placehold.co/200x200/lilas/white?text=Créoles",
-          slug: "creoles-torsadees-dorees",
-          isAvailable: true
-        },
-        {
-          id: "puces_pierre_couleur",
-          name: "Puces d'Oreilles Pierre de Couleur",
-          price: 2490,
-          imageUrl: "https://placehold.co/200x200/lilas/white?text=Puces",
-          slug: "puces-pierre-couleur",
-          isAvailable: true
-        }
-      ];
-      
-      setFavorites(fakeFavorites);
-      console.log("❤️ Favoris simulés:", fakeFavorites);
     }
     
     function generateOrderNotifications(orders: OrderFront[]) {
