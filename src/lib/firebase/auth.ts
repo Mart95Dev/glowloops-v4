@@ -122,7 +122,7 @@ export function useAuth(): AuthState {
       unsubscribe();
       clearTimeout(checkTimeout);
     };
-  }, []);
+  }, [state.loading, state.user, state.error]);
 
   console.log("📊 useAuth - État actuel:", { 
     user: state.user ? `✅ (${state.user.email})` : "❌ absent",

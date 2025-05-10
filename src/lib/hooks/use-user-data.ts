@@ -315,6 +315,7 @@ export function useUserData() {
     }
     
     fetchUserDataAndOrders();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Fonctions pour gérer les notifications et favoris
@@ -343,18 +344,22 @@ export function useUserData() {
     const isUnread = notificationToDelete && !notificationToDelete.isRead;
     
     // Supprimer la notification
-    setNotifications(prev => prev.filter(notification => notification.id !== notificationId));
-    
-    // Si la notification était non lue, mettre à jour le nombre de notifications non lues
-    if (isUnread) {
-      setUserStats(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          unreadNotificationCount: Math.max(0, prev.unreadNotificationCount - 1)
-        };
-      });
-    }
+    setNotifications(prev => {
+      const updatedNotifications = prev.filter(notification => notification.id !== notificationId);
+      
+      // Si la notification était non lue, mettre à jour le nombre de notifications non lues
+      if (isUnread) {
+        setUserStats(prevStats => {
+          if (!prevStats) return null;
+          return {
+            ...prevStats,
+            unreadNotificationCount: Math.max(0, prevStats.unreadNotificationCount - 1)
+          };
+        });
+      }
+      
+      return updatedNotifications;
+    });
   };
   
   const addToCart = async (productId: string) => {

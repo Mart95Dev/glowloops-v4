@@ -1,25 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/firebase/auth';
-import { isAuthenticated, getAuthenticatedUser, AuthSession } from '@/lib/firebase/auth-session';
-import { User } from 'firebase/auth';
-
-// Type pour les données utilisateur récupérées du localStorage
-interface StoredUserData {
-  uid: string;
-  email?: string | null;
-  displayName?: string | null;
-  photoURL?: string | null;
-}
-
-// Type pour l'utilisateur forcé (quand auth.currentUser est null mais on a une session)
-interface ForcedUser {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-  isForced: boolean;
-}
 
 /**
  * Hook pour gérer l'authentification requise pour accéder à une page
