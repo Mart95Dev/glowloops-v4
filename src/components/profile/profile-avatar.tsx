@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { userService } from '@/lib/firebase/user-service';
 import { toast } from '@/lib/utils/toast';
 import { Upload, X } from 'lucide-react';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
 interface ProfileAvatarProps {
   user: User;
@@ -34,24 +35,41 @@ export default function ProfileAvatar({ user, onAvatarUpdate }: ProfileAvatarPro
       return;
     }
     
-    // Création d'une URL pour la prévisualisation
-    const imageUrl = URL.createObjectURL(file);
-    setPreviewUrl(imageUrl);
+    // Création d'une URL pour la prévisualisation locale
+    const localPreviewUrl = URL.createObjectURL(file);
+    setPreviewUrl(localPreviewUrl);
     
-    // Simuler un téléchargement (dans une version réelle, il faudrait télécharger vers Firebase Storage)
+    // Démarrer le téléchargement vers Firebase Storage
     setIsUploading(true);
     
     try {
-      // Dans une application réelle, vous téléchargeriez le fichier sur Firebase Storage ici
-      // et récupéreriez l'URL pour la mettre à jour dans le profil utilisateur
+      // Initialiser Firebase Storage
+      const storage = getStorage();
       
-      // Simuler un délai pour l'exemple
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Créer une référence unique pour l'avatar (userId + timestamp)
+      const avatarFileName = `${user.uid}_${new Date().getTime()}`;
+      const avatarExtension = file.name.split('.').pop() || 'jpg';
+      // Utiliser le dossier avatars qui a maintenant les bonnes permissions
+      const avatarPath = `avatars/${avatarFileName}.${avatarExtension}`;
+      const avatarRef = ref(storage, avatarPath);
       
-      // Mettre à jour le profil avec la nouvelle photo (ici simulé avec l'URL locale)
+      // Télécharger le fichier vers Firebase Storage
+      await uploadBytes(avatarRef, file);
+      
+      // Récupérer l'URL de téléchargement
+      const downloadURL = await getDownloadURL(avatarRef);
+      
+      // Mettre à jour le profil avec la nouvelle photo dans Auth et Firestore
       await userService.updateUserProfile(user, {
-        photoURL: imageUrl // Normalement, ce serait l'URL de Firebase Storage
+        photoURL: downloadURL,
+        avatarUrl: downloadURL
       });
+      
+      // Libérer l'URL locale de prévisualisation
+      URL.revokeObjectURL(localPreviewUrl);
+      
+      // Mettre à jour l'URL de prévisualisation avec celle de Firebase
+      setPreviewUrl(downloadURL);
       
       // Appeler le callback si fourni
       if (onAvatarUpdate) {
@@ -62,6 +80,12 @@ export default function ProfileAvatar({ user, onAvatarUpdate }: ProfileAvatarPro
     } catch (error) {
       console.error('Erreur lors du téléchargement de l\'avatar:', error);
       toast.error('Erreur lors de la mise à jour de la photo de profil');
+      
+      // En cas d'erreur, revenir à l'URL précédente
+      setPreviewUrl(user.photoURL);
+      
+      // Libérer l'URL locale
+      URL.revokeObjectURL(localPreviewUrl);
     } finally {
       setIsUploading(false);
     }
@@ -72,9 +96,28 @@ export default function ProfileAvatar({ user, onAvatarUpdate }: ProfileAvatarPro
     try {
       setIsUploading(true);
       
+      // Si l'URL actuelle provient de Firebase Storage, essayer de supprimer le fichier
+      if (previewUrl && previewUrl.includes('firebasestorage.googleapis.com')) {
+        try {
+          // Tenter d'extraire le chemin du fichier depuis l'URL
+          const storage = getStorage();
+          const urlPath = previewUrl.split('/o/')[1]?.split('?')[0];
+          
+          if (urlPath) {
+            const decodedPath = decodeURIComponent(urlPath);
+            const fileRef = ref(storage, decodedPath);
+            await deleteObject(fileRef);
+          }
+        } catch (storageError) {
+          console.error('Erreur lors de la suppression du fichier:', storageError);
+          // Continuer malgré l'erreur de suppression du fichier
+        }
+      }
+      
       // Mettre à jour le profil pour supprimer la photo
       await userService.updateUserProfile(user, {
-        photoURL: ''
+        photoURL: '',
+        avatarUrl: null
       });
       
       // Réinitialiser la prévisualisation
@@ -103,6 +146,12 @@ export default function ProfileAvatar({ user, onAvatarUpdate }: ProfileAvatarPro
       return user.email.charAt(0).toUpperCase();
     }
     return 'U';
+  };
+
+  // Ouvrir la boîte de dialogue de sélection de fichier
+  const handleButtonClick = () => {
+    // Déclencher un clic sur l'input file caché
+    document.getElementById('avatar-upload')?.click();
   };
 
   return (
@@ -148,17 +197,16 @@ export default function ProfileAvatar({ user, onAvatarUpdate }: ProfileAvatarPro
         <p className="text-sm text-gray-500">{user.email}</p>
       </div>
       
-      <label htmlFor="avatar-upload">
-        <Button
-          variant="outline"
-          size="sm"
-          type="button"
-          disabled={isUploading}
-          className="mt-2"
-        >
-          {isUploading ? 'Chargement...' : 'Changer de photo'}
-        </Button>
-      </label>
+      <Button
+        variant="outline"
+        size="sm"
+        type="button"
+        onClick={handleButtonClick}
+        disabled={isUploading}
+        className="mt-2"
+      >
+        {isUploading ? 'Chargement...' : 'Changer de photo'}
+      </Button>
     </div>
   );
 } 

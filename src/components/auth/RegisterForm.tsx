@@ -427,7 +427,7 @@ const RegisterForm = () => {
             Inscription...
           </>
         ) : (
-          'S&apos;inscrire'
+          'S\'inscrire'
         )}
       </button>
     </form>

@@ -10,6 +10,7 @@ interface UserProfileData {
   email?: string;
   phoneNumber?: string;
   photoURL?: string;
+  avatarUrl?: string | null;
 }
 
 interface UpdatePasswordData {

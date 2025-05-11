@@ -231,7 +231,7 @@ export default function SecurityForm({ user, onSecurityUpdate }: SecurityFormPro
           </form>
         ) : (
           <p className="text-gray-500">
-            Pour des raisons de sécurité, votre mot de passe n'est pas affiché. Utilisez le bouton modifier pour changer votre mot de passe.
+            Pour des raisons de sécurité, votre mot de passe n&apos;est pas affiché. Utilisez le bouton modifier pour changer votre mot de passe.
           </p>
         )}
       </div>
