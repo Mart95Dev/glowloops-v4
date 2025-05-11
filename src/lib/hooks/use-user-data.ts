@@ -267,7 +267,7 @@ export function useUserData() {
           setUserDocId(userDoc.id);
           
           // Récupérer les commandes avec la méthode fiable
-          const orders = await getUserOrders(uid);
+          const orders = await getUserOrders();
           // Mapper les commandes pour correspondre au format Order attendu par la page commandes
           const mappedOrders: OrderFront[] = orders.map((order) => {
             let status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
@@ -351,7 +351,7 @@ export function useUserData() {
     return () => {
       console.log("🧹 useUserData - Nettoyage de l'effet");
     };
-  }, [user?.uid]); // Utiliser uniquement user?.uid comme dépendance
+  }, [user?.uid, user]); // Utiliser uniquement user?.uid comme dépendance
 
   // Fonctions pour gérer les notifications et favoris
   const markNotificationAsRead = async (notificationId: string) => {

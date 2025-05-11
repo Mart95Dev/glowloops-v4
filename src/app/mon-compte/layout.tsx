@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { User, ShoppingBag, Heart, MapPin, Bell, LogOut, Menu, X } from 'lucide-react';
 import { authService } from '@/lib/firebase/auth-service';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface NavItem {
   label: string;
@@ -216,8 +217,13 @@ export default function AccountLayout({
             </div>
             <div className="mb-6 pb-4 border-b border-gray-200">
               <div className="flex flex-col items-center">
-                <div className="w-16 h-16 bg-lilas-clair rounded-full flex items-center justify-center text-white text-xl mb-2">
-                  {user?.displayName ? user.displayName.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}
+                <div className="w-16 h-16 mb-2">
+                  <Avatar className="w-16 h-16 border-2 border-lilas-clair">
+                    <AvatarImage src={user?.photoURL || undefined} alt="Photo de profil" />
+                    <AvatarFallback className="bg-lilas-clair text-white text-xl">
+                      {user?.displayName ? user.displayName.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
                 <p className="font-medium">{user?.displayName || 'Client'}</p>
                 <p className="text-sm text-gray-500">{user?.email}</p>
@@ -256,8 +262,13 @@ export default function AccountLayout({
         <aside className="hidden md:block w-64 bg-white rounded-lg shadow-sm p-4 h-fit sticky top-20">
           <div className="mb-6 pb-4 border-b border-gray-200">
             <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-lilas-clair rounded-full flex items-center justify-center text-white text-xl mb-2">
-                {user?.displayName ? user.displayName.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}
+              <div className="w-16 h-16 mb-2">
+                <Avatar className="w-16 h-16 border-2 border-lilas-clair">
+                  <AvatarImage src={user?.photoURL || undefined} alt="Photo de profil" />
+                  <AvatarFallback className="bg-lilas-clair text-white text-xl">
+                    {user?.displayName ? user.displayName.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
               </div>
               <p className="font-medium">{user?.displayName || 'Client'}</p>
               <p className="text-sm text-gray-500">{user?.email}</p>
