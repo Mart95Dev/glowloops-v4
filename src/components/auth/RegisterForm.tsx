@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { authService } from '@/lib/firebase/auth-service';
 import { userService } from '@/lib/services/user-service';
@@ -85,7 +85,6 @@ const RegisterForm = () => {
     register,
     handleSubmit,
     formState: { errors },
-    control,
     watch
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -147,7 +146,7 @@ const RegisterForm = () => {
       })));
       setPasswordStrength(0);
     }
-  }, [password, confirmPassword]);
+  }, [password, confirmPassword, passwordCriteria]);
   
   // Fonction pour obtenir la couleur de la barre de force
   const getStrengthColor = (strength: number): string => {

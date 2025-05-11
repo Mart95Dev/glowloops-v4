@@ -1,5 +1,5 @@
 // Hook d'authentification Firebase
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { onAuthStateChanged, User, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { auth } from './firebase-config';
 import { saveUserToSession, isAuthenticated, getAuthenticatedUser } from './auth-session';
@@ -23,9 +23,21 @@ export function useAuth(): AuthState {
     loading: true,
     error: null,
   });
+  
+  // Référence pour éviter les mises à jour multiples
+  const authSetupDone = useRef(false);
+  // Référence pour stocker le timeout
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Éviter d'exécuter l'effet plusieurs fois si déjà configuré
+    if (authSetupDone.current) {
+      console.log("✅ useAuth - Configuration déjà effectuée, pas de reconfiguration");
+      return;
+    }
+    
     console.log("🔄 useAuth - Effet déclenché, configuration de la persistance...");
+    authSetupDone.current = true;
     
     // Définir la persistance sur LOCAL pour garder l'utilisateur connecté
     setPersistence(auth, browserLocalPersistence)
@@ -77,6 +89,12 @@ export function useAuth(): AuthState {
           // Sauvegarder l'utilisateur dans notre système de session
           saveUserToSession(user);
           console.log("💾 useAuth - Utilisateur sauvegardé dans la session:", user.email);
+          
+          // Annuler le timeout s'il existe
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+          }
         }
         
         setState({ user, loading: false, error: null });
@@ -85,44 +103,55 @@ export function useAuth(): AuthState {
       (error) => {
         console.error("❌ useAuth - Erreur dans onAuthStateChanged:", error);
         setState({ user: null, loading: false, error });
+        
+        // Annuler le timeout s'il existe
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
       }
     );
 
     // Vérification supplémentaire après un court délai si aucun utilisateur n'est détecté
-    const checkTimeout = setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       console.log("⏱️ useAuth - Vérification supplémentaire après délai");
       
-      if (state.loading || (!state.user && !state.error)) {
-        // Tenter de récupérer l'utilisateur via notre système de session
-        console.log("🔍 useAuth - Tentative de récupération via système de session");
-        
-        if (isAuthenticated()) {
-          const sessionUser = getAuthenticatedUser();
-          console.log("✅ useAuth - Utilisateur récupéré via session:", sessionUser);
+      // Vérifier l'état actuel du state via setState pour garantir l'accès à la dernière valeur
+      setState(currentState => {
+        if (currentState.loading) {
+          // Tenter de récupérer l'utilisateur via notre système de session
+          console.log("🔍 useAuth - Tentative de récupération via système de session");
           
-          if (sessionUser && 'email' in sessionUser) {
-            setState({
-              user: sessionUser as User,
-              loading: false,
-              error: null
-            });
-            console.log("✅ useAuth - État mis à jour avec l'utilisateur de la session");
+          if (isAuthenticated()) {
+            const sessionUser = getAuthenticatedUser();
+            console.log("✅ useAuth - Utilisateur récupéré via session:", sessionUser);
+            
+            if (sessionUser && 'email' in sessionUser) {
+              return {
+                user: sessionUser as User,
+                loading: false,
+                error: null
+              };
+            }
+          } else {
+            console.log("❌ useAuth - Aucun utilisateur trouvé après délai supplémentaire");
+            // Mettre fin au chargement si aucun utilisateur n'est trouvé
+            return { ...currentState, loading: false };
           }
-        } else {
-          console.log("❌ useAuth - Aucun utilisateur trouvé après délai supplémentaire");
-          // Mettre fin au chargement si aucun utilisateur n'est trouvé
-          setState(prev => ({ ...prev, loading: false }));
-          console.log("✅ useAuth - État mis à jour, fin du chargement");
         }
-      }
+        return currentState;
+      });
     }, 2000);
 
     return () => {
       console.log("🧹 useAuth - Nettoyage de l'effet");
       unsubscribe();
-      clearTimeout(checkTimeout);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     };
-  }, []);
+  }, []); // Aucune dépendance
 
   console.log("📊 useAuth - État actuel:", { 
     user: state.user ? `✅ (${state.user.email})` : "❌ absent",

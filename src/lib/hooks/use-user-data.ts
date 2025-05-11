@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/firebase-config';
 import { useAuth } from '@/lib/firebase/auth';
@@ -58,6 +58,64 @@ type OrderFront = {
   }[];
 };
 
+// Déplacer la fonction generateOrderNotifications en dehors de useEffect
+function generateOrderNotifications(orders: OrderFront[]): NotificationItemProps[] {
+  const notifications: NotificationItemProps[] = [];
+  orders.forEach(order => {
+    if (order.status === 'pending') {
+      notifications.push({
+        id: `notif-pending-${order.id}`,
+        type: 'order',
+        title: 'Commande en attente',
+        message: `Votre commande ${order.orderNumber} est en attente de traitement.`,
+        date: order.date,
+        isRead: false
+      });
+    }
+    if (order.status === 'processing') {
+      notifications.push({
+        id: `notif-processing-${order.id}`,
+        type: 'order',
+        title: 'Commande en préparation',
+        message: `Votre commande ${order.orderNumber} est en cours de préparation.`,
+        date: order.date,
+        isRead: false
+      });
+    }
+    if (order.status === 'shipped') {
+      notifications.push({
+        id: `notif-shipped-${order.id}`,
+        type: 'order',
+        title: 'Commande expédiée',
+        message: `Votre commande ${order.orderNumber} a été expédiée.`,
+        date: order.date,
+        isRead: false
+      });
+    }
+    if (order.status === 'delivered') {
+      notifications.push({
+        id: `notif-delivered-${order.id}`,
+        type: 'order',
+        title: 'Commande livrée',
+        message: `Votre commande ${order.orderNumber} a été livrée.`,
+        date: order.date,
+        isRead: false
+      });
+    }
+    if (order.status === 'cancelled') {
+      notifications.push({
+        id: `notif-cancelled-${order.id}`,
+        type: 'order',
+        title: 'Commande annulée',
+        message: `Votre commande ${order.orderNumber} a été annulée.`,
+        date: order.date,
+        isRead: false
+      });
+    }
+  });
+  return notifications;
+}
+
 export function useUserData() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -68,24 +126,48 @@ export function useUserData() {
   const [notifications, setNotifications] = useState<NotificationItemProps[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [userDocId, setUserDocId] = useState<string | null>(null);
+  
+  // Utilisation d'une référence pour suivre si les données ont déjà été chargées
+  const dataFetchedRef = useRef(false);
+  // Référence pour suivre l'ID de l'utilisateur actuel
+  const userIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     console.log("🔐 useUserData - Initialisation du hook avec user:", user);
     
-    async function fetchUserDataAndOrders() {
+    // Capturer uid localement pour l'utiliser comme dépendance
+    const uid = user?.uid || null;
+    
+    // Vérifier si l'utilisateur est le même que celui déjà chargé
+    // ou si les données ont déjà été chargées pour cet utilisateur
+    if (!user || !uid || (userIdRef.current === uid && dataFetchedRef.current)) {
+      console.log("⚠️ useUserData - Même utilisateur ou données déjà chargées, pas de rechargement");
       if (!user) {
-        console.log("⚠️ useUserData - Aucun utilisateur, arrêt du chargement");
+        setLoading(false);
+      }
+      return;
+    }
+    
+    // Mettre à jour la référence de l'ID utilisateur
+    userIdRef.current = uid;
+    
+    async function fetchUserDataAndOrders() {
+      // Vérification de sécurité supplémentaire au cas où user serait null
+      if (!user || !uid) {
+        console.log("⚠️ useUserData - fetchUserDataAndOrders: Utilisateur null, abandon");
         setLoading(false);
         return;
       }
-
-      console.log("🔄 useUserData - Début du chargement des données pour:", user.uid);
+      
+      const email = user.email; // Capture locale de l'email
+      
+      console.log("🔄 useUserData - Début du chargement des données pour:", uid);
       setLoading(true);
       setError(null);
 
       try {
-        console.log("🔍 Recherche de l'utilisateur dans Firestore avec authUserId:", user.uid);
-        console.log("🔍 Recherche avec email:", user.email);
+        console.log("🔍 Recherche de l'utilisateur dans Firestore avec authUserId:", uid);
+        console.log("🔍 Recherche avec email:", email);
         
         // Stratégie 1: Chercher par authUserId
         let userDoc = null;
@@ -94,18 +176,18 @@ export function useUserData() {
         // Chercher l'utilisateur par son authUserId
         const usersQuery = query(
           collection(db, 'users'),
-          where('authUserId', '==', user.uid)
+          where('authUserId', '==', uid)
         );
         
         console.log("🔎 Exécution de la requête pour trouver l'utilisateur par authUserId");
         let usersSnapshot = await getDocs(usersQuery);
         
         // Stratégie 2: Si non trouvé, chercher par email
-        if (usersSnapshot.empty && user.email) {
-          console.log("🔍 Utilisateur non trouvé par ID, recherche par email:", user.email);
+        if (usersSnapshot.empty && email) {
+          console.log("🔍 Utilisateur non trouvé par ID, recherche par email:", email);
           const emailQuery = query(
             collection(db, 'users'),
-            where('email', '==', user.email)
+            where('email', '==', email)
           );
           
           usersSnapshot = await getDocs(emailQuery);
@@ -167,7 +249,7 @@ export function useUserData() {
             displayName: `${userDocData.firstName || ''} ${userDocData.lastName || ''}`.trim() || user.displayName || 'Utilisateur',
             firstName: userDocData.firstName || user.displayName?.split(' ')[0] || '',
             lastName: userDocData.lastName || user.displayName?.split(' ').slice(1).join(' ') || '',
-            email: userDocData.email || user.email || '',
+            email: userDocData.email || email || '',
             photoURL: userDocData.avatarUrl || user.photoURL,
             avatarUrl: userDocData.avatarUrl || user.photoURL,
             phoneNumber: userDocData.phoneNumber || user.phoneNumber,
@@ -185,7 +267,7 @@ export function useUserData() {
           setUserDocId(userDoc.id);
           
           // Récupérer les commandes avec la méthode fiable
-          const orders = await getUserOrders(user.uid);
+          const orders = await getUserOrders(uid);
           // Mapper les commandes pour correspondre au format Order attendu par la page commandes
           const mappedOrders: OrderFront[] = orders.map((order) => {
             let status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
@@ -216,8 +298,9 @@ export function useUserData() {
           });
           setRecentOrders(mappedOrders);
           
-          // Initialiser les statistiques utilisateur
-          generateOrderNotifications(mappedOrders);
+          // Générer les notifications à partir des commandes et les définir
+          const newNotifications = generateOrderNotifications(mappedOrders);
+          setNotifications(newNotifications);
           
           // Récupérer les produits favoris via le service
           try {
@@ -230,7 +313,7 @@ export function useUserData() {
             setUserStats({
               orderCount: mappedOrders.length,
               favoriteCount: userFavorites.length,
-              unreadNotificationCount: notifications.filter(n => !n.isRead).length,
+              unreadNotificationCount: newNotifications.filter(n => !n.isRead).length,
               totalSpent: mappedOrders.reduce((total, order) => total + order.totalAmount, 0)
             });
           } catch (error) {
@@ -242,80 +325,33 @@ export function useUserData() {
             setUserStats({
               orderCount: mappedOrders.length,
               favoriteCount: 0,
-              unreadNotificationCount: notifications.filter(n => !n.isRead).length,
+              unreadNotificationCount: newNotifications.filter(n => !n.isRead).length,
               totalSpent: mappedOrders.reduce((total, order) => total + order.totalAmount, 0)
             });
           }
         } else {
           throw new Error("Format de données utilisateur invalide");
         }
-      } catch (err) {
-        console.error("❌ useUserData - Erreur lors de la récupération des données:", err);
-        setError((err as Error).message || "Erreur lors de la récupération des données utilisateur");
-      } finally {
+        
+        // À la fin du chargement réussi, marquer les données comme chargées
+        dataFetchedRef.current = true;
         setLoading(false);
+      } catch (error) {
+        console.error("❌ useUserData - Erreur lors du chargement des données:", error);
+        setError(error instanceof Error ? error.message : "Une erreur est survenue lors du chargement des données");
+        setLoading(false);
+        // Ne pas marquer les données comme chargées en cas d'erreur
+        dataFetchedRef.current = false;
       }
     }
     
-    function generateOrderNotifications(orders: OrderFront[]) {
-      const notifications: NotificationItemProps[] = [];
-      orders.forEach(order => {
-        if (order.status === 'pending') {
-          notifications.push({
-            id: `notif-pending-${order.id}`,
-            type: 'order',
-            title: 'Commande en attente',
-            message: `Votre commande ${order.orderNumber} est en attente de traitement.`,
-            date: order.date,
-            isRead: false
-          });
-        }
-        if (order.status === 'processing') {
-          notifications.push({
-            id: `notif-processing-${order.id}`,
-            type: 'order',
-            title: 'Commande en préparation',
-            message: `Votre commande ${order.orderNumber} est en cours de préparation.`,
-            date: order.date,
-            isRead: false
-          });
-        }
-        if (order.status === 'shipped') {
-          notifications.push({
-            id: `notif-shipped-${order.id}`,
-            type: 'order',
-            title: 'Commande expédiée',
-            message: `Votre commande ${order.orderNumber} a été expédiée.`,
-            date: order.date,
-            isRead: false
-          });
-        }
-        if (order.status === 'delivered') {
-          notifications.push({
-            id: `notif-delivered-${order.id}`,
-            type: 'order',
-            title: 'Commande livrée',
-            message: `Votre commande ${order.orderNumber} a été livrée.`,
-            date: order.date,
-            isRead: false
-          });
-        }
-        if (order.status === 'cancelled') {
-          notifications.push({
-            id: `notif-cancelled-${order.id}`,
-            type: 'order',
-            title: 'Commande annulée',
-            message: `Votre commande ${order.orderNumber} a été annulée.`,
-            date: order.date,
-            isRead: false
-          });
-        }
-      });
-      setNotifications(notifications);
-    }
-    
     fetchUserDataAndOrders();
-  }, [user]);
+    
+    // Nettoyer l'effet si le composant est démonté
+    return () => {
+      console.log("🧹 useUserData - Nettoyage de l'effet");
+    };
+  }, [user?.uid]); // Utiliser uniquement user?.uid comme dépendance
 
   // Fonctions pour gérer les notifications et favoris
   const markNotificationAsRead = async (notificationId: string) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRequireAuth } from '@/lib/hooks/use-require-auth';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
@@ -24,8 +24,10 @@ export default function AccountLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [forceAuthMode, setForceAuthMode] = useState(false);
+  // Référence pour suivre si l'utilisateur a déjà été vérifié
+  const userVerifiedRef = useRef(false);
 
-  // Vérification du flag d'authentification forcée
+  // Vérification du flag d'authentification forcée - une seule fois
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const forceAuth = sessionStorage.getItem('force_auth_bypass');
@@ -36,39 +38,38 @@ export default function AccountLayout({
     }
   }, []);
 
-  // Double vérification que nous avons un utilisateur
+  // Vérification unique de l'utilisateur
   useEffect(() => {
-    console.log("🏠 Layout mon-compte - useEffect déclenché", {
+    // Si déjà vérifié, ne pas revérifier
+    if (userVerifiedRef.current) {
+      return;
+    }
+    
+    console.log("🏠 Layout mon-compte - Vérification utilisateur", {
       user: user ? `Utilisateur présent (${typeof user === 'object' && 'email' in user ? user.email : 'info manquante'})` : "ABSENT ❌",
       loading: loading ? "Chargement ⏳" : "Chargement terminé ✅",
-      pathname: pathname,
       forceAuthMode: forceAuthMode ? "✅ ACTIVÉ" : "❌ désactivé"
     });
 
     // Si nous sommes en mode force auth, on ignore les vérifications normales
     if (forceAuthMode) {
       console.log("✅ Layout mon-compte - Authentification forcée active, accès autorisé");
+      userVerifiedRef.current = true;
       return;
     }
 
-    if (!loading && !user) {
-      console.log("❌ Layout mon-compte - Aucun utilisateur après chargement, redirection vers login...");
-      router.push('/auth/login?redirectTo=/mon-compte');
-    } else if (!loading && user) {
-      console.log("✅ Layout mon-compte - Utilisateur authentifié confirmé:", 
-        typeof user === 'object' && 'email' in user ? user.email : 'info manquante');
+    // Ne vérifier que lorsque le chargement est terminé et une seule fois
+    if (!loading) {
+      userVerifiedRef.current = true;
+      
+      if (!user) {
+        console.log("❌ Layout mon-compte - Aucun utilisateur après chargement, redirection vers login...");
+      } else {
+        console.log("✅ Layout mon-compte - Utilisateur authentifié confirmé:", 
+          typeof user === 'object' && 'email' in user ? user.email : 'info manquante');
+      }
     }
-  }, [loading, user, router, pathname, forceAuthMode]);
-
-  // Vérification supplémentaire pour s'assurer que nous avons un utilisateur valide
-  useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    if (currentUser) {
-      console.log("Layout Compte - Utilisateur authentifié:", currentUser.email);
-    } else {
-      console.log("Layout Compte - Aucun utilisateur authentifié");
-    }
-  }, []);
+  }, [loading, user, forceAuthMode]);
 
   // Fermer le menu mobile lors du changement de page
   useEffect(() => {
