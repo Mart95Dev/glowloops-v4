@@ -1,344 +1,255 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MapPin, Plus, Pencil, Trash2 } from 'lucide-react';
-import { useUserData } from '@/lib/hooks/use-user-data';
-
-interface Address {
-  addressLine1: string;
-  addressLine2: string | null;
-  city: string;
-  postalCode: string;
-  country: string;
-  isDefault?: boolean;
-}
+import { useAuth } from '@/lib/firebase/auth';
+import { addressService } from '@/lib/services/address-service';
+import { useUserStore, UserAddress } from '@/lib/store/user-store';
+import { AddressFormValues } from '@/lib/types/schemas';
+import AddressList from '@/components/address/AddressList';
+import { toast } from 'sonner';
 
 export default function AdressesPage() {
-  const { userData, loading, error } = useUserData();
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [isAddingAddress, setIsAddingAddress] = useState(false);
-  const [isEditingAddress, setIsEditingAddress] = useState<number | null>(null);
-  
-  // Formulaire d'adresse
-  const [formData, setFormData] = useState<Address>({
-    addressLine1: '',
-    addressLine2: null,
-    city: '',
-    postalCode: '',
-    country: 'FR',
-    isDefault: false
-  });
+  const { user } = useAuth();
+  const { profile, setProfile } = useUserStore();
+  const [addresses, setAddresses] = useState<UserAddress[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (userData?.shippingAddresses) {
-      setAddresses(userData.shippingAddresses);
+    if (profile) {
+      setAddresses(profile.addresses || []);
+      setIsLoading(false);
     }
-  }, [userData]);
+  }, [profile]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  useEffect(() => {
+    if (user && !profile) {
+      fetchAddresses();
+    }
+  }, [user, profile]);
 
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: checked
-    }));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      addressLine1: '',
-      addressLine2: null,
-      city: '',
-      postalCode: '',
-      country: 'FR',
-      isDefault: false
-    });
-  };
-
-  const handleEditClick = (index: number) => {
-    setIsEditingAddress(index);
-    setFormData(addresses[index]);
-    setIsAddingAddress(false);
-  };
-
-  const handleAddClick = () => {
-    setIsAddingAddress(true);
-    setIsEditingAddress(null);
-    resetForm();
-  };
-
-  const handleDeleteClick = (index: number) => {
-    // Dans une version réelle, nous devrions appeler un service pour mettre à jour dans Firebase
-    const newAddresses = [...addresses];
-    newAddresses.splice(index, 1);
-    setAddresses(newAddresses);
-  };
-
-  const handleSetDefaultClick = (index: number) => {
-    const newAddresses = addresses.map((address, i) => ({
-      ...address,
-      isDefault: i === index
-    }));
-    setAddresses(newAddresses);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const fetchAddresses = async () => {
+    if (!user) return;
     
-    if (isEditingAddress !== null) {
-      // Mode édition
-      const newAddresses = [...addresses];
-      newAddresses[isEditingAddress] = formData;
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const fetchedAddresses = await addressService.getUserAddresses(user.uid);
+      setAddresses(fetchedAddresses);
       
-      // Si cette adresse est définie comme par défaut, mettre à jour les autres
-      if (formData.isDefault) {
-        newAddresses.forEach((address, index) => {
-          if (index !== isEditingAddress) {
-            address.isDefault = false;
+      // Mettre à jour le store Zustand avec les adresses récupérées
+      if (profile) {
+        setProfile({
+          ...profile,
+          addresses: fetchedAddresses
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des adresses:", error);
+      setError("Impossible de récupérer vos adresses. Veuillez réessayer plus tard.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddAddress = async (addressData: AddressFormValues) => {
+    if (!user) return;
+    
+    try {
+      const newAddress = await addressService.addAddress(user.uid, addressData);
+      
+      // Mettre à jour l'état local
+      setAddresses(prev => {
+        // Si la nouvelle adresse est par défaut, mettre à jour les autres
+        if (addressData.isDefault) {
+          return [...prev.map(addr => ({...addr, isDefault: false})), newAddress];
+        }
+        return [...prev, newAddress];
+      });
+      
+      // Mettre à jour le store Zustand
+      if (profile) {
+        let updatedAddresses = [...profile.addresses];
+        
+        if (addressData.isDefault) {
+          updatedAddresses = updatedAddresses.map(addr => ({...addr, isDefault: false}));
+        }
+        
+        setProfile({
+          ...profile,
+          addresses: [...updatedAddresses, newAddress]
+        });
+      }
+      
+      toast.success("Adresse ajoutée avec succès");
+    } catch (error) {
+      console.error("Erreur lors de l'ajout de l'adresse:", error);
+      toast.error("Impossible d'ajouter l'adresse. Veuillez réessayer plus tard.");
+      throw error;
+    }
+  };
+
+  const handleUpdateAddress = async (id: string, addressData: AddressFormValues) => {
+    if (!user) return;
+    
+    try {
+      const updatedAddress = {
+        id,
+        ...addressData
+      };
+      
+      await addressService.updateAddress(user.uid, updatedAddress);
+      
+      // Mettre à jour l'état local
+      setAddresses(prev => {
+        const newAddresses = [...prev];
+        const index = newAddresses.findIndex(addr => addr.id === id);
+        
+        if (index !== -1) {
+          newAddresses[index] = updatedAddress;
+          
+          // Si l'adresse est définie comme par défaut, mettre à jour les autres
+          if (addressData.isDefault) {
+            return newAddresses.map(addr => ({
+              ...addr,
+              isDefault: addr.id === id
+            }));
           }
-        });
+        }
+        
+        return newAddresses;
+      });
+      
+      // Mettre à jour le store Zustand
+      if (profile) {
+        let updatedAddresses = [...profile.addresses];
+        const index = updatedAddresses.findIndex(addr => addr.id === id);
+        
+        if (index !== -1) {
+          updatedAddresses[index] = {
+            ...updatedAddresses[index],
+            ...addressData
+          };
+          
+          // Si l'adresse est définie comme par défaut, mettre à jour les autres
+          if (addressData.isDefault) {
+            updatedAddresses = updatedAddresses.map(addr => ({
+              ...addr,
+              isDefault: addr.id === id
+            }));
+          }
+          
+          setProfile({
+            ...profile,
+            addresses: updatedAddresses
+          });
+        }
       }
       
-      setAddresses(newAddresses);
-      setIsEditingAddress(null);
-    } else if (isAddingAddress) {
-      // Mode ajout
-      const newAddresses = [...addresses];
-      
-      // Si cette adresse est définie comme par défaut, mettre à jour les autres
-      if (formData.isDefault) {
-        newAddresses.forEach(address => {
-          address.isDefault = false;
-        });
-      }
-      
-      newAddresses.push(formData);
-      setAddresses(newAddresses);
-      setIsAddingAddress(false);
+      toast.success("Adresse mise à jour avec succès");
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour de l'adresse:", error);
+      toast.error("Impossible de mettre à jour l'adresse. Veuillez réessayer plus tard.");
+      throw error;
     }
-    
-    resetForm();
   };
 
-  if (loading) {
-    return <div className="py-6 text-center">Chargement des adresses...</div>;
-  }
+  const handleDeleteAddress = async (id: string) => {
+    if (!user) return;
+    
+    try {
+      await addressService.removeAddress(user.uid, id);
+      
+      // Mettre à jour l'état local
+      setAddresses(prev => {
+        const newAddresses = prev.filter(addr => addr.id !== id);
+        
+        // Si l'adresse supprimée était celle par défaut et qu'il reste des adresses,
+        // définir la première comme adresse par défaut
+        const wasDefault = prev.find(addr => addr.id === id)?.isDefault || false;
+        
+        if (wasDefault && newAddresses.length > 0) {
+          newAddresses[0].isDefault = true;
+        }
+        
+        return newAddresses;
+      });
+      
+      // Mettre à jour le store Zustand
+      if (profile) {
+        const wasDefault = profile.addresses.find(addr => addr.id === id)?.isDefault || false;
+        const newAddresses = profile.addresses.filter(addr => addr.id !== id);
+        
+        if (wasDefault && newAddresses.length > 0) {
+          newAddresses[0].isDefault = true;
+        }
+        
+        setProfile({
+          ...profile,
+          addresses: newAddresses
+        });
+      }
+      
+      toast.success("Adresse supprimée avec succès");
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'adresse:", error);
+      toast.error("Impossible de supprimer l'adresse. Veuillez réessayer plus tard.");
+      throw error;
+    }
+  };
+
+  const handleSetDefaultAddress = async (id: string) => {
+    if (!user) return;
+    
+    try {
+      await addressService.setDefaultAddress(user.uid, id);
+      
+      // Mettre à jour l'état local
+      setAddresses(prev => 
+        prev.map(addr => ({
+          ...addr,
+          isDefault: addr.id === id
+        }))
+      );
+      
+      // Mettre à jour le store Zustand
+      if (profile) {
+        setProfile({
+          ...profile,
+          addresses: profile.addresses.map(addr => ({
+            ...addr,
+            isDefault: addr.id === id
+          }))
+        });
+      }
+      
+      toast.success("Adresse définie par défaut avec succès");
+    } catch (error) {
+      console.error("Erreur lors de la définition de l'adresse par défaut:", error);
+      toast.error("Impossible de définir l'adresse par défaut. Veuillez réessayer plus tard.");
+      throw error;
+    }
+  };
 
   if (error) {
     return (
       <div className="py-6 text-center text-red-500">
-        Erreur lors du chargement des adresses : {error}
+        {error}
       </div>
     );
   }
 
   return (
-    <>
-      <h1 className="text-xl md:text-2xl font-playfair text-lilas-fonce mb-6">
-        Mes adresses
-      </h1>
-      
-      {/* Liste des adresses */}
-      <div className="mb-6 space-y-4">
-        {addresses.length === 0 ? (
-          <div className="text-center py-6 bg-gray-50 rounded-lg">
-            <MapPin className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-            <p className="text-gray-500">Vous n&apos;avez pas encore enregistré d&apos;adresse</p>
-          </div>
-        ) : (
-          addresses.map((address, index) => (
-            <div 
-              key={index} 
-              className={`p-4 rounded-lg border ${address.isDefault ? 'border-lilas-fonce bg-lilas-clair/10' : 'border-gray-200'}`}
-            >
-              <div className="flex justify-between items-start mb-2">
-                <div className="font-medium">
-                  {address.isDefault && (
-                    <span className="text-xs bg-lilas-fonce text-white px-2 py-1 rounded-full mr-2">
-                      Par défaut
-                    </span>
-                  )}
-                  Adresse {index + 1}
-                </div>
-                <div className="flex space-x-2">
-                  <button 
-                    onClick={() => handleEditClick(index)}
-                    className="text-gray-500 hover:text-lilas-fonce"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                  <button 
-                    onClick={() => handleDeleteClick(index)}
-                    className="text-gray-500 hover:text-red-500"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-              
-              <div className="text-gray-700">
-                <p>{address.addressLine1}</p>
-                {address.addressLine2 && <p>{address.addressLine2}</p>}
-                <p>{address.postalCode} {address.city}</p>
-                <p>{address.country === 'FR' ? 'France' : address.country}</p>
-              </div>
-              
-              {!address.isDefault && (
-                <button
-                  onClick={() => handleSetDefaultClick(index)}
-                  className="mt-3 text-sm text-lilas-fonce hover:underline"
-                >
-                  Définir comme adresse par défaut
-                </button>
-              )}
-            </div>
-          ))
-        )}
-      </div>
-      
-      {/* Bouton Ajouter */}
-      {!isAddingAddress && isEditingAddress === null && (
-        <button
-          onClick={handleAddClick}
-          className="mb-6 w-full sm:w-auto flex items-center justify-center gap-2 bg-lilas-fonce hover:bg-lilas-clair text-white py-2 px-4 rounded-full transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          Ajouter une adresse
-        </button>
-      )}
-      
-      {/* Formulaire */}
-      {(isAddingAddress || isEditingAddress !== null) && (
-        <div className="mt-6 bg-gray-50 p-4 rounded-lg">
-          <h2 className="font-playfair text-lg text-lilas-fonce mb-4">
-            {isEditingAddress !== null ? 'Modifier l\'adresse' : 'Ajouter une adresse'}
-          </h2>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="addressLine1" className="block text-sm font-medium text-gray-700 mb-1">
-                Adresse *
-              </label>
-              <input
-                type="text"
-                id="addressLine1"
-                name="addressLine1"
-                value={formData.addressLine1}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                required
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="addressLine2" className="block text-sm font-medium text-gray-700 mb-1">
-                Complément d&apos;adresse
-              </label>
-              <input
-                type="text"
-                id="addressLine2"
-                name="addressLine2"
-                value={formData.addressLine2 || ''}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700 mb-1">
-                  Code postal *
-                </label>
-                <input
-                  type="text"
-                  id="postalCode"
-                  name="postalCode"
-                  value={formData.postalCode}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
-                  Ville *
-                </label>
-                <input
-                  type="text"
-                  id="city"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
-                Pays *
-              </label>
-              <select
-                id="country"
-                name="country"
-                value={formData.country}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                required
-              >
-                <option value="FR">France</option>
-                <option value="BE">Belgique</option>
-                <option value="CH">Suisse</option>
-                <option value="LU">Luxembourg</option>
-              </select>
-            </div>
-            
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="isDefault"
-                name="isDefault"
-                checked={formData.isDefault}
-                onChange={handleCheckboxChange}
-                className="h-4 w-4 text-lilas-fonce focus:ring-lilas-clair"
-              />
-              <label htmlFor="isDefault" className="ml-2 text-sm text-gray-700">
-                Définir comme adresse par défaut
-              </label>
-            </div>
-            
-            <div className="flex space-x-3 pt-2">
-              <button
-                type="submit"
-                className="flex-1 bg-lilas-fonce hover:bg-lilas-clair text-white py-2 px-4 rounded-md transition-colors"
-              >
-                {isEditingAddress !== null ? 'Mettre à jour' : 'Ajouter'}
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => {
-                  setIsAddingAddress(false);
-                  setIsEditingAddress(null);
-                  resetForm();
-                }}
-                className="flex-1 border border-gray-300 hover:bg-gray-100 text-gray-700 py-2 px-4 rounded-md transition-colors"
-              >
-                Annuler
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-    </>
+    <div className="max-w-3xl mx-auto py-6 px-4">
+      <AddressList
+        addresses={addresses}
+        onAddAddress={handleAddAddress}
+        onUpdateAddress={handleUpdateAddress}
+        onDeleteAddress={handleDeleteAddress}
+        onSetDefaultAddress={handleSetDefaultAddress}
+        isLoading={isLoading}
+      />
+    </div>
   );
 } 

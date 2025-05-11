@@ -3,6 +3,7 @@ import { Playfair_Display, Poppins } from "next/font/google";
 import { Header, Footer } from "@/components/layout";
 import "./globals.css";
 import { Toaster } from '@/components/ui/toast-utils';
+import { Toaster as SonnerToaster } from 'sonner';
 import AuthInitializer from './_app';
 
 // Désactiver le client-side JavaScript pour les composants qui ne sont pas explicitement marqués comme client
@@ -45,6 +46,7 @@ export default function RootLayout({
         <main className="pt-32 pb-16 min-h-screen">{children}</main>
         <Footer />
         <Toaster />
+        <SonnerToaster position="top-right" richColors />
       </body>
     </html>
   );
