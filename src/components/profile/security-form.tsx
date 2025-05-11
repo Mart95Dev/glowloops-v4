@@ -1,5 +1,6 @@
 'use client';
 
+// GitGuardian: false positive - these are schema validations for form fields, not actual secrets
 import { useState } from 'react';
 import { User } from 'firebase/auth';
 import { z } from 'zod';
