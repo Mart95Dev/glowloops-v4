@@ -83,6 +83,11 @@ export default function AccountLayout({
       icon: <User className="w-5 h-5" />,
     },
     {
+      label: 'Mon profil',
+      href: '/mon-compte/profil',
+      icon: <User className="w-5 h-5" />,
+    },
+    {
       label: 'Mes commandes',
       href: '/mon-compte/commandes',
       icon: <ShoppingBag className="w-5 h-5" />,
