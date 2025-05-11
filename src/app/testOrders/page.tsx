@@ -18,10 +18,9 @@ export default function TestOrders() {
     async function fetchUserOrders() {
       try {
         setLoading(true);
-        // Utiliser l'UID de l'utilisateur connecté
         const userId = user?.uid;
         if (!userId) return;
-        const fetchedOrders = await getUserOrders(userId);
+        const fetchedOrders = await getUserOrders();
         setOrders(fetchedOrders);
       } catch {
         setError("Impossible de récupérer les commandes. Veuillez réessayer plus tard.");
@@ -94,9 +93,7 @@ export default function TestOrders() {
             <p>{order.shippingAddress.country}</p>
             {order.shippingAddress.phoneNumber && <p>Tél: {order.shippingAddress.phoneNumber}</p>}
             <h3>Méthode de paiement</h3>
-            <p>Type: {order.paymentMethod.type}</p>
-            <p>Statut: {order.paymentMethod.status}</p>
-            {order.paymentMethod.transactionId && <p>ID de transaction: {order.paymentMethod.transactionId}</p>}
+            <p>{typeof order.paymentMethod === 'string' ? order.paymentMethod : JSON.stringify(order.paymentMethod)}</p>
           </div>
         ))
       )}
