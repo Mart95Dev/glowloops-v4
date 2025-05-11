@@ -15,6 +15,22 @@ import {
   Tag
 } from 'lucide-react';
 import Link from 'next/link';
+import { Order } from '@/lib/types/order';
+
+// Définir le type OrderFront ici puisqu'il n'est pas exporté
+type OrderFront = {
+  id: string;
+  orderNumber: string;
+  date: Date;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  totalAmount: number;
+  items: {
+    id: string;
+    productName: string;
+    imageUrl: string;
+    quantity: number;
+  }[];
+};
 
 export default function ProfilePage() {
   const {
@@ -67,6 +83,37 @@ export default function ProfilePage() {
   const hasFavorites = favorites.length > 0;
   const hasNotifications = notifications.length > 0;
   
+  // Ajoutez une fonction de transformation des données
+  const adaptOrderFrontToOrder = (orderFront: OrderFront): Order => {
+    return {
+      id: orderFront.id,
+      userId: "user_id", // valeur par défaut
+      orderNumber: orderFront.orderNumber,
+      items: orderFront.items.map((item: { id: string; productName: string; imageUrl: string; quantity: number }) => ({
+        productId: item.id,
+        productName: item.productName,
+        quantity: item.quantity,
+        price: 0, // valeur par défaut
+        subtotal: 0, // valeur par défaut
+        imageUrl: item.imageUrl
+      })),
+      shippingAddress: {
+        fullName: "",
+        address1: "",
+        city: "",
+        postalCode: "",
+        country: ""
+      },
+      orderDate: orderFront.date,
+      status: orderFront.status,
+      subtotal: 0, // valeur par défaut 
+      shippingCost: 0,
+      tax: 0,
+      total: orderFront.totalAmount,
+      paymentMethod: "card" // valeur par défaut
+    };
+  };
+
   return (
     <>
       <h1 className="text-xl md:text-2xl font-playfair text-lilas-fonce mb-6">
@@ -125,7 +172,7 @@ export default function ProfilePage() {
           {hasOrders ? (
             <div className="space-y-3">
               {recentOrders.slice(0, 3).map((order) => (
-                <OrderSummary key={order.id} order={order} />
+                <OrderSummary key={order.id} order={adaptOrderFrontToOrder(order)} />
               ))}
             </div>
           ) : (
