@@ -22,6 +22,8 @@ const createToast = (message: string, type: 'success' | 'error' | 'info' | 'warn
     toastContainer.style.display = 'flex';
     toastContainer.style.flexDirection = 'column';
     toastContainer.style.gap = '0.5rem';
+    // S'assurer que le conteneur ne bloque pas les clics
+    toastContainer.style.pointerEvents = 'none';
     document.body.appendChild(toastContainer);
   }
   
@@ -37,6 +39,8 @@ const createToast = (message: string, type: 'success' | 'error' | 'info' | 'warn
   toast.style.animation = 'slideIn 0.3s ease-out forwards';
   toast.style.opacity = '0';
   toast.style.transform = 'translateX(100%)';
+  // Permettre l'interaction avec le toast lui-même
+  toast.style.pointerEvents = 'auto';
   
   // Définir les couleurs en fonction du type
   switch (type) {
@@ -78,6 +82,23 @@ const createToast = (message: string, type: 'success' | 'error' | 'info' | 'warn
     toast.appendChild(descriptionElement);
   }
   
+  // Ajouter un bouton de fermeture
+  const closeButton = document.createElement('button');
+  closeButton.innerHTML = '&times;';
+  closeButton.style.position = 'absolute';
+  closeButton.style.top = '0.5rem';
+  closeButton.style.right = '0.5rem';
+  closeButton.style.backgroundColor = 'transparent';
+  closeButton.style.border = 'none';
+  closeButton.style.fontSize = '1rem';
+  closeButton.style.cursor = 'pointer';
+  closeButton.style.color = 'inherit';
+  closeButton.onclick = () => {
+    removeToast(toast, toastContainer);
+  };
+  toast.style.position = 'relative';
+  toast.appendChild(closeButton);
+  
   // Ajouter le toast au conteneur
   toastContainer.appendChild(toast);
   
@@ -107,17 +128,22 @@ const createToast = (message: string, type: 'success' | 'error' | 'info' | 'warn
   // Supprimer le toast après un délai
   const duration = options?.duration || 5000;
   setTimeout(() => {
-    toast.style.animation = 'slideOut 0.3s ease-in forwards';
-    setTimeout(() => {
-      if (toastContainer.contains(toast)) {
-        toastContainer.removeChild(toast);
-      }
-      // Supprimer le conteneur s'il est vide
-      if (toastContainer.childNodes.length === 0) {
-        document.body.removeChild(toastContainer);
-      }
-    }, 300);
+    removeToast(toast, toastContainer);
   }, duration);
+};
+
+// Fonction pour supprimer proprement un toast
+const removeToast = (toast: HTMLElement, container: HTMLElement) => {
+  toast.style.animation = 'slideOut 0.3s ease-in forwards';
+  setTimeout(() => {
+    if (container.contains(toast)) {
+      container.removeChild(toast);
+    }
+    // Supprimer le conteneur s'il est vide
+    if (container.childNodes.length === 0 && document.body.contains(container)) {
+      document.body.removeChild(container);
+    }
+  }, 300);
 };
 
 export const toast = {

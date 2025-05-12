@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { authService } from '@/lib/firebase/auth-service';
@@ -16,7 +16,6 @@ type LoginFormValues = {
 };
 
 const LoginForm = () => {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirectTo') || '/';
   
@@ -79,7 +78,8 @@ const LoginForm = () => {
           }
         }
         
-        router.push(redirectTo);
+        // Utiliser window.location pour forcer une navigation complète
+        window.location.href = redirectTo;
       }, 500);
     } catch (error) {
       console.error("❌ Erreur lors de la connexion:", error);

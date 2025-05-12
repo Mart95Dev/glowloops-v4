@@ -6,10 +6,8 @@ import { authService } from '@/lib/firebase/auth-service';
 import { extractFirebaseErrorCode, getAuthErrorMessage } from '@/lib/utils/auth-error-utils';
 import { toast } from '@/lib/utils/toast';
 import { Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 
 const SocialLoginOptions = () => {
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Gérer la connexion avec Google
@@ -19,12 +17,17 @@ const SocialLoginOptions = () => {
     try {
       await authService.loginWithGoogle();
       toast.success('Connexion réussie !');
-      router.push('/');
+      
+      // Ajouter un délai avant la redirection
+      setTimeout(() => {
+        console.log("⏱️ Délai de redirection terminé après Google Login, navigation vers la page d'accueil");
+        // Utiliser window.location pour forcer une navigation complète
+        window.location.href = '/';
+      }, 500);
     } catch (error) {
       const errorCode = extractFirebaseErrorCode(error);
       const errorMessage = getAuthErrorMessage(errorCode);
       toast.error(errorMessage);
-    } finally {
       setIsSubmitting(false);
     }
   };

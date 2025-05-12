@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, RefObject } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/firebase/auth';
 import { useCartStore } from '@/lib/store/cart-store';
-import { useFavoritesCount } from '@/lib/store/favoritesStore';
+import { useSyncNavbarFavorites } from '@/lib/hooks/use-sync-favorites';
 import { toast } from '@/lib/utils/toast';
 import { authService } from '@/lib/firebase/auth-service';
 import { navigationData } from '../../lib/data/navigation-data';
@@ -131,7 +131,7 @@ export default function Navbar({ isMobileMenuOpen: propsMobileMenuOpen, onMobile
   const totalItems = useCartStore((state) => state.totalItems);
   
   const { user } = useAuth();
-  const { count: favoritesCount } = useFavoritesCount();
+  const { count: favoritesCount } = useSyncNavbarFavorites();
   
   const userMenuRef = useRef<HTMLDivElement>(null);
 

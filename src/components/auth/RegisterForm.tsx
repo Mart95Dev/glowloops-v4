@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -45,8 +44,6 @@ interface PasswordCriteria {
 }
 
 const RegisterForm = () => {
-  const router = useRouter();
-  
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -174,12 +171,18 @@ const RegisterForm = () => {
       });
       
       toast.success('Inscription réussie !');
-      router.push('/');
+      
+      // Ajouter un délai avant la redirection pour s'assurer que le toast est affiché
+      // et que Firebase a fini d'initialiser la session
+      setTimeout(() => {
+        console.log("⏱️ Délai de redirection terminé, navigation vers la page d'accueil");
+        // Utiliser window.location pour forcer une navigation complète en cas de problème avec le routeur Next.js
+        window.location.href = '/';
+      }, 1000);
     } catch (error) {
       const errorCode = extractFirebaseErrorCode(error);
       const errorMessage = getAuthErrorMessage(errorCode);
       toast.error(errorMessage);
-    } finally {
       setIsSubmitting(false);
     }
   };
