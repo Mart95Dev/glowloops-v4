@@ -6,10 +6,11 @@ import { ProductDisplay } from '@/lib/types/product';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
-import { HiChevronLeft, HiChevronRight, HiOutlineHeart, HiHeart, HiOutlineShoppingBag } from 'react-icons/hi';
+import { HiChevronLeft, HiChevronRight, HiOutlineShoppingBag } from 'react-icons/hi';
 import { useInView } from 'react-intersection-observer';
 import { useCartStore } from '@/lib/store/cart-store';
 import { toast } from '@/lib/utils/toast';
+import { FavoriteToggle } from '@/components/account/favorite-toggle';
 
 interface ModernNewArrivalsSliderProps {
   products: ProductDisplay[];
@@ -18,20 +19,12 @@ interface ModernNewArrivalsSliderProps {
 
 export default function ModernNewArrivalsSlider({ products, title }: ModernNewArrivalsSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFavorite, setIsFavorite] = useState<Record<string, boolean>>({});
   const sliderRef = useRef<HTMLDivElement>(null);
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
   });
   const { addItem } = useCartStore();
-
-  const toggleFavorite = (productId: string) => {
-    setIsFavorite(prev => ({
-      ...prev,
-      [productId]: !prev[productId]
-    }));
-  };
 
   const nextSlide = () => {
     if (currentIndex < products.length - 1) {
@@ -178,16 +171,14 @@ export default function ModernNewArrivalsSlider({ products, title }: ModernNewAr
                         sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                       />
                     </Link>
-                    <button
-                      onClick={() => toggleFavorite(product.id)}
-                      className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-white transition-all duration-300"
-                    >
-                      {isFavorite[product.id] ? (
-                        <HiHeart className="h-5 w-5 text-red-500" />
-                      ) : (
-                        <HiOutlineHeart className="h-5 w-5 text-gray-600" />
-                      )}
-                    </button>
+                    <FavoriteToggle
+                      productId={product.id}
+                      productName={product.name}
+                      productPrice={product.price}
+                      productImage={product.imageUrl}
+                      size="md"
+                      className="absolute top-3 right-3"
+                    />
                     {product.isNew && (
                       <span className="absolute top-3 left-3 bg-menthe text-white text-xs px-2 py-1 rounded-full">
                         Nouveau

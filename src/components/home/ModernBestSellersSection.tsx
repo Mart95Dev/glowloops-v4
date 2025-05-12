@@ -6,10 +6,10 @@ import { ProductDisplay } from '@/lib/types/product';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
-import { useState } from 'react';
-import { HiOutlineHeart, HiHeart, HiOutlineShoppingBag } from 'react-icons/hi';
+import { HiOutlineShoppingBag } from 'react-icons/hi';
 import { useCartStore } from '@/lib/store/cart-store';
 import { toast } from '@/lib/utils/toast';
+import { FavoriteToggle } from '@/components/account/favorite-toggle';
 
 interface ModernBestSellersSectionProps {
   products: ProductDisplay[];
@@ -27,15 +27,7 @@ export default function ModernBestSellersSection({
     threshold: 0.1,
   });
 
-  const [isFavorite, setIsFavorite] = useState<Record<string, boolean>>({});
   const { addItem } = useCartStore();
-
-  const toggleFavorite = (productId: string) => {
-    setIsFavorite(prev => ({
-      ...prev,
-      [productId]: !prev[productId]
-    }));
-  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -119,16 +111,14 @@ export default function ModernBestSellersSection({
                     sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   />
                 </Link>
-                <button
-                  onClick={() => toggleFavorite(product.id)}
-                  className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm p-2 rounded-full shadow-sm hover:bg-white transition-all duration-300"
-                >
-                  {isFavorite[product.id] ? (
-                    <HiHeart className="h-5 w-5 text-red-500" />
-                  ) : (
-                    <HiOutlineHeart className="h-5 w-5 text-gray-600" />
-                  )}
-                </button>
+                <FavoriteToggle
+                  productId={product.id}
+                  productName={product.name}
+                  productPrice={product.price}
+                  productImage={product.imageUrl}
+                  size="md"
+                  className="absolute top-3 right-3"
+                />
                 {product.popularity > 8 && (
                   <span className="absolute top-3 left-3 bg-dore text-white text-xs px-2 py-1 rounded-full">
                     Best-seller

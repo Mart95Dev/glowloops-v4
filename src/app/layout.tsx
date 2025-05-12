@@ -5,6 +5,7 @@ import "./globals.css";
 import { Toaster } from '@/components/ui/toast-utils';
 import { Toaster as SonnerToaster } from 'sonner';
 import AuthInitializer from './_app';
+import FavoritesSync from '@/components/global/favorites-sync';
 
 // Désactiver le client-side JavaScript pour les composants qui ne sont pas explicitement marqués comme client
 export const dynamic = 'force-static';
@@ -42,6 +43,7 @@ export default function RootLayout({
         className={`${playfairDisplay.variable} ${poppins.variable} antialiased`}
       >
         <AuthInitializer />
+        <FavoritesSync />
         <Header />
         <main className="pt-32 pb-16 min-h-screen">{children}</main>
         <Footer />

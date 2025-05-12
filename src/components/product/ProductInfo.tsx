@@ -9,6 +9,8 @@ import { Separator } from '@/components/ui/separator';
 // import { QuantitySelector } from '@/components/ui/QuantitySelector';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/Input';
+import { AddToCartButton } from './AddToCartButton';
+import { FavoriteToggle } from '@/components/account/favorite-toggle';
 
 interface ProductInfoProps {
   product: Product;
@@ -482,6 +484,29 @@ export default function ProductInfo({
           </svg>
           <span>Paiement sécurisé</span>
         </div>
+      </div>
+
+      {/* Dans la section des boutons d'action, après le bouton AddToCartButton */}
+      <div className="flex flex-wrap gap-3 mt-6">
+        <AddToCartButton 
+          productId={product.id}
+          name={product.basic_info.name}
+          price={finalPrice}
+          image={product.media?.mainImageUrl || ''}
+          selectedVariant={selectedShipping}
+          quantity={quantity}
+          setQuantity={onQuantityChange}
+        />
+        
+        <FavoriteToggle
+          productId={product.id}
+          productName={product.basic_info.name}
+          productPrice={finalPrice}
+          productImage={product.media?.mainImageUrl || ''}
+          size="md"
+          displayStyle="button" 
+          color="lilas"
+        />
       </div>
     </div>
   );

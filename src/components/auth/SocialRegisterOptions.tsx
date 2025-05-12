@@ -7,10 +7,8 @@ import { userService } from '@/lib/services/user-service';
 import { extractFirebaseErrorCode, getAuthErrorMessage } from '@/lib/utils/auth-error-utils';
 import { toast } from '@/lib/utils/toast';
 import { Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 
 const SocialRegisterOptions = () => {
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Gérer l'inscription avec Google
@@ -25,12 +23,17 @@ const SocialRegisterOptions = () => {
       await userService.createUserDocument(firebaseUser);
       
       toast.success('Inscription réussie !');
-      router.push('/');
+      
+      // Ajouter un délai avant la redirection
+      setTimeout(() => {
+        console.log("⏱️ Délai de redirection terminé après Google Sign-in, navigation vers la page d'accueil");
+        // Utiliser window.location pour forcer une navigation complète
+        window.location.href = '/';
+      }, 1000);
     } catch (error) {
       const errorCode = extractFirebaseErrorCode(error);
       const errorMessage = getAuthErrorMessage(errorCode);
       toast.error(errorMessage);
-    } finally {
       setIsSubmitting(false);
     }
   };
