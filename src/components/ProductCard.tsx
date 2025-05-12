@@ -1,6 +1,7 @@
 // Composant de carte produit
 import { ProductDisplay } from '@/lib/types/product';
 import Image from 'next/image';
+import { FavoriteToggle } from '@/components/account/favorite-toggle';
 
 interface ProductCardProps {
   product: ProductDisplay;
@@ -23,6 +24,18 @@ export const ProductCard = ({ product }: ProductCardProps) => {
             console.log('Erreur de chargement d\'image pour:', product.name);
           }}
         />
+        
+        {/* Bouton de favoris */}
+        <div className="absolute top-2 right-2 z-10">
+          <FavoriteToggle
+            productId={product.id}
+            productName={product.name}
+            productPrice={product.price}
+            productImage={product.imageUrl || 'https://via.placeholder.com/300x300?text=Image+non+disponible'}
+            size="md"
+            color="lilas"
+          />
+        </div>
       </div>
       
       <div className="p-4">

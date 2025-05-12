@@ -54,6 +54,23 @@ const defaultWishlistSettings: WishlistSettings = {
   updatedAt: Date.now()
 };
 
+// Fonction utilitaire pour déclencher un événement de mise à jour des favoris
+const dispatchFavoritesCountEvent = (count: number, action?: string, productId?: string) => {
+  if (typeof window !== 'undefined') {
+    // Déclencher l'événement favoritesCountUpdated
+    window.dispatchEvent(new CustomEvent('favoritesCountUpdated', {
+      detail: { count, action, productId }
+    }));
+    
+    // Déclencher aussi l'événement générique favoritesUpdated
+    window.dispatchEvent(new CustomEvent('favoritesUpdated', {
+      detail: { count, action, productId }
+    }));
+    
+    console.log(`Favoris mis à jour: ${count} items, action: ${action || 'n/a'}`);
+  }
+};
+
 // Création du store avec persistance
 export const useFavoritesStore = create<FavoritesState>()(
   persist(
@@ -67,25 +84,22 @@ export const useFavoritesStore = create<FavoritesState>()(
         const currentUser = auth.currentUser;
         const newItem: FavoriteItem = { ...item, dateAdded: Date.now() };
         
+        // Vérifier si l'article existe déjà
+        const itemExists = get().items.some((i) => i.id === item.id);
+        if (itemExists) {
+          return; // Ne rien faire si l'article existe déjà
+        }
+        
         // Mise à jour locale
         set((state) => {
-          // Vérifier si l'article existe déjà
-          if (state.items.some((i) => i.id === item.id)) {
-            return state; // Ne rien faire si l'article existe déjà
-          }
-          
           const newItems = [...state.items, newItem];
           const newCount = newItems.length;
-          
-          // Notifier le changement via un événement personnalisé
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('favoritesCountUpdated', {
-              detail: { count: newCount, action: 'add', productId: item.id }
-            }));
-          }
-          
           return { items: newItems, count: newCount };
         });
+        
+        // Émettre l'événement de mise à jour immédiatement après la mise à jour de l'état
+        const currentCount = get().count;
+        dispatchFavoritesCountEvent(currentCount, 'add', item.id);
         
         // Synchronisation avec Firebase si l'utilisateur est connecté
         if (currentUser) {
@@ -120,16 +134,12 @@ export const useFavoritesStore = create<FavoritesState>()(
           removedItem = state.items.find((item) => item.id === id);
           const newItems = state.items.filter((item) => item.id !== id);
           const newCount = newItems.length;
-          
-          // Notifier le changement via un événement personnalisé
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('favoritesCountUpdated', {
-              detail: { count: newCount, action: 'remove', productId: id }
-            }));
-          }
-          
           return { items: newItems, count: newCount };
         });
+        
+        // Émettre l'événement de mise à jour immédiatement après la mise à jour de l'état
+        const currentCount = get().count;
+        dispatchFavoritesCountEvent(currentCount, 'remove', id);
         
         // Synchronisation avec Firebase si l'utilisateur est connecté
         if (currentUser && removedItem) {
@@ -152,12 +162,8 @@ export const useFavoritesStore = create<FavoritesState>()(
         // Mise à jour locale
         set({ items: [], count: 0 });
         
-        // Notifier le changement via un événement personnalisé
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('favoritesCountUpdated', {
-            detail: { count: 0, action: 'clear' }
-          }));
-        }
+        // Émettre l'événement de mise à jour
+        dispatchFavoritesCountEvent(0, 'clear');
         
         // Synchronisation avec Firebase si l'utilisateur est connecté
         if (currentUser) {
@@ -178,13 +184,13 @@ export const useFavoritesStore = create<FavoritesState>()(
         const currentItems = get().items;
         const newCount = currentItems.length;
         
-        set({ count: newCount });
-        
-        // Notifier le changement via un événement personnalisé
-        if (typeof window !== 'undefined' && get().count !== newCount) {
-          window.dispatchEvent(new CustomEvent('favoritesCountUpdated', {
-            detail: { count: newCount, action: 'refresh' }
-          }));
+        const oldCount = get().count;
+        if (oldCount !== newCount) {
+          // Mettre à jour le compteur uniquement s'il a changé
+          set({ count: newCount });
+          
+          // Émettre l'événement de mise à jour
+          dispatchFavoritesCountEvent(newCount, 'refresh');
         }
         
         return Promise.resolve();
@@ -205,13 +211,12 @@ export const useFavoritesStore = create<FavoritesState>()(
               const newItems = data.items || [];
               const newCount = newItems.length;
               
+              const oldCount = get().count;
               set({ items: newItems, count: newCount });
               
-              // Notifier le changement via un événement personnalisé
-              if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('favoritesCountUpdated', {
-                  detail: { count: newCount, action: 'sync' }
-                }));
+              // Émettre l'événement de mise à jour seulement si le compteur a changé
+              if (oldCount !== newCount) {
+                dispatchFavoritesCountEvent(newCount, 'sync');
               }
             }
 

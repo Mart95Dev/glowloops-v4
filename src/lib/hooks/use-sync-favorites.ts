@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/firebase/auth';
 import { useFavoritesStore } from '@/lib/store/favoritesStore';
 
@@ -32,14 +32,8 @@ export function useSyncFavorites() {
     
     window.addEventListener('favoritesUpdated', handleFavoritesUpdated);
     
-    // Vérifier régulièrement si les favoris ont changé
-    const intervalId = setInterval(() => {
-      refreshCount();
-    }, 1000); // Vérifier toutes les secondes
-    
     return () => {
       window.removeEventListener('favoritesUpdated', handleFavoritesUpdated);
-      clearInterval(intervalId);
     };
   }, [user, syncWithFirebase, refreshCount]);
   
@@ -52,49 +46,44 @@ export function useSyncFavorites() {
  * Utilisé uniquement dans le composant Navbar
  */
 export function useSyncNavbarFavorites() {
-  const { items, count, refreshCount } = useFavoritesStore();
+  const { count, refreshCount } = useFavoritesStore();
+  const [localCount, setLocalCount] = useState(count);
+  
+  // Mettre à jour le compteur local lorsque le store change
+  useEffect(() => {
+    setLocalCount(count);
+  }, [count]);
   
   useEffect(() => {
-    // Mettre à jour le compteur au changement des items
+    // Rafraîchir le compteur au montage du composant
     refreshCount();
     
     // Écouter les événements personnalisés pour les favoris
     const handleFavoritesUpdated = (event: Event) => {
-      // Rafraîchir le compteur immédiatement
-      refreshCount();
+      const customEvent = event as CustomEvent;
       
-      // Si l'événement contient des détails, on peut les utiliser pour optimiser
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail && customEvent.detail.action) {
-        console.log(`Action favoris: ${customEvent.detail.action} pour le produit: ${customEvent.detail.productId}`);
-      }
-    };
-    
-    // Écouter l'événement spécifique de mise à jour du compteur
-    const handleCountUpdated = (event: Event) => {
-      const customEvent = event as CustomEvent;
+      // Si l'événement contient un compteur, mettre à jour directement
       if (customEvent.detail && customEvent.detail.count !== undefined) {
-        console.log(`Mise à jour du compteur de favoris: ${customEvent.detail.count}`);
-        // On pourrait directement mettre à jour le compteur ici si nécessaire
-        refreshCount();
+        setLocalCount(customEvent.detail.count);
+      } else {
+        // Sinon, rafraîchir le compteur depuis le store
+        refreshCount().then(() => {
+          // Utiliser le compteur du store après la mise à jour
+          setLocalCount(useFavoritesStore.getState().count);
+        });
       }
     };
     
-    // Écouter plus de types d'événements pour être plus réactif
+    // Ajouter des écouteurs pour tous les événements liés aux favoris
     window.addEventListener('favoritesUpdated', handleFavoritesUpdated);
-    window.addEventListener('favoritesCountUpdated', handleCountUpdated);
+    window.addEventListener('favoritesCountUpdated', handleFavoritesUpdated);
     
-    // Vérifier le compteur après un court délai pour s'assurer qu'il est à jour
-    const timeoutId = setTimeout(() => {
-      refreshCount();
-    }, 300);
-    
+    // Nettoyer les écouteurs lors du démontage du composant
     return () => {
       window.removeEventListener('favoritesUpdated', handleFavoritesUpdated);
-      window.removeEventListener('favoritesCountUpdated', handleCountUpdated);
-      clearTimeout(timeoutId);
+      window.removeEventListener('favoritesCountUpdated', handleFavoritesUpdated);
     };
-  }, [items, refreshCount]);
+  }, [refreshCount]);
   
-  return { count };
+  return { count: localCount };
 } 

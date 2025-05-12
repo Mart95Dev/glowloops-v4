@@ -6,10 +6,10 @@ import { ProductDisplay } from '@/lib/types/product';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
-import { useState } from 'react';
-import { HiOutlineHeart, HiHeart, HiOutlineShoppingBag, HiStar } from 'react-icons/hi';
+import { HiOutlineShoppingBag, HiStar } from 'react-icons/hi';
 import { useCartStore } from '@/lib/store/cart-store';
 import { toast } from '@/lib/utils/toast';
+import { FavoriteToggle } from '@/components/account/favorite-toggle';
 
 interface ProductListProps {
   products: ProductDisplay[];
@@ -21,15 +21,7 @@ export default function ProductList({ products }: ProductListProps) {
     threshold: 0.1,
   });
 
-  const [favorites, setFavorites] = useState<Record<string, boolean>>({});
   const { addItem } = useCartStore();
-
-  const toggleFavorite = (productId: string) => {
-    setFavorites(prev => ({
-      ...prev,
-      [productId]: !prev[productId]
-    }));
-  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -145,17 +137,15 @@ export default function ProductList({ products }: ProductListProps) {
                   <Link href={`/produits/${product.id}`}>Voir détails</Link>
                 </Button>
                 
-                <button
-                  onClick={() => toggleFavorite(product.id)}
+                <FavoriteToggle
+                  productId={product.id}
+                  productName={product.name}
+                  productPrice={product.price}
+                  productImage={product.imageUrl}
+                  size="sm"
+                  displayStyle="icon"
                   className="p-2 rounded-full border border-gray-300 hover:bg-gray-50 transition-colors"
-                  aria-label={favorites[product.id] ? "Retirer des favoris" : "Ajouter aux favoris"}
-                >
-                  {favorites[product.id] ? (
-                    <HiHeart className="h-5 w-5 text-red-500" />
-                  ) : (
-                    <HiOutlineHeart className="h-5 w-5 text-gray-600" />
-                  )}
-                </button>
+                />
               </div>
             </div>
           </div>

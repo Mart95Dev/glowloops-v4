@@ -5,40 +5,30 @@ export const dynamic = 'force-static';
 export const dynamicParams = false;
 
 import { Suspense, useState, useEffect } from 'react';
-import { getNewArrivals, getPopularProducts } from '@/lib/services/product-service';
+import { getNewArrivals, getPopularProducts, convertToProductDisplay } from '@/lib/services/product-service';
 import { getActiveCollections } from '@/lib/services/collection-service';
 import { getRecentInstagramPosts } from '@/lib/services/instagram-service';
 import { getFrequentFaqs } from '@/lib/services/faq-service';
 import { getActiveAdvantages } from '@/lib/services/advantages-service';
-import { convertToProductDisplay } from '@/lib/services/product-service';
 import { bannerService } from '@/lib/services/firestore-service';
 import { AdvantageIcon } from '@/components/ui/AdvantageIcon';
+import ModernNewArrivalsSlider from '@/components/home/ModernNewArrivalsSlider';
+import ModernBestSellersSection from '@/components/home/ModernBestSellersSection';
 import {
   ModernHeroBanner,
   ModernCollectionsGrid,
-  ModernNewArrivalsSlider,
   ModernInstagramSection,
-  ModernBestSellersSection,
   ModernFaqAccordion,
   ModernAdvantagesBanner,
   ModernNewsletterForm
 } from '@/components/home/modern-index';
 import { CartTester } from '@/components/test/CartTester';
 import { ProductDisplay } from '@/lib/types/product';
-// Import des interfaces pour les types
 import type { Collection } from '@/lib/services/collection-service';
 import type { InstagramPost } from '@/lib/services/instagram-service';
 import type { FaqItem } from '@/lib/services/faq-service';
 import type { Advantage } from '@/lib/services/advantages-service';
 import type { Banner } from '@/lib/services/firestore-service';
-// import Hero from '@/components/home/Hero';
-// import Reviews from '@/components/home/Reviews';
-// import {
-//   ModernShowcase,
-//   ModernValuePropositions,
-//   ModernCollectionsDisplay,
-//   ModernInstagramGallery
-// } from '@/components/home/modern-index';
 
 export default function Home() {
   // État pour stocker les données
@@ -132,28 +122,19 @@ export default function Home() {
           )}
         </Suspense>
 
-        {/* Nouveautés - Slider moderne avec animations */}
-        <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
-          <ModernNewArrivalsSlider 
-            products={newArrivals}
-            title="Nos nouveautés"
-          />
-        </Suspense>
+        {/* Les autres sections de la page d'accueil */}
+        <ModernNewArrivalsSlider products={newArrivals} title="Nos nouveautés" />
+        <ModernBestSellersSection 
+          products={popularProducts} 
+          title="Nos best-sellers" 
+          subtitle="Découvrez nos produits les plus populaires, plébiscités par notre communauté"
+        />
 
         {/* Collections - Grille moderne avec effets au survol */}
         <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
           <ModernCollectionsGrid 
             collections={collectionsData}
             title="Nos collections"
-          />
-        </Suspense>
-
-        {/* Produits populaires - Grille moderne avec effets au survol */}
-        <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
-          <ModernBestSellersSection 
-            products={popularProducts}
-            title="Nos best-sellers"
-            subtitle="Découvrez nos bijoux les plus appréciés par nos clientes"
           />
         </Suspense>
 
