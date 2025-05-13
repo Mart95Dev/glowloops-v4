@@ -12,7 +12,7 @@ export const addressSchema = z.object({
   telephone: z.string().regex(/^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/, { 
     message: 'Le numéro de téléphone n\'est pas valide' 
   }),
-  isDefault: z.boolean().default(false),
+  isDefault: z.boolean().optional().default(false),
 });
 
 export type AddressFormValues = z.infer<typeof addressSchema>;

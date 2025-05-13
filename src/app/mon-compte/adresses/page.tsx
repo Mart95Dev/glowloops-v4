@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/firebase/auth';
 import { addressService } from '@/lib/services/address-service';
 import { useUserStore, UserAddress } from '@/lib/store/user-store';
@@ -15,20 +15,7 @@ export default function AdressesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (profile) {
-      setAddresses(profile.addresses || []);
-      setIsLoading(false);
-    }
-  }, [profile]);
-
-  useEffect(() => {
-    if (user && !profile) {
-      fetchAddresses();
-    }
-  }, [user, profile]);
-
-  const fetchAddresses = async () => {
+  const fetchAddresses = useCallback(async () => {
     if (!user) return;
     
     setIsLoading(true);
@@ -51,7 +38,20 @@ export default function AdressesPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, profile, setProfile]);
+
+  useEffect(() => {
+    if (profile) {
+      setAddresses(profile.addresses || []);
+      setIsLoading(false);
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    if (user && !profile) {
+      fetchAddresses();
+    }
+  }, [user, profile, fetchAddresses]);
 
   const handleAddAddress = async (addressData: AddressFormValues) => {
     if (!user) return;
