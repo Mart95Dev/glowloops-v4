@@ -43,7 +43,7 @@ export const useCouponStore = create<CouponStore>((set, get) => ({
     }
   },
 
-  addCoupon: async (_newCoupon) => {
+  addCoupon: async () => {
     // Cette fonctionnalité sera implémentée côté admin
     // On pourrait créer une fonction pour ajouter un coupon manuellement
     throw new Error('Non implémenté');
