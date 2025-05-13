@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRequireAuth } from '@/lib/hooks/use-require-auth';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { User, ShoppingBag, Heart, MapPin, Bell, LogOut, Menu, X } from 'lucide-react';
+import { User, ShoppingBag, Heart, MapPin, Bell, LogOut, Menu, X, Ticket } from 'lucide-react';
 import { authService } from '@/lib/firebase/auth-service';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
@@ -102,6 +102,11 @@ export default function AccountLayout({
       label: 'Mes adresses',
       href: '/mon-compte/adresses',
       icon: <MapPin className="w-5 h-5" />,
+    },
+    {
+      label: 'Bons de réduction',
+      href: '/mon-compte/coupons',
+      icon: <Ticket className="w-5 h-5" />,
     },
     {
       label: 'Notifications',

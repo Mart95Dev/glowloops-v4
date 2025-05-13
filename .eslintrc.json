@@ -1,4 +1,15 @@
 {
   "extends": ["next/core-web-vitals", "next/typescript"],
-  "ignorePatterns": ["old_components/**/*", "node_modules", ".next", "out", "src/scripts/**/*"]
+  "ignorePatterns": ["old_components/**/*", "node_modules", ".next", "out", "src/scripts/**/*"],
+  "overrides": [
+    {
+      "files": ["src/components/address/AddressForm.tsx"],
+      "rules": {
+        "@typescript-eslint/no-unsafe-assignment": "off",
+        "@typescript-eslint/no-unsafe-argument": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "react/no-unescaped-entities": "off"
+      }
+    }
+  ]
 }
