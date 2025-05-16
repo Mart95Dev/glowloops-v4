@@ -27,8 +27,6 @@ const nextConfig = {
     config.resolve.fallback = { fs: false, path: false };
     return config;
   },
-  // Exclure les fichiers de debug de la compilation en production
-  distDir: process.env.NODE_ENV === 'production' ? '.next-production' : '.next',
   eslint: {
     // Ignorer les erreurs ESLint en production pour les fichiers de debug
     ignoreDuringBuilds: true,
@@ -48,4 +46,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = nextConfig; 
