@@ -27,6 +27,13 @@ service firebase.storage {
       allow write: if isAdmin(); // Seuls les administrateurs peuvent modifier
     }
     
+    // Règles pour les images des catégories
+    match /categories/{allPaths=**} {
+      allow read: if true; // Tout le monde peut lire les images des catégories
+      allow write: if true; // Temporairement autorisé pour les tests
+      // En production: allow write: if isAdmin();
+    }
+    
     // Règles pour les images des produits
     match /products/{allPaths=**} {
       allow read: if true; // Tout le monde peut lire les images des produits

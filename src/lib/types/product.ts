@@ -126,18 +126,30 @@ export const ProductSchema = z.object({
 });
 
 // Type TypeScript dérivé du schéma Zod
-export type Product = z.infer<typeof ProductSchema>;
+export type ProductZod = z.infer<typeof ProductSchema>;
 
-// Type simplifié pour l'affichage des produits
-export type ProductDisplay = {
+// Interface pour les produits utilisée dans les pages de catégorie
+export interface Product {
   id: string;
   name: string;
   description: string;
   price: number;
-  imageUrl: string;
-  category: string;
-  isNew: boolean;
-  popularity: number;
-  collection: string;
-  galleryImages: string[];
-};
+  originalPrice?: number;
+  images: string[];
+  categories?: string[];
+  styles?: string[];
+  vibes?: string[];
+  materials?: string[];
+  isNew?: boolean;
+  discount?: number;
+  popularity?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Interface pour l'affichage des produits avec les propriétés supplémentaires
+export interface ProductDisplay extends Product {
+  isInCart?: boolean;
+  isInWishlist?: boolean;
+  quantity?: number;
+}

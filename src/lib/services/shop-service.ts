@@ -3,6 +3,30 @@ import { db } from '../firebase/firebase-config';
 import { ProductDisplay } from '../types/product';
 import { convertFirestoreDocToProduct, convertToProductDisplay } from './product-service';
 
+// Interface pour le produit Firestore avec les propriétés manquantes
+interface FirestoreProduct {
+  id: string;
+  basic_info?: {
+    name?: string;
+    categoryId?: string;
+    tags?: string[];
+    createdAt?: {
+      seconds: number;
+      nanoseconds: number;
+    };
+  };
+  pricing?: {
+    regular_price?: number;
+    sale_price?: number;
+  };
+  specifications?: {
+    materials?: string[];
+  };
+  popularity?: number;
+  vibes?: Record<string, boolean> | string[];
+  status?: string;
+}
+
 // Type personnalisé pour nos opérateurs de filtre étendus
 type CustomFilterOp = WhereFilterOp | 'in-style' | 'in-vibe' | 'in-material';
 
@@ -127,7 +151,7 @@ export const getFilteredProducts = async (
       .map(doc => convertFirestoreDocToProduct(doc));
     
     // Déterminer le prix maximum pour le slider
-    const maxPrice = Math.max(...products.map(p => p.pricing?.regular_price || 0));
+    const maxPrice = Math.max(...products.map(p => (p as FirestoreProduct).pricing?.regular_price || 0));
     console.log(`Prix maximum trouvé: ${maxPrice} EUR`);
     
     // Application des filtres en mémoire
@@ -153,27 +177,41 @@ export const getFilteredProducts = async (
         return filtersToApply.every(filter => {
           // Filtre de style simplifié
           if (filter.field === 'style' && filter.operator === 'in-style') {
-            const tags = product.basic_info?.tags || [];
-            const categoryId = product.basic_info?.categoryId || '';
+            const tags = (product as FirestoreProduct).basic_info?.tags || [];
+            const categoryId = (product as FirestoreProduct).basic_info?.categoryId || '';
             const styleValues = Array.isArray(filter.value) 
               ? filter.value as string[] 
               : [filter.value as string];
             
-            // Vérifier si au moins un style correspond aux tags ou à la catégorie
+            // Créer des variantes normalisées pour chaque style
+            const normalizedStyles: string[] = [];
+            
             for (const style of styleValues) {
               if (typeof style !== 'string') continue;
               
-              // Vérifier dans les tags
-              for (const tag of tags) {
-                if (typeof tag === 'string' && tag.toLowerCase() === style.toLowerCase()) {
-                  return true;
-                }
-              }
+              // Ajouter le style original et normalisé (sans accents)
+              normalizedStyles.push(style.toLowerCase());
+              normalizedStyles.push(
+                style.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+              );
               
-              // Vérifier la catégorie
-              if (categoryId.toLowerCase() === style.toLowerCase()) {
+              // Ajouter des variantes spécifiques si nécessaires
+              if (style.toLowerCase() === 'créoles' || style.toLowerCase() === 'creoles') {
+                normalizedStyles.push('créoles');
+                normalizedStyles.push('creoles');
+              }
+            }
+            
+            // Vérifier dans les tags
+            for (const tag of tags) {
+              if (typeof tag === 'string' && normalizedStyles.includes(tag.toLowerCase())) {
                 return true;
               }
+            }
+            
+            // Vérifier la catégorie
+            if (normalizedStyles.includes(categoryId.toLowerCase())) {
+              return true;
             }
             
             return false;
@@ -181,7 +219,7 @@ export const getFilteredProducts = async (
           
           // Filtre de vibe simplifié
           if (filter.field === 'vibe' && filter.operator === 'in-vibe') {
-            const vibes = product.vibes;
+            const vibes = (product as FirestoreProduct).vibes;
             const vibeValues = Array.isArray(filter.value) 
               ? filter.value as string[] 
               : [filter.value as string];
@@ -212,7 +250,7 @@ export const getFilteredProducts = async (
           
           // Filtre de matériau simplifié
           if (filter.field === 'material' && filter.operator === 'in-material') {
-            const materials = product.specifications?.materials || [];
+            const materials = (product as FirestoreProduct).specifications?.materials || [];
             const materialValues = Array.isArray(filter.value) 
               ? filter.value as string[] 
               : [filter.value as string];
@@ -299,46 +337,39 @@ export const getFilteredProducts = async (
       case 'newest':
         // Tri par date de création (si disponible dans basic_info) ou par nom
         products.sort((a, b) => {
-          if (a.basic_info?.createdAt && b.basic_info?.createdAt) {
-            // Conversion des timestamps Firestore en dates JavaScript
-            const dateA = a.basic_info.createdAt.seconds ? 
-              new Date(a.basic_info.createdAt.seconds * 1000) : new Date(0);
-            const dateB = b.basic_info.createdAt.seconds ? 
-              new Date(b.basic_info.createdAt.seconds * 1000) : new Date(0);
-            return dateB.getTime() - dateA.getTime();
-          } else {
-            return (a.basic_info?.name || '').localeCompare(b.basic_info?.name || '');
-          }
+          const dateA = (a as FirestoreProduct).basic_info?.createdAt?.seconds || 0;
+          const dateB = (b as FirestoreProduct).basic_info?.createdAt?.seconds || 0;
+          return dateB && dateA ? new Date(dateB * 1000).getTime() - new Date(dateA * 1000).getTime() : 0;
         });
         break;
       case 'price-asc':
         // Tri par prix croissant
         products.sort((a, b) => {
-          const priceA = a.pricing?.regular_price || 0;
-          const priceB = b.pricing?.regular_price || 0;
+          const priceA = (a as FirestoreProduct).pricing?.regular_price || 0;
+          const priceB = (b as FirestoreProduct).pricing?.regular_price || 0;
           return priceA - priceB;
         });
         break;
       case 'price-desc':
         // Tri par prix décroissant
         products.sort((a, b) => {
-          const priceA = a.pricing?.regular_price || 0;
-          const priceB = b.pricing?.regular_price || 0;
+          const priceA = (a as FirestoreProduct).pricing?.regular_price || 0;
+          const priceB = (b as FirestoreProduct).pricing?.regular_price || 0;
           return priceB - priceA;
         });
         break;
       case 'popularity':
         // Tri par popularité (si disponible) ou par nom
         products.sort((a, b) => {
-          const popularityA = a.popularity || 0;
-          const popularityB = b.popularity || 0;
+          const popularityA = (a as FirestoreProduct).popularity || 0;
+          const popularityB = (b as FirestoreProduct).popularity || 0;
           return popularityB - popularityA;
         });
         break;
       default:
         // Tri par nom par défaut
         products.sort((a, b) => {
-          return (a.basic_info?.name || '').localeCompare(b.basic_info?.name || '');
+          return ((a as FirestoreProduct).basic_info?.name || '').localeCompare((b as FirestoreProduct).basic_info?.name || '');
         });
     }
     
@@ -392,11 +423,11 @@ export const getProductsByType = async (
       case 'style':
         // Filtrer par style (dans les tags ou la catégorie)
         products = products.filter(product => {
-          const tags = product.basic_info?.tags || [];
-          const categoryId = product.basic_info?.categoryId || '';
+          const tags = (product as FirestoreProduct).basic_info?.tags || [];
+          const categoryId = (product as FirestoreProduct).basic_info?.categoryId || '';
           
           // Vérifier dans les tags
-          const matchesTag = tags.some(tag => 
+          const matchesTag = tags.some((tag: unknown) => 
             typeof tag === 'string' && tag.toLowerCase() === value.toLowerCase()
           );
           
@@ -431,9 +462,9 @@ export const getProductsByType = async (
       case 'material':
         // Filtrer par matériau
         products = products.filter(product => {
-          const materials = product.specifications?.materials || [];
+          const materials = (product as FirestoreProduct).specifications?.materials || [];
           
-          return materials.some(m => 
+          return materials.some((m: unknown) => 
             typeof m === 'string' && m.toLowerCase().includes(value.toLowerCase())
           );
         });
@@ -475,7 +506,7 @@ export const getProductsByPriceRange = async (
     
     // Filtrer par plage de prix
     const filteredByPrice = priceFilteredProducts.filter(product => {
-      const price = product.pricing?.regular_price || 0;
+      const price = (product as FirestoreProduct).pricing?.regular_price || 0;
       return price >= min && price <= max;
     });
     
@@ -505,7 +536,7 @@ export const getMaxProductPrice = async (): Promise<number> => {
     const maxPriceProducts = maxPriceSnapshot.docs.map(doc => convertFirestoreDocToProduct(doc));
     
     // Trouver le prix maximum
-    const maxPrice = Math.max(...maxPriceProducts.map((p) => p.pricing?.regular_price || 0));
+    const maxPrice = Math.max(...maxPriceProducts.map((p) => (p as FirestoreProduct).pricing?.regular_price || 0));
     
     // Arrondir au multiple de 50 supérieur pour avoir une valeur propre
     const roundedMaxPrice = Math.ceil(maxPrice / 50) * 50;

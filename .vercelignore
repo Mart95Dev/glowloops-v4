@@ -21,3 +21,11 @@
 #windsurfrules
 /windsurfrules
 /windsurfrules/*
+
+# Pages de débogage et test
+src/app/debug/
+src/app/test-*/
+
+# Services et utilitaires de test
+src/lib/services/test-*.ts
+src/lib/firebase/add-test-*.ts
