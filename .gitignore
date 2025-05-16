@@ -78,9 +78,9 @@ next-env.d.ts
 /src/app/test-firebase/*
 /src/app/test-panier/
 /src/app/test-panier/*
-/src/app/testOders/
-/src/app/testOders/*
+# /src/app/testOders/
+# /src/app/testOders/*
 
 # Services et utilitaires de test
-/src/lib/services/test-*.ts
+# /src/lib/services/test-*.ts
 /src/lib/firebase/add-test-*.ts

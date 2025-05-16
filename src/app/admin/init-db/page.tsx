@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { initializeFavoriteField } from '@/lib/firebase/init-favorite-field';
-import { addTestFavorite } from '@/lib/firebase/add-test-favorite';
+// import { addTestFavorite } from '@/lib/firebase/add-test-favorite';
 import { getProductsList, ProductListItem } from '@/lib/firebase/get-products-list';
 import { db } from '@/lib/firebase/firebase-config';
 import { doc, updateDoc, arrayUnion, collection, query, where, getDocs } from 'firebase/firestore';
@@ -11,9 +11,9 @@ import { useRouter } from 'next/navigation';
 
 export default function InitDbPage() {
   const [loading, setLoading] = useState(false);
-  const [testLoading, setTestLoading] = useState(false);
+  // const [testLoading, setTestLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
-  const [testMessage, setTestMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [, setTestMessage] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [products, setProducts] = useState<ProductListItem[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -74,32 +74,32 @@ export default function InitDbPage() {
     }
   };
 
-  const handleAddTestFavorite = async () => {
-    if (!user) {
-      setTestMessage({ text: 'Vous devez être connecté pour effectuer cette action', type: 'error' });
-      return;
-    }
+  // const handleAddTestFavorite = async () => {
+  //   if (!user) {
+  //     setTestMessage({ text: 'Vous devez être connecté pour effectuer cette action', type: 'error' });
+  //     return;
+  //   }
     
-    setTestLoading(true);
-    setTestMessage({ text: 'Ajout du produit test aux favoris d\'Alice...', type: 'info' });
+  //   setTestLoading(true);
+  //   setTestMessage({ text: 'Ajout du produit test aux favoris d\'Alice...', type: 'info' });
     
-    try {
-      const result = await addTestFavorite();
-      if (result) {
-        setTestMessage({ text: 'Produit test ajouté aux favoris d\'Alice avec succès !', type: 'success' });
-      } else {
-        setTestMessage({ text: 'Échec lors de l\'ajout du produit test.', type: 'error' });
-      }
-    } catch (error) {
-      console.error('Erreur:', error);
-      setTestMessage({ 
-        text: `Erreur: ${(error as Error).message || 'Erreur inconnue'}`, 
-        type: 'error' 
-      });
-    } finally {
-      setTestLoading(false);
-    }
-  };
+  //   try {
+  //     const result = await addTestFavorite();
+  //     if (result) {
+  //       setTestMessage({ text: 'Produit test ajouté aux favoris d\'Alice avec succès !', type: 'success' });
+  //     } else {
+  //       setTestMessage({ text: 'Échec lors de l\'ajout du produit test.', type: 'error' });
+  //     }
+  //   } catch (error) {
+  //     console.error('Erreur:', error);
+  //     setTestMessage({ 
+  //       text: `Erreur: ${(error as Error).message || 'Erreur inconnue'}`, 
+  //       type: 'error' 
+  //     });
+  //   } finally {
+  //     setTestLoading(false);
+  //   }
+  // };
 
   // Ajouter un produit spécifique aux favoris d'Alice
   const handleAddSpecificProduct = async () => {
@@ -212,7 +212,7 @@ export default function InitDbPage() {
         </div>
       </div>
       
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+      {/* <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
         <h2 className="text-xl font-medium mb-4">Ajouter un produit test aux favoris</h2>
         <p className="mb-4 text-gray-600">
           Cette opération va ajouter un produit test aux favoris de l&apos;utilisateur Alice.
@@ -241,7 +241,7 @@ export default function InitDbPage() {
             </div>
           )}
         </div>
-      </div>
+      </div> */}
       
       <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
         <h2 className="text-xl font-medium mb-4">Ajouter un produit spécifique aux favoris</h2>
