@@ -57,18 +57,20 @@ export default function ModernBestSellersSection({
     
     console.log('BestSellers: Ajout au panier', product);
     
-    addItem({
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      quantity: 1,
-      image: product.imageUrl,
-    });
-    
-    // Afficher une notification pour confirmer l'ajout au panier
-    toast.success("Produit ajouté au panier", {
-      description: product.name
-    });
+    if (product.name && product.price !== undefined) {
+      addItem({
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        quantity: 1,
+        image: product.imageUrl,
+      });
+      
+      // Afficher une notification pour confirmer l'ajout au panier
+      toast.success("Produit ajouté au panier", {
+        description: product.name
+      });
+    }
   };
 
   return (
@@ -105,28 +107,30 @@ export default function ModernBestSellersSection({
                 <Link href={`/produits/${product.id}`} className="relative block w-full h-full">
                   <Image
                     src={product.imageUrl}
-                    alt={product.name}
+                    alt={product.name || 'Produit'}
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                     sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   />
                 </Link>
-                <FavoriteToggle
-                  productId={product.id}
-                  productName={product.name}
-                  productPrice={product.price}
-                  productImage={product.imageUrl}
-                  size="md"
-                  className="absolute top-3 right-3"
-                />
-                {product.popularity > 8 && (
+                {product.name && product.price !== undefined && (
+                  <FavoriteToggle
+                    productId={product.id}
+                    productName={product.name}
+                    productPrice={product.price}
+                    productImage={product.imageUrl}
+                    size="md"
+                    className="absolute top-3 right-3"
+                  />
+                )}
+                {product.popularity !== undefined && product.popularity > 8 && (
                   <span className="absolute top-3 left-3 bg-dore text-white text-xs px-2 py-1 rounded-full">
                     Best-seller
                   </span>
                 )}
               </div>
               <div className="p-4 flex flex-col flex-grow">
-                <h3 className="font-medium text-sm mb-1 text-gray-800">{product.name}</h3>
+                <h3 className="font-medium text-sm mb-1 text-gray-800">{product.name || 'Produit'}</h3>
                 <div className="flex items-center mb-2">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <svg 
@@ -142,8 +146,10 @@ export default function ModernBestSellersSection({
                 </div>
                 <div className="mt-auto">
                   <div className="flex justify-between items-center mb-3">
-                    <span className="font-bold text-lilas-fonce">{product.price.toFixed(2)} €</span>
-                    {false && (
+                    <span className="font-bold text-lilas-fonce">
+                      {product.price !== undefined ? `${product.price.toFixed(2)} €` : 'Prix non disponible'}
+                    </span>
+                    {false && product.price !== undefined && (
                       <span className="text-sm line-through text-gray-400">
                         {(product.price * 1.2).toFixed(2)} €
                       </span>

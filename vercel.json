@@ -1,0 +1,37 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "next.config.js",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/debug/(.*)",
+      "dest": "/404"
+    },
+    {
+      "src": "/test-(.*)",
+      "dest": "/404"
+    },
+    {
+      "src": "/auth-debug/(.*)",
+      "dest": "/404"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "debug": false,
+      "test-*": false
+    }
+  },
+  "ignoreCommand": "echo Ignoring debug and test directories"
+} 

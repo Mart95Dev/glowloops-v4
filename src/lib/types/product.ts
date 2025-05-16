@@ -131,20 +131,20 @@ export type ProductZod = z.infer<typeof ProductSchema>;
 // Interface pour les produits utilisée dans les pages de catégorie
 export interface Product {
   id: string;
-  name: string;
-  description: string;
-  price: number;
+  name?: string;
+  description?: string;
+  price?: number;
   originalPrice?: number;
-  images: string[];
+  images?: string[];
   categories?: string[];
   styles?: string[];
-  vibes?: string[];
+  vibes?: string[] | Record<string, string>;
   materials?: string[];
   isNew?: boolean;
   discount?: number;
   popularity?: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
   // Ajout des propriétés pour compatibilité avec ProductZod
   basic_info?: {
     name: string;
@@ -154,10 +154,24 @@ export interface Product {
     collection: string;
     tags?: string[];
   };
+  shipping?: {
+    weight_g?: number;
+    requires_shipping?: boolean;
+    free_shipping?: boolean;
+  };
   media?: {
     mainImageUrl?: string;
     thumbnailUrl?: string;
     galleryImageUrls?: Record<string, string>;
+    customerPhotos?: Record<string, {
+      url: string;
+      customerName: string;
+      rating: number;
+    }>;
+    howToWearImages?: Record<string, {
+      url: string;
+      caption?: string;
+    }>;
   };
   pricing?: {
     regular_price: number;
@@ -170,11 +184,19 @@ export interface Product {
     style_tips?: Record<string, string>;
     occasion?: Record<string, string>;
   };
+  status?: string;
+  type?: string;
 }
 
 // Interface pour l'affichage des produits avec les propriétés supplémentaires
-export interface ProductDisplay extends Product {
+export interface ProductDisplay extends Omit<Product, 'name' | 'price'> {
+  name: string; // Obligatoire
+  price: number; // Obligatoire
   isInCart?: boolean;
   isInWishlist?: boolean;
   quantity?: number;
+  imageUrl: string; // Obligatoire
+  category?: string;
+  collection?: string;
+  galleryImages?: string[];
 }

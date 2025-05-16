@@ -132,10 +132,10 @@ export const convertFirestoreDocToProduct = (doc: { id: string; data: () => Reco
 export const convertToProductDisplay = (product: Product): ProductDisplay => {
   return {
     id: product.id,
-    name: product.basic_info?.name || '',
+    name: product.basic_info?.name || 'Produit sans nom',
     description: product.content?.short_description || product.content?.full_description || '',
     price: product.pricing?.regular_price || 0,
-    imageUrl: product.media?.mainImageUrl || '',
+    imageUrl: product.media?.mainImageUrl || 'https://via.placeholder.com/300x300?text=Image+non+disponible',
     category: product.basic_info?.categoryId || '',
     isNew: product.isNew || false,
     popularity: product.popularity || 0,

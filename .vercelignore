@@ -24,6 +24,7 @@
 
 # Pages de débogage et test
 src/app/debug/
+src/app/debug/*
 src/app/test-*/
 
 # Pages de débogage et test
