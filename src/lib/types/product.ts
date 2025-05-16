@@ -163,6 +163,13 @@ export interface Product {
     regular_price: number;
     sale_price?: number | null;
   };
+  content?: {
+    short_description?: string;
+    full_description?: string;
+    selling_points?: Record<string, string>;
+    style_tips?: Record<string, string>;
+    occasion?: Record<string, string>;
+  };
 }
 
 // Interface pour l'affichage des produits avec les propriétés supplémentaires
