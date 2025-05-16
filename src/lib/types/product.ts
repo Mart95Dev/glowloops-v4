@@ -145,6 +145,24 @@ export interface Product {
   popularity?: number;
   createdAt: Date;
   updatedAt: Date;
+  // Ajout des propriétés pour compatibilité avec ProductZod
+  basic_info?: {
+    name: string;
+    slug?: string;
+    sku: string;
+    categoryId: string;
+    collection: string;
+    tags?: string[];
+  };
+  media?: {
+    mainImageUrl?: string;
+    thumbnailUrl?: string;
+    galleryImageUrls?: Record<string, string>;
+  };
+  pricing?: {
+    regular_price: number;
+    sale_price?: number | null;
+  };
 }
 
 // Interface pour l'affichage des produits avec les propriétés supplémentaires
