@@ -506,6 +506,120 @@ export const getProductsByMainCategory = async (categoryType: 'style' | 'vibe' |
 };
 
 /**
+ * Récupère les produits d'une catégorie principale (style, vibe, materiaux)
+ * avec filtrage, tri par date de création et popularité, et limite de produits
+ */
+export const getProductsByParentCategory = async (
+  parentCategoryId: 'style' | 'vibe' | 'materiaux',
+  maxProducts = 8
+): Promise<Product[]> => {
+  console.log(`Début de getProductsByParentCategory pour: ${parentCategoryId}`);
+  try {
+    const productsRef = collection(db, 'products');
+    console.log("Collection de produits récupérée");
+    
+    // On récupère TOUS les produits sans filtre pour diagnostiquer
+    const q = query(
+      productsRef,
+      limit(50) // Limiter à 50 produits pour éviter de surcharger la console
+    );
+    
+    console.log("Requête créée, chargement des produits...");
+    const querySnapshot = await getDocs(q);
+    console.log(`Total de produits trouvés: ${querySnapshot.size}`);
+    
+    if (querySnapshot.empty) {
+      console.log(`Aucun produit trouvé dans la base de données`);
+      return [];
+    }
+    
+    // Logging pour diagnostic
+    console.log(`Recherche de produits avec parentCategoryId = ${parentCategoryId}`);
+    
+    // Compter les produits avec parentCategoryId défini
+    let countWithParentCategoryId = 0;
+    let styleCount = 0;
+    let vibeCount = 0;
+    let materiauxCount = 0;
+    
+    querySnapshot.docs.forEach((doc, index) => {
+      const data = doc.data();
+      
+      // Vérifier si parentCategoryId existe
+      if (data.basic_info && data.basic_info.parentCategoryId) {
+        countWithParentCategoryId++;
+        const parentCat = String(data.basic_info.parentCategoryId).toLowerCase();
+        
+        // Compter par type
+        if (parentCat === 'style') styleCount++;
+        if (parentCat === 'vibe') vibeCount++;
+        if (parentCat === 'materiaux') materiauxCount++;
+        
+        // Afficher les détails pour le type demandé
+        if (parentCat === parentCategoryId.toLowerCase()) {
+          console.log(`Produit #${index+1} - ID: ${doc.id} - MATCH!`);
+          console.log(`  Nom: ${data.basic_info.name || 'non défini'}`);
+          console.log(`  Status: ${data.status || 'non défini'}`);
+          console.log(`  parentCategoryId: ${data.basic_info.parentCategoryId}`);
+        }
+      }
+    });
+    
+    console.log(`Statistiques des parentCategoryId:`);
+    console.log(`  Total avec parentCategoryId: ${countWithParentCategoryId}`);
+    console.log(`  Style: ${styleCount}`);
+    console.log(`  Vibe: ${vibeCount}`);
+    console.log(`  Matériaux: ${materiauxCount}`);
+    
+    // Filtre manuel sur basic_info.parentCategoryId avec tolérance à la casse
+    const filteredDocs = querySnapshot.docs.filter(doc => {
+      const data = doc.data();
+      const isActive = data.status === 'active';
+      
+      // Vérification avec tolérance à la casse
+      const parentCatIdFromProduct = 
+        (data.basic_info && data.basic_info.parentCategoryId) 
+        ? String(data.basic_info.parentCategoryId).toLowerCase() 
+        : '';
+      
+      // Vérifier si le produit a l'ID correct en insensible à la casse
+      const hasParentCategory = parentCatIdFromProduct === parentCategoryId.toLowerCase();
+      
+      // Log plus détaillé pour les candidats potentiels
+      if (parentCatIdFromProduct.includes(parentCategoryId.toLowerCase()) || 
+          parentCategoryId.toLowerCase().includes(parentCatIdFromProduct)) {
+        console.log(`Candidat potentiel - ID: ${doc.id}`);
+        console.log(`  parentCategoryId dans le produit: "${parentCatIdFromProduct}"`);
+        console.log(`  parentCategoryId recherché: "${parentCategoryId.toLowerCase()}"`);
+        console.log(`  statut: ${data.status}`);
+        console.log(`  match: ${hasParentCategory}`);
+      }
+      
+      return isActive && hasParentCategory;
+    });
+    
+    console.log(`Produits après filtrage pour ${parentCategoryId}: ${filteredDocs.length}`);
+    
+    if (filteredDocs.length === 0) {
+      console.log(`Aucun produit trouvé pour la catégorie parente: ${parentCategoryId}`);
+      return [];
+    }
+    
+    // Formatage des produits
+    const products = filteredDocs.map(doc => formatProductData(doc.id, doc.data()));
+    
+    // Limiter le nombre de produits (sans tri pour simplifier)
+    const resultProducts = products.slice(0, maxProducts);
+    console.log(`Nombre final de produits retournés: ${resultProducts.length}`);
+    
+    return resultProducts;
+  } catch (error) {
+    console.error(`Erreur lors de la récupération des produits pour ${parentCategoryId}:`, error);
+    return [];
+  }
+};
+
+/**
  * Formate les données brutes du produit en un objet Product
  */
 const formatProductData = (id: string, data: DocumentData): Product => {
@@ -563,6 +677,7 @@ const formatProductData = (id: string, data: DocumentData): Product => {
     materials: data.materials || [],
     isNew: data.isNew || false,
     discount,
+    popularity: data.popularity || 0,
     createdAt,
     updatedAt
   };

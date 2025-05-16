@@ -142,6 +142,7 @@ export interface Product {
   materials?: string[];
   isNew?: boolean;
   discount?: number;
+  popularity?: number;
   createdAt: Date;
   updatedAt: Date;
 }

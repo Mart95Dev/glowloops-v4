@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { navigationData } from '@/lib/data/navigation-data';
-import { getCategoryInfo, getProductsByMainCategory, getSubcategories, CategoryInfo } from '@/lib/services/category-service';
+import { getCategoryInfo, getSubcategories, CategoryInfo, getProductsByParentCategory } from '@/lib/services/category-service';
 import { Product } from '@/lib/types/product';
 import CategoryHeader from '@/components/category/CategoryHeader';
 import CategoryFeatures from '@/components/category/CategoryFeatures';
@@ -38,8 +38,8 @@ export default function VibePageContent() {
         const subcategoriesData = await getSubcategories('vibe');
         setSubcategories(subcategoriesData);
         
-        // Récupérer les produits
-        const vibeProducts = await getProductsByMainCategory('vibe', 12);
+        // Récupérer les produits avec la nouvelle fonction
+        const vibeProducts = await getProductsByParentCategory('vibe', 8);
         setProducts(vibeProducts);
       } catch (error) {
         console.error('Erreur lors de la récupération des données:', error);

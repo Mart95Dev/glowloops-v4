@@ -60,13 +60,17 @@ export default function CategoryHeader({
         className="object-cover" 
       />
       
+      {/* Overlay sombre pour améliorer le contraste et la lisibilité */}
+      <div className="absolute inset-0 bg-black/50"></div>
+      
+      {/* Gradient coloré spécifique à la catégorie */}
       <div className={`absolute inset-0 bg-gradient-to-r ${getBgGradient()} flex items-center`}>
-        <div className="p-4 sm:p-6 md:p-8 max-w-md">
+        <div className="p-4 sm:p-6 md:p-8 max-w-md relative z-10">
           <motion.h1 
             initial={{ y: 20, opacity: 0 }}
             animate={inView ? { y: 0, opacity: 1 } : { y: 20, opacity: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-white text-2xl sm:text-3xl md:text-4xl font-display font-bold mb-2 sm:mb-3"
+            className="text-white text-2xl sm:text-3xl md:text-4xl font-display font-bold mb-2 sm:mb-3 drop-shadow-lg"
           >
             {title}
           </motion.h1>
@@ -75,7 +79,7 @@ export default function CategoryHeader({
             initial={{ y: 20, opacity: 0 }}
             animate={inView ? { y: 0, opacity: 1 } : { y: 20, opacity: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="text-white/90 text-sm sm:text-base"
+            className="text-white text-sm sm:text-base drop-shadow-lg"
           >
             {description}
           </motion.p>

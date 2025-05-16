@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { navigationData } from '@/lib/data/navigation-data';
-import { getCategoryInfo, getProductsByMainCategory, getSubcategories, CategoryInfo } from '@/lib/services/category-service';
+import { getCategoryInfo, getSubcategories, CategoryInfo, getProductsByParentCategory } from '@/lib/services/category-service';
 import { Product } from '@/lib/types/product';
 import CategoryHeader from '@/components/category/CategoryHeader';
 import CategoryFeatures from '@/components/category/CategoryFeatures';
@@ -38,8 +38,8 @@ export default function MateriauxPageContent() {
         const subcategoriesData = await getSubcategories('materiaux');
         setSubcategories(subcategoriesData);
         
-        // Récupérer les produits
-        const materiauxProducts = await getProductsByMainCategory('material', 12);
+        // Récupérer les produits avec la nouvelle fonction
+        const materiauxProducts = await getProductsByParentCategory('materiaux', 8);
         setProducts(materiauxProducts);
       } catch (error) {
         console.error('Erreur lors de la récupération des données:', error);
