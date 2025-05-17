@@ -26,9 +26,9 @@ const ModernInstagramSection = lazy(() => import('@/components/home/ModernInstag
 const ModernFaqAccordion = lazy(() => import('@/components/home/ModernFaqAccordion'));
 const ModernNewsletterForm = lazy(() => import('@/components/home/ModernNewsletterForm'));
 
-// Placeholder pour le chargement
-const LoadingPlaceholder = ({ height = 'h-96' }: { height?: string }) => (
-  <div className={`${height} w-full bg-gray-100 animate-pulse rounded-md`} />
+// Placeholder optimisé pour le chargement - utilise des div simples pour éviter la jank visuelle
+const LoadingPlaceholder = ({ height = 'h-96', showAnimation = true }: { height?: string, showAnimation?: boolean }) => (
+  <div className={`${height} w-full bg-gray-50 ${showAnimation ? 'animate-pulse' : ''} rounded-md`} />
 );
 
 // Générer les métadonnées SEO pour la page d'accueil
@@ -95,36 +95,36 @@ export default async function Home() {
         {/* Sections non prioritaires avec lazy loading et suspense */}
 
         {/* Section 3: Best-sellers - Lazy loading */}
-        <section id="bestsellers">
-          <Suspense fallback={<LoadingPlaceholder height="h-96" />}>
+        <section id="bestsellers" className="mt-8">
+          <Suspense fallback={<LoadingPlaceholder height="h-96" showAnimation={false} />}>
             <PopularProductsSection />
           </Suspense>
         </section>
 
         {/* Section 4: Collections - Lazy loading */}
-        <section id="collections">
-          <Suspense fallback={<LoadingPlaceholder height="h-96" />}>
+        <section id="collections" className="mt-8">
+          <Suspense fallback={<LoadingPlaceholder height="h-96" showAnimation={false} />}>
             <CollectionsSection />
           </Suspense>
         </section>
 
         {/* Section 5: Instagram - Lazy loading */}
-        <section id="instagram" data-testid="instagram-section">
-          <Suspense fallback={<LoadingPlaceholder height="h-80" />}>
+        <section id="instagram" data-testid="instagram-section" className="mt-8">
+          <Suspense fallback={<LoadingPlaceholder height="h-80" showAnimation={false} />}>
             <InstagramSection />
           </Suspense>
         </section>
 
         {/* Section 6: FAQ - Lazy loading */}
-        <section id="faq">
-          <Suspense fallback={<LoadingPlaceholder height="h-80" />}>
+        <section id="faq" className="mt-8">
+          <Suspense fallback={<LoadingPlaceholder height="h-80" showAnimation={false} />}>
             <FaqSection />
           </Suspense>
         </section>
 
         {/* Section 7: Newsletter - Lazy loading */}
-        <section id="newsletter">
-          <Suspense fallback={<LoadingPlaceholder height="h-64" />}>
+        <section id="newsletter" className="mt-8">
+          <Suspense fallback={<LoadingPlaceholder height="h-64" showAnimation={false} />}>
             <ModernNewsletterForm 
               title="Restez informée"
               subtitle="Inscrivez-vous à notre newsletter pour recevoir nos dernières nouveautés et offres exclusives"
@@ -135,8 +135,8 @@ export default async function Home() {
         </section>
         
         {/* Section 8: Avantages - Lazy loading */}
-        <section id="avantages">
-          <Suspense fallback={<LoadingPlaceholder height="h-80" />}>
+        <section id="avantages" className="mt-8">
+          <Suspense fallback={<LoadingPlaceholder height="h-80" showAnimation={false} />}>
             <AdvantagesSection />
           </Suspense>
         </section>

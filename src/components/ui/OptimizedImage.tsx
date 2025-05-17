@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils/cn';
+import { getOptimizedImageUrl, getImagePreloadProps, ImageOptimizationOptions } from '@/lib/utils/image-optimization';
+import Head from 'next/head';
 
 export interface OptimizedImageProps {
   src: string | null;
@@ -21,8 +23,9 @@ export interface OptimizedImageProps {
   fallbackSrc?: string;
   eager?: boolean;
   blur?: boolean;
-  format?: 'webp' | 'avif' | 'jpg' | 'png' | 'auto';
   ratio?: 'portrait' | 'landscape' | 'square' | 'auto';
+  critical?: boolean; // Indique si l'image est critique pour le LCP
+  sizePreset?: 'thumbnail' | 'small' | 'medium' | 'large' | 'banner' | 'hero';
 }
 
 const DEFAULT_FALLBACK = '/images/default-product.png';
@@ -31,8 +34,8 @@ const DEFAULT_FALLBACK = '/images/default-product.png';
 const BLUR_DATA_URL = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjJmMmYyIi8+PC9zdmc+';
 
 // Taille par défaut définie pour les images critiques et non-critiques
-const DEFAULT_QUALITY_CRITICAL = 55; // Qualité plus faible pour les images prioritaires (plus grande taille)
-const DEFAULT_QUALITY_NORMAL = 50;  // Qualité encore plus faible pour les images normales
+const DEFAULT_QUALITY_CRITICAL = 85; // Augmenté pour les images critiques pour le LCP
+const DEFAULT_QUALITY_NORMAL = 75;  // Optimisé pour un meilleur équilibre qualité/performance
 
 export function OptimizedImage({
   src,
@@ -51,73 +54,58 @@ export function OptimizedImage({
   fallbackSrc = DEFAULT_FALLBACK,
   eager = false,
   blur = true,
-  format = 'avif', // Par défaut avif pour une meilleure compression
   ratio = 'auto',
+  critical = false, // Indique si l'image est critique pour le LCP
+  sizePreset,
 }: OptimizedImageProps) {
-  // Déterminer la qualité en fonction de la priorité
-  const imageQuality = quality || (priority ? DEFAULT_QUALITY_CRITICAL : DEFAULT_QUALITY_NORMAL);
+  // Détermine si cette image est critique (pour le LCP ou explicitement définie comme critique)
+  const isCritical = critical || priority;
   
-  const [imgSrc, setImgSrc] = useState<string>(src || fallbackSrc);
+  // Déterminer la qualité en fonction de la criticité
+  const imageQuality = quality || (isCritical ? DEFAULT_QUALITY_CRITICAL : DEFAULT_QUALITY_NORMAL);
+  
+  const [imgSrc, setImgSrc] = useState<string>('');
+  const [optimizedSrc, setOptimizedSrc] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Préparer les options d'optimisation
+  const getOptimizationOptions = (): ImageOptimizationOptions => {
+    const options: ImageOptimizationOptions = {
+      quality: imageQuality,
+      format: 'webp',
+      fetchPriority: isCritical ? 'high' : 'auto',
+    };
+
+    // Ajouter les dimensions spécifiques si fournies
+    if (width) options.width = width;
+    if (height) options.height = height;
+    
+    // Utiliser le preset de taille si fourni
+    if (sizePreset) options.sizePreset = sizePreset;
+    
+    return options;
+  };
   
   // Initialiser la source au montage du composant
   useEffect(() => {
     if (!src || src.trim() === '') {
-      setImgSrc(fallbackSrc);
+      const optimized = getOptimizedImageUrl(fallbackSrc, getOptimizationOptions());
+      setImgSrc(optimized);
+      setOptimizedSrc(optimized);
       return;
     }
     
-    // Fonction optimisée pour traiter les URLs Firebase
-    const optimizeFirebaseUrl = (url: string): string => {
-      if (!url) return fallbackSrc;
-      
-      // Vérifier si c'est une URL Firebase Storage et l'optimiser
-      if (url.includes('firebasestorage.googleapis.com') || url.includes('storage.googleapis.com')) {
-        try {
-          const optimizedUrl = new URL(url);
-          
-          // S'assurer que l'URL a le paramètre alt=media
-          if (!optimizedUrl.searchParams.has('alt')) {
-            optimizedUrl.searchParams.set('alt', 'media');
-          }
-          
-          // Ajouter le format si supporté
-          if (format !== 'auto') {
-            optimizedUrl.searchParams.set('format', format);
-          }
-          
-          // Définir la qualité pour réduire la taille du fichier
-          optimizedUrl.searchParams.set('q', imageQuality.toString());
-          
-          // Ajouter un paramètre de redimensionnement si c'est une image de Firebase Storage
-          if (width && height && !fill) {
-            optimizedUrl.searchParams.set('width', width.toString());
-            optimizedUrl.searchParams.set('height', height.toString());
-          } else if (fill) {
-            // Définir une taille par défaut pour les images en mode fill
-            const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
-            const defaultWidth = viewportWidth <= 768 ? 800 : 1200;
-            optimizedUrl.searchParams.set('width', defaultWidth.toString());
-          }
-          
-          return optimizedUrl.toString();
-        } catch {
-          // En cas d'erreur dans l'URL, retourner l'URL d'origine
-          return url;
-        }
-      }
-      
-      return url;
-    };
+    // Optimiser l'URL avec notre fonction utilitaire améliorée
+    const optimized = getOptimizedImageUrl(src, getOptimizationOptions());
+    setImgSrc(optimized);
+    setOptimizedSrc(optimized);
     
-    // Optimiser l'URL Firebase si applicable
-    const optimizedSrc = optimizeFirebaseUrl(src);
-    setImgSrc(optimizedSrc);
-  }, [src, fallbackSrc, format, imageQuality, width, height, fill]);
+  }, [src, fallbackSrc, width, height, imageQuality, sizePreset]);
 
   const handleError = () => {
     if (imgSrc !== fallbackSrc) {
-      setImgSrc(fallbackSrc);
+      const optimized = getOptimizedImageUrl(fallbackSrc, getOptimizationOptions());
+      setImgSrc(optimized);
     } else if (fallbackSrc !== DEFAULT_FALLBACK) {
       setImgSrc(DEFAULT_FALLBACK);
     }
@@ -129,10 +117,10 @@ export function OptimizedImage({
   };
   
   // Déterminer la valeur de loading selon les props
-  const loadingStrategy = priority || eager ? 'eager' : 'lazy';
+  const loadingStrategy = isCritical || eager ? 'eager' : 'lazy';
   
   // Utiliser fetchPriority si c'est priority
-  const fetchPriorityValue = priority ? 'high' : 'auto';
+  const fetchPriorityValue = isCritical ? 'high' : 'auto';
   
   // Fusionner les styles pour s'assurer que les dimensions sont correctes
   const containerStyles: React.CSSProperties = {
@@ -165,39 +153,56 @@ export function OptimizedImage({
     height: fill ? '100%' : undefined,
   };
   
+  // Obtenir les attributs de préchargement pour les images critiques
+  const preloadProps = isCritical ? getImagePreloadProps(optimizedSrc, true) : null;
+  
   return (
-    <div 
-      className={cn(
-        'relative',
-        isLoading && 'animate-pulse',
-        className
+    <>
+      {/* Précharger l'image si elle est critique */}
+      {isCritical && optimizedSrc && (
+        <Head>
+          <link 
+            rel="preload" 
+            as="image" 
+            href={optimizedSrc} 
+            {...(preloadProps || {})}
+          />
+        </Head>
       )}
-      style={containerStyles}
-    >
-      {imgSrc && (
-        <Image
-          src={imgSrc}
-          alt={alt}
-          width={!fill ? width : undefined}
-          height={!fill ? height : undefined}
-          fill={fill}
-          sizes={sizes}
-          priority={priority}
-          quality={imageQuality}
-          loading={loadingStrategy as 'eager' | 'lazy'}
-          fetchPriority={fetchPriorityValue as 'high' | 'low' | 'auto'}
-          style={imageStyles}
-          onError={handleError}
-          onLoad={handleLoad}
-          className={cn(
-            'transition-opacity duration-300',
-            isLoading ? 'opacity-0' : 'opacity-100'
-          )}
-          placeholder={blur ? 'blur' : undefined}
-          blurDataURL={blur ? BLUR_DATA_URL : undefined}
-          unoptimized={false}
-        />
-      )}
-    </div>
+      
+      <div 
+        className={cn(
+          'relative',
+          isLoading && blur ? 'animate-pulse bg-gray-100' : '',
+          className
+        )}
+        style={containerStyles}
+      >
+        {imgSrc && (
+          <Image
+            src={imgSrc}
+            alt={alt}
+            width={!fill ? width : undefined}
+            height={!fill ? height : undefined}
+            fill={fill}
+            sizes={sizes}
+            priority={isCritical}
+            quality={imageQuality}
+            loading={loadingStrategy as 'eager' | 'lazy'}
+            fetchPriority={fetchPriorityValue as 'high' | 'low' | 'auto'}
+            style={imageStyles}
+            onError={handleError}
+            onLoad={handleLoad}
+            className={cn(
+              'transition-opacity duration-300',
+              isLoading ? 'opacity-0' : 'opacity-100'
+            )}
+            placeholder={blur ? 'blur' : undefined}
+            blurDataURL={blur ? BLUR_DATA_URL : undefined}
+            unoptimized={false}
+          />
+        )}
+      </div>
+    </>
   );
 } 
