@@ -11,23 +11,26 @@ import { getActiveCollections } from '@/lib/services/collection-service';
 import { getRecentInstagramPosts } from '@/lib/services/instagram-service';
 import { getFrequentFaqs } from '@/lib/services/faq-service';
 import { getActiveAdvantages } from '@/lib/services/advantages-service';
-// Réactiver l'import du service de bannières
 import { bannerService } from '@/lib/services/firestore-service';
-import { AdvantageIcon } from '@/components/ui/AdvantageIcon';
 import { generateHomeSeoMetadata } from '@/lib/utils/seo-helpers';
 import OrganizationJsonLd from '@/components/seo/OrganizationJsonLd';
+import { AdvantageIcon } from '@/components/ui/AdvantageIcon';
 
-// Import direct des composants
-// Réactiver ModernHeroBanner qui a été corrigé
+// Import direct des composants critiques (au-dessus de la ligne de flottaison)
 import ModernHeroBanner from '@/components/home/ModernHeroBanner';
 import ModernNewArrivalsSlider from '@/components/home/ModernNewArrivalsSlider';
 
-// Import lazy des composants sous le pli pour améliorer les performances
-const ModernCollectionsGrid = lazy(() => import('@/components/home/ModernCollectionsGrid'));
+// Import lazy des composants non-critiques (sous la ligne de flottaison)
 const ModernBestSellersSection = lazy(() => import('@/components/home/ModernBestSellersSection'));
+const ModernCollectionsGrid = lazy(() => import('@/components/home/ModernCollectionsGrid'));
 const ModernInstagramSection = lazy(() => import('@/components/home/ModernInstagramSection'));
 const ModernFaqAccordion = lazy(() => import('@/components/home/ModernFaqAccordion'));
 const ModernNewsletterForm = lazy(() => import('@/components/home/ModernNewsletterForm'));
+
+// Placeholder pour le chargement
+const LoadingPlaceholder = ({ height = 'h-96' }: { height?: string }) => (
+  <div className={`${height} w-full bg-gray-100 animate-pulse rounded-md`} />
+);
 
 // Générer les métadonnées SEO pour la page d'accueil
 export const metadata = generateHomeSeoMetadata({
@@ -45,42 +48,11 @@ export default async function Home() {
   // Conversion des données produits prioritaires
   const newArrivals = newArrivalsData.map(convertToProductDisplay);
 
-  // Récupération des données secondaires (pour les sections sous le pli)
-  const [
-    popularProductsData,
-    collectionsData,
-    instagramPostsData,
-    faqsData,
-    advantagesData,
-  ] = await Promise.all([
-    getPopularProducts(8),
-    getActiveCollections(),
-    getRecentInstagramPosts(6),
-    getFrequentFaqs(5),
-    getActiveAdvantages(),
-  ]);
-
-  // Conversion des données produits secondaires
-  const popularProducts = popularProductsData.map(convertToProductDisplay);
-
-  // Préparation des données avantages avec icônes (filtrage des entrées sans iconName)
-  const advantagesWithIcons = advantagesData
-    .filter(advantage => typeof advantage.iconName === 'string' && advantage.iconName.length > 0)
-    .map(advantage => ({
-      id: advantage.id,
-      title: advantage.title,
-      description: advantage.description,
-      icon: <AdvantageIcon iconName={advantage.iconName} />,
-      order: advantage.order,
-      isActive: advantage.isActive
-  }));
-
   // Filtrer les bannières pour celles qui sont actives
   const heroBanners = heroBannersData || [];
   
   // Fallback pour les bannières si aucune bannière n'est disponible
   if (heroBanners.length === 0) {
-    console.log('Aucune bannière disponible, utilisation du fallback');
     heroBanners.push({
       id: 'fallback-banner',
       title: 'Bijoux Artisanaux en Résine',
@@ -96,23 +68,12 @@ export default async function Home() {
     });
   }
 
-  // Déterminer la configuration de la grille en fonction du nombre d'avantages
-  const getGridCols = (count: number) => {
-    // Pour 3 avantages : 1 sur mobile, 3 sur tablette et desktop
-    if (count === 3) return 'grid-cols-1 min-[700px]:grid-cols-3';
-    // Pour 4 avantages : 1 sur mobile, 2 sur tablette, 4 sur desktop
-    if (count === 4) return 'grid-cols-1 min-[700px]:grid-cols-2 lg:grid-cols-4';
-    // Par défaut (5 avantages) : 1 sur mobile, 2 sur tablette, 5 sur desktop
-    return 'grid-cols-1 min-[700px]:grid-cols-2 lg:grid-cols-5';
-  };
-
   return (
     <div className="min-w-[375px] min-h-screen">
       <OrganizationJsonLd />
       <main>
         {/* Section prioritaire 1: Hero Banner - Chargement prioritaire */}
         <section id="hero">
-        <Suspense fallback={<div className="h-[85vh] w-full bg-gray-200 animate-pulse"></div>}>
           {heroBanners.length > 0 && (
             <ModernHeroBanner 
               title={heroBanners[0].title}
@@ -122,106 +83,171 @@ export default async function Home() {
               imageUrl={heroBanners[0].imageUrl}
             />
           )}
-        </Suspense>
         </section>
 
         {/* Section prioritaire 2: Nouveautés - Chargement prioritaire */}
         <section id="nouveautes">
-        <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
           <ModernNewArrivalsSlider 
             products={newArrivals} 
             title="Nos nouveautés" 
           />
-        </Suspense>
         </section>
 
-        {/* Sections non prioritaires avec lazy loading et chargement différé */}
+        {/* Sections non prioritaires avec lazy loading et suspense */}
 
         {/* Section 3: Best-sellers - Lazy loading */}
         <section id="bestsellers">
-        <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
-          <ModernBestSellersSection 
-            products={popularProducts} 
-            title="Nos best-sellers" 
-            subtitle="Découvrez nos produits les plus populaires, plébiscités par notre communauté"
-          />
-        </Suspense>
+          <Suspense fallback={<LoadingPlaceholder height="h-96" />}>
+            <PopularProductsSection />
+          </Suspense>
         </section>
 
         {/* Section 4: Collections - Lazy loading */}
         <section id="collections">
-        <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
-          <ModernCollectionsGrid 
-            collections={collectionsData}
-            title="Nos collections"
-          />
-        </Suspense>
+          <Suspense fallback={<LoadingPlaceholder height="h-96" />}>
+            <CollectionsSection />
+          </Suspense>
         </section>
 
         {/* Section 5: Instagram - Lazy loading */}
         <section id="instagram" data-testid="instagram-section">
-        <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
-          <ModernInstagramSection 
-            title="Nos clientes adorent GlowLoops"
-            subtitle="Rejoignez notre communauté et partagez vos moments précieux avec nos bijoux"
-            instagramPosts={instagramPostsData}
-            instagramUsername="glowloops"
-          />
-        </Suspense>
+          <Suspense fallback={<LoadingPlaceholder height="h-80" />}>
+            <InstagramSection />
+          </Suspense>
         </section>
 
         {/* Section 6: FAQ - Lazy loading */}
         <section id="faq">
-        <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
-          <ModernFaqAccordion 
-            faqs={faqsData}
-            title="Questions fréquentes"
-          />
-        </Suspense>
+          <Suspense fallback={<LoadingPlaceholder height="h-80" />}>
+            <FaqSection />
+          </Suspense>
         </section>
 
         {/* Section 7: Newsletter - Lazy loading */}
         <section id="newsletter">
-        <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
-          <ModernNewsletterForm 
-            title="Restez informée"
-            subtitle="Inscrivez-vous à notre newsletter pour recevoir nos dernières nouveautés et offres exclusives"
-            buttonText="S'inscrire"
-            successMessage="Merci pour votre inscription ! Vous recevrez bientôt nos dernières nouveautés."
-          />
-        </Suspense>
+          <Suspense fallback={<LoadingPlaceholder height="h-64" />}>
+            <ModernNewsletterForm 
+              title="Restez informée"
+              subtitle="Inscrivez-vous à notre newsletter pour recevoir nos dernières nouveautés et offres exclusives"
+              buttonText="S'inscrire"
+              successMessage="Merci pour votre inscription ! Vous recevrez bientôt nos dernières nouveautés."
+            />
+          </Suspense>
         </section>
         
         {/* Section 8: Avantages - Lazy loading */}
-        <section id="avantages" className="min-w-[375px] py-12 md:py-16 px-4 bg-white border-t border-gray-100 text-gray-800">
-          <div className="container mx-auto">
-            <div className="text-center mb-10">
-              <h2 className="text-2xl md:text-3xl font-bold font-display mb-4">
-                Pourquoi choisir GlowLoops ?
-              </h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">
-                Des boucles d&apos;oreilles uniques, éthiques et abordables pour sublimer votre style
-              </p>
-            </div>
-            
-            {/* Grille adaptative en fonction du nombre d'avantages */}
-            <div className={`grid ${getGridCols(advantagesWithIcons.length)} gap-6 overflow-visible place-items-center justify-center max-w-6xl mx-auto`}>
-              {advantagesWithIcons.map((advantage) => (
-                <div 
-                  key={advantage.id}
-                  className="bg-white/10 backdrop-blur-sm rounded-xl p-4 md:p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex-shrink-0 w-[280px] md:w-auto snap-center"
-                >
-                  <div className="bg-dore rounded-full w-14 h-14 flex items-center justify-center mb-4 mx-auto">
-                    {advantage.icon}
-                  </div>
-                  <h3 className="text-xl font-bold mb-3 text-center font-display">{advantage.title}</h3>
-                  <p className="text-gray-600 text-center text-sm">{advantage.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+        <section id="avantages">
+          <Suspense fallback={<LoadingPlaceholder height="h-80" />}>
+            <AdvantagesSection />
+          </Suspense>
         </section>
       </main>
+    </div>
+  );
+}
+
+// Composants de sections séparés pour permettre le code-splitting et le chargement différé
+async function PopularProductsSection() {
+  const popularProductsData = await getPopularProducts(8);
+  const popularProducts = popularProductsData.map(convertToProductDisplay);
+  
+  return (
+    <ModernBestSellersSection 
+      products={popularProducts} 
+      title="Nos best-sellers" 
+      subtitle="Découvrez nos produits les plus populaires, plébiscités par notre communauté"
+    />
+  );
+}
+
+async function CollectionsSection() {
+  const collectionsData = await getActiveCollections();
+  
+  return (
+    <ModernCollectionsGrid 
+      collections={collectionsData}
+      title="Nos collections"
+    />
+  );
+}
+
+async function InstagramSection() {
+  const instagramPostsData = await getRecentInstagramPosts(6);
+  
+  return (
+    <ModernInstagramSection 
+      title="Nos clientes adorent GlowLoops"
+      subtitle="Rejoignez notre communauté et partagez vos moments précieux avec nos bijoux"
+      instagramPosts={instagramPostsData}
+      instagramUsername="glowloops"
+    />
+  );
+}
+
+async function FaqSection() {
+  const faqsData = await getFrequentFaqs(5);
+  
+  return (
+    <ModernFaqAccordion 
+      faqs={faqsData}
+      title="Questions fréquentes"
+    />
+  );
+}
+
+async function AdvantagesSection() {
+  const advantagesData = await getActiveAdvantages();
+  
+  // Préparation des données avantages avec icônes (filtrage des entrées sans iconName)
+  const advantagesWithIcons = advantagesData
+    .filter(advantage => typeof advantage.iconName === 'string' && advantage.iconName.length > 0)
+    .map(advantage => ({
+      id: advantage.id,
+      title: advantage.title,
+      description: advantage.description,
+      icon: <AdvantageIcon iconName={advantage.iconName as string} />,
+      order: advantage.order,
+      isActive: advantage.isActive
+  }));
+
+  // Déterminer la configuration de la grille en fonction du nombre d'avantages
+  const getGridCols = (count: number) => {
+    // Pour 3 avantages : 1 sur mobile, 3 sur tablette et desktop
+    if (count === 3) return 'grid-cols-1 min-[700px]:grid-cols-3';
+    // Pour 4 avantages : 1 sur mobile, 2 sur tablette, 4 sur desktop
+    if (count === 4) return 'grid-cols-1 min-[700px]:grid-cols-2 lg:grid-cols-4';
+    // Par défaut (5 avantages) : 1 sur mobile, 2 sur tablette, 5 sur desktop
+    return 'grid-cols-1 min-[700px]:grid-cols-2 lg:grid-cols-5';
+  };
+  
+  return (
+    <div className="min-w-[375px] py-12 md:py-16 px-4 bg-white border-t border-gray-100 text-gray-800">
+      <div className="container mx-auto">
+        <div className="text-center mb-10">
+          <h2 className="text-2xl md:text-3xl font-bold font-display mb-4">
+            Pourquoi choisir GlowLoops ?
+          </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Des boucles d&apos;oreilles uniques, éthiques et abordables pour sublimer votre style
+          </p>
+        </div>
+        
+        {/* Grille adaptative en fonction du nombre d'avantages */}
+        <div className={`grid ${getGridCols(advantagesWithIcons.length)} gap-6 overflow-visible place-items-center justify-center max-w-6xl mx-auto`}>
+          {advantagesWithIcons.map((advantage) => (
+            <div 
+              key={advantage.id}
+              className="bg-white/10 backdrop-blur-sm rounded-xl p-4 md:p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex-shrink-0 w-[280px] md:w-auto snap-center"
+            >
+              <div className="bg-dore rounded-full w-14 h-14 flex items-center justify-center mb-4 mx-auto">
+                {advantage.icon}
+              </div>
+              <h3 className="text-xl font-bold mb-3 text-center font-display">{advantage.title}</h3>
+              <p className="text-gray-600 text-center text-sm">{advantage.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
