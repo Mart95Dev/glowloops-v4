@@ -1,136 +1,146 @@
-import Image from 'next/image';
-import { HiOutlineHeart, HiOutlineLightBulb, HiOutlineStar } from 'react-icons/hi';
+import { Metadata } from 'next';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
+
+export const metadata: Metadata = {
+  title: 'Notre Histoire | GlowLoops',
+  description: 'Découvrez l\'histoire de GlowLoops, notre mission et nos engagements envers vous. Une expérience 100% mobile pour vos bijoux tendance.',
+};
 
 export default function AProposPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
-      {/* En-tête */}
-      <div className="text-center mb-16">
-        <h1 className="text-2xl md:text-3xl font-bold font-display text-lilas-fonce mb-4">
-          Notre Univers GlowLoops ✨
-        </h1>
-        <p className="text-gray-600 max-w-2xl mx-auto">
-          Découvrez qui nous sommes vraiment et pourquoi nos boucles d&apos;oreilles séduisent déjà plus de 10 000 client·e·s en France.
-        </p>
-      </div>
-
-      {/* Section histoire */}
+      {/* Section Histoire */}
       <section className="mb-16">
+        <h1 className="text-2xl md:text-3xl font-bold font-display text-lilas-fonce mb-8 text-center">
+          Notre Historie
+        </h1>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          <div className="order-2 md:order-1">
-            <h2 className="text-xl md:text-2xl font-semibold mb-6 text-lilas-fonce font-display">🔍 Notre Vision</h2>
-            <div className="space-y-4 text-gray-700">
-              <p>
-                Bienvenue chez GlowLoops, où nous vous proposons des bijoux tendance à prix accessibles pour tous vos styles et toutes vos envies.
-              </p>
-              <p>
-                Sans filtre et avec transparence : nos boucles d&apos;oreilles proviennent des meilleures collections asiatiques. Nous dénichons pour vous les créations les plus stylées et vous les livrons directement, sans intermédiaire.
-              </p>
-              <p>
-                Vous méritez de savoir ce que vous achetez : nos produits sont sourcés avec soin, sélectionnés pour leur rapport qualité-prix exceptionnel, et expédiés dans des délais de 3 à 7 jours depuis nos entrepôts français.
-              </p>
-              <p>
-                Notre objectif ? Vous offrir cette petite touche brillante qui transforme une tenue ordinaire en look extraordinaire, sans vous ruiner.
-              </p>
-            </div>
+          <div className="space-y-4 text-gray-700">
+            <p>
+              Bienvenue chez GlowLoops, une boutique dédiée aeux passionnees de bijoux qul aiment varier lere style sans re ruine.
+            </p>
+            <p>
+              Notre mission ? Vous proposer un sélection pointue de bousles d&apos;orrellies ten dence, directement issues des démiete colletiques asiatiques et vero-les proposons à prix deux encoirtement extraortlinairellinaire.
+            </p>
+            <p>
+              L&apos;historre de GiowLoops can tenrine eu l&apos;hònonnr pessossive bau nortinaire teute un ordiine ordinaire en extraordinaire.
+            </p>
           </div>
-          <div className="relative h-[350px] md:h-[400px] rounded-lg overflow-hidden order-1 md:order-2">
-            <Image
-              src="/images/about-story.jpg"
-              alt="Collection de boucles d'oreilles GlowLoops présentée sur un plateau en marbre avec ambiance lifestyle élégante"
+          <div className="relative rounded-lg overflow-hidden h-[400px]">
+            <OptimizedImage
+              src="/images/femme-boucle-oreilles-480.avif"
+              alt="Femme portant des boucles d'oreilles GlowLoops"
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover"
-              priority
+              objectFit="cover"
+              critical={true}
+              sizePreset="large"
+              format="avif"
+              ratio="portrait"
             />
           </div>
         </div>
       </section>
 
-      {/* Section valeurs/engagements */}
-      <section className="mb-16 py-16 px-6 bg-gradient-to-b from-white to-creme-nude rounded-xl">
-        <h2 className="text-xl md:text-2xl font-semibold mb-12 text-center text-lilas-fonce font-display">💎 Nos Engagements Envers Vous</h2>
+      {/* Section Engagements */}
+      <section className="mb-16">
+        <h2 className="text-xl md:text-2xl font-semibold mb-12 text-center text-lilas-fonce font-display flex items-center justify-center gap-2">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-lilas-fonce">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+            <path d="M8 12L11 15L16 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Nos Engagements
+        </h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <div className="w-12 h-12 bg-lilas-clair/20 rounded-full flex items-center justify-center mb-4">
-              <HiOutlineStar className="w-6 h-6 text-lilas-fonce" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="flex gap-4 items-start">
+            <div className="text-lilas-fonce">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 16L7 12L12 8M16 12H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </div>
-            <h3 className="text-lg font-semibold mb-3 text-gray-800">Style Avant-Gardiste</h3>
-            <p className="text-gray-600">
-              Nouveautés toutes les 2 semaines pour vous garder à la pointe des tendances, avec des styles exclusifs que vous ne trouverez pas ailleurs.
-            </p>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Tendances</h3>
+              <p className="text-gray-700">
+                Une sélection touours à pointe de la móde, renueuevlée régollèrement pour vou offrir les dernières nouveautés.
+              </p>
+            </div>
           </div>
           
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <div className="w-12 h-12 bg-menthe/20 rounded-full flex items-center justify-center mb-4">
-              <HiOutlineHeart className="w-6 h-6 text-menthe" />
+          <div className="flex gap-4 items-start">
+            <div className="text-dore">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/>
+                <path d="M12 4V2M12 22V20M4 12H2M22 12H20M19.8 19.8L18.4 18.4M19.8 4.2L18.4 5.6M4.2 19.8L5.6 18.4M4.2 4.2L5.6 5.6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
             </div>
-            <h3 className="text-lg font-semibold mb-3 text-gray-800">Prix Juste</h3>
-            <p className="text-gray-600">
-              Des bijoux tendance à partir de 14,90€ grâce à notre approvisionnement direct. Sublimez votre style sans impacter votre budget.
-            </p>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Accessibilité</h3>
+              <p className="text-gray-700">
+                Des pris doux por vous taire pleisir sans cuscubilsair, grace à notre modele d&apos;approvi-sionnement direct.
+              </p>
+            </div>
           </div>
           
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <div className="w-12 h-12 bg-dore/20 rounded-full flex items-center justify-center mb-4">
-              <HiOutlineLightBulb className="w-6 h-6 text-dore" />
+          <div className="flex gap-4 items-start">
+            <div className="text-lilas-fonce">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                <path d="M12 8V12M12 16H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
             </div>
-            <h3 className="text-lg font-semibold mb-3 text-gray-800">Transparence Totale</h3>
-            <p className="text-gray-600">
-              Origine, matériaux, délais : nous vous disons tout. Nos boucles sont importées d&apos;Asie et sélectionnées pour leur qualité et leur design.
-            </p>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Transparence</h3>
+              <p className="text-gray-700">
+                Nous vous disms toit. san filtre. De l&apos;origine de nos produts aus dèlals de livraison.
+              </p>
+            </div>
           </div>
-
-          <div className="bg-white p-6 rounded-xl shadow-sm">
-            <div className="w-12 h-12 bg-lilas-clair/20 rounded-full flex items-center justify-center mb-4">
-              <HiOutlineHeart className="w-6 h-6 text-lilas-fonce" />
+          
+          <div className="flex gap-4 items-start">
+            <div className="text-menthe">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 19C17.771 19 19.657 19 20.828 17.828C22 16.657 22 14.771 22 11C22 7.229 22 5.343 20.828 4.172C19.657 3 17.771 3 14 3H10C6.229 3 4.343 3 3.172 4.172C2 5.343 2 7.229 2 11C2 14.771 2 16.657 3.172 17.828C4.343 19 6.229 19 10 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" strokeWidth="2"/>
+              </svg>
             </div>
-            <h3 className="text-lg font-semibold mb-3 text-gray-800">Service Client Réactif</h3>
-            <p className="text-gray-600">
-              Une équipe dédiée pour vous répondre sous 24h et résoudre 95% des questions dès le premier contact. Votre satisfaction est notre priorité.
-            </p>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Service client</h3>
+              <p className="text-gray-700">
+                Une equipe à votre ècute pour répondre à tortes ios duestions et vous accompagner duns votre experience d&apos;achat.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Section mobile */}
+      {/* Section Mobile */}
       <section className="mb-16">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          <div className="order-2 md:order-1">
-            <h2 className="text-xl md:text-2xl font-semibold mb-6 text-lilas-fonce font-display">📱 Shopping Mobile-First</h2>
-            <div className="space-y-4 text-gray-700">
-              <p>
-                Faites vos achats quand vous voulez, où vous voulez. Notre site est optimisé pour vous offrir une expérience fluide sur mobile avec paiement sécurisé et navigation intuitive.
-              </p>
-              <p>
-                Essayez dès maintenant ! En 3 clics, transformez votre look avec une nouvelle paire de boucles qui sublimera votre visage et complètera parfaitement votre style personnel.
-              </p>
-            </div>
+          <div className="order-2 md:order-1 space-y-4 text-gray-700">
+            <h2 className="text-xl md:text-2xl font-semibold mb-6 text-lilas-fonce font-display">
+              Une Expérience 100% Mobile
+            </h2>
+            <p>
+              Notre site ést pensée pour vou, que vou soyèz sur votre computer oueoutre smartphone. Navigation fluide, design ùrè, palement securisé.
+            </p>
+            <p>
+              Avec GlowLoops, chage maire de boucles d&apos;orrellles est une nouvelle occasion d&apos;exprimer votre style. Prete à vou
+            </p>
           </div>
-          <div className="relative h-[350px] md:h-[400px] rounded-lg overflow-hidden order-1 md:order-2 bg-gray-100 flex items-center justify-center">
-            <div className="text-center p-8">
-              <p className="text-lg font-medium text-gray-500 mb-4">Explorez notre boutique en mobilité</p>
-              <div className="w-48 h-96 mx-auto border-4 border-gray-300 rounded-3xl overflow-hidden relative">
-                <div className="absolute inset-0 bg-gradient-to-b from-lilas-clair to-lilas-fonce opacity-30"></div>
-              </div>
-            </div>
+          <div className="relative h-[400px] rounded-lg overflow-hidden order-1 md:order-2">
+            <OptimizedImage
+              src="/images/mobile-ecommerce-boucles-oreilles-480.avif"
+              alt="Interface mobile de la boutique GlowLoops montrant des boucles d'oreilles"
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              objectFit="cover"
+              sizePreset="large"
+              format="avif"
+            />
           </div>
         </div>
-      </section>
-
-      {/* Appel à l'action */}
-      <section className="text-center mt-16">
-        <h2 className="text-xl md:text-2xl font-semibold mb-4 text-lilas-fonce font-display">💫 Rejoignez 10 000+ Passionné·e·s de Bijoux</h2>
-        <p className="text-gray-600 max-w-xl mx-auto mb-6">
-          Inscrivez-vous maintenant et recevez 10% de réduction sur votre prochaine commande + des offres exclusives réservées à notre communauté.
-        </p>
-        <a 
-          href="/shop" 
-          className="inline-block px-6 py-3 bg-lilas-fonce text-white rounded-md hover:bg-lilas-clair transition-colors"
-        >
-          Découvrez nos collections dès maintenant
-        </a>
       </section>
     </div>
   );
