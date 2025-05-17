@@ -89,6 +89,16 @@ export default async function Home() {
     });
   }
 
+  // Déterminer la configuration de la grille en fonction du nombre d'avantages
+  const getGridCols = (count: number) => {
+    // Pour 3 avantages : 1 sur mobile, 3 sur tablette et desktop
+    if (count === 3) return 'grid-cols-1 min-[700px]:grid-cols-3';
+    // Pour 4 avantages : 1 sur mobile, 2 sur tablette, 4 sur desktop
+    if (count === 4) return 'grid-cols-1 min-[700px]:grid-cols-2 lg:grid-cols-4';
+    // Par défaut (5 avantages) : 1 sur mobile, 2 sur tablette, 5 sur desktop
+    return 'grid-cols-1 min-[700px]:grid-cols-2 lg:grid-cols-5';
+  };
+
   return (
     <div className="min-w-[375px] min-h-screen">
       <OrganizationJsonLd />
@@ -171,7 +181,9 @@ export default async function Home() {
                   Des boucles d&apos;oreilles uniques, éthiques et abordables pour sublimer votre style
                 </p>
               </div>
-              <div className="grid grid-cols-1 min-[700px]:grid-cols-2 lg:grid-cols-5 gap-6 overflow-visible place-items-center">
+              
+              {/* Grille adaptative en fonction du nombre d'avantages */}
+              <div className={`grid ${getGridCols(advantagesWithIcons.length)} gap-6 overflow-visible place-items-center justify-center max-w-6xl mx-auto`}>
                 {advantagesWithIcons.map((advantage) => (
                   <div 
                     key={advantage.id}

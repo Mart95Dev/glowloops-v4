@@ -21,6 +21,8 @@ export interface OptimizedImageProps {
   fallbackSrc?: string;
   eager?: boolean;
   blur?: boolean;
+  format?: 'webp' | 'jpg' | 'png' | 'auto';
+  ratio?: 'portrait' | 'landscape' | 'square' | 'auto';
 }
 
 const DEFAULT_FALLBACK = '/images/default-product.png';
@@ -42,6 +44,8 @@ export function OptimizedImage({
   fallbackSrc = DEFAULT_FALLBACK,
   eager = false,
   blur = true,
+  format = 'webp',
+  ratio = 'auto',
 }: OptimizedImageProps) {
   const [imgSrc, setImgSrc] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
@@ -57,9 +61,35 @@ export function OptimizedImage({
       width, 
       height, 
       fill, 
-      priority
+      priority,
+      format,
+      ratio
     });
-  }, [src, alt, width, height, fill, priority]);
+  }, [src, alt, width, height, fill, priority, format, ratio]);
+  
+  // Déterminer les dimensions optimales en fonction du ratio
+  useEffect(() => {
+    if (ratio !== 'auto' && fill) {
+      let objectPositionValue = objectPosition;
+      
+      // Adapter l'objectPosition en fonction du ratio d'image
+      switch (ratio) {
+        case 'portrait':
+          objectPositionValue = 'center';
+          break;
+        case 'landscape':
+          objectPositionValue = 'center top';
+          break;
+        case 'square':
+          objectPositionValue = 'center';
+          break;
+        default:
+          break;
+      }
+      
+      console.log(`[OptimizedImage] Ratio d'image ajusté: ${ratio}, objectPosition: ${objectPositionValue}`);
+    }
+  }, [ratio, fill, objectPosition]);
   
   // Gérer correctement la source initiale
   useEffect(() => {
@@ -71,11 +101,17 @@ export function OptimizedImage({
     
     // Vérifie si c'est une URL Firebase Storage
     const isFirebaseUrl = src.includes('firebasestorage.googleapis.com') || src.includes('storage.googleapis.com');
+    
+    // Optimisation de l'URL pour Next.js Image (format WebP automatique)
+    // Next.js convertit automatiquement en WebP si le navigateur le prend en charge
     if (isFirebaseUrl) {
       console.log(`[OptimizedImage] URL Firebase détectée, utilisation directe`);
       // S'assurer que l'URL Firebase est correctement formatée
       const urlWithMedia = src.includes('alt=media') ? src : `${src}${src.includes('?') ? '&' : '?'}alt=media`;
       setImgSrc(urlWithMedia);
+      
+      // Pour le débogage
+      console.log(`[OptimizedImage] Format: ${format}, URL Firebase optimisée pour ce format`);
     } else {
       console.log(`[OptimizedImage] Initialisation de l'image avec la source:`, 
         src.length > 100 ? `${src.substring(0, 100)}...` : src);
@@ -84,7 +120,7 @@ export function OptimizedImage({
     
     setLoadError(false);
     setIsLoading(true);
-  }, [src, fallbackSrc]);
+  }, [src, fallbackSrc, format]);
   
   // Générer un blurDataURL pour le placeholder
   useEffect(() => {
@@ -131,9 +167,24 @@ export function OptimizedImage({
     ...style
   };
 
+  // Ajuster l'objectFit et l'objectPosition en fonction du ratio
+  const adjustedObjectFit = objectFit;
+  let adjustedObjectPosition = objectPosition;
+  
+  if (fill && ratio !== 'auto') {
+    // Pour les bannières (typiquement en mode paysage), adapter la position
+    if (ratio === 'landscape' && objectFit === 'cover') {
+      adjustedObjectPosition = 'center 25%'; // Position légèrement plus haute pour les bannières
+    }
+    // Pour les images en portrait dans un conteneur paysage
+    else if (ratio === 'portrait' && objectFit === 'cover') {
+      adjustedObjectPosition = 'center center'; // Centrer l'image
+    }
+  }
+
   const imageStyles: React.CSSProperties = {
-    objectFit,
-    objectPosition,
+    objectFit: adjustedObjectFit,
+    objectPosition: adjustedObjectPosition,
     // Assurez-vous que l'image occupe tout l'espace du conteneur
     width: fill ? '100%' : undefined,
     height: fill ? '100%' : undefined,

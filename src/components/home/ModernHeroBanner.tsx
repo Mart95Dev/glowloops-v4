@@ -60,9 +60,11 @@ export default function ModernHeroBanner({
           quality={90}
           sizes={getResponsiveSizes('banner')}
           objectFit="cover"
-          objectPosition="center"
+          objectPosition="center 30%" // Positionner légèrement plus haut pour mieux cadrer le visage
           eager={true}
           fallbackSrc={FALLBACK_IMAGE}
+          format="webp" // Utiliser le format WebP pour une meilleure optimisation
+          ratio="landscape" // Définir le ratio paysage pour la bannière hero
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
       </div>

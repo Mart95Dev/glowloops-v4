@@ -16,7 +16,7 @@ export interface Advantage {
 /**
  * Récupère les avantages actifs
  */
-export const getActiveAdvantages = async (limitCount = 3): Promise<Advantage[]> => {
+export const getActiveAdvantages = async (limitCount = 5): Promise<Advantage[]> => {
   try {
     const advantagesRef = collection(db, ADVANTAGES_COLLECTION);
     const q = query(
