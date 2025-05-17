@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 // Définition du type Collection en attendant l'import correct
 interface Collection {
   id: string;
@@ -20,11 +21,40 @@ interface ModernCollectionsGridProps {
   title: string;
 }
 
+// URL de l'image par défaut si l'URL originale n'est pas valide
+const FALLBACK_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/glowloops-v3.appspot.com/o/collections%2Fdefault-collection.jpg?alt=media';
+
+// Fonction utilitaire pour vérifier si une URL est valide
+const isValidUrl = (url: string): boolean => {
+  try {
+    if (!url) return false;
+    if (url.startsWith('/')) return true; // URL relative
+    new URL(url); // Teste si l'URL est valide
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export default function ModernCollectionsGrid({ collections, title }: ModernCollectionsGridProps) {
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
   });
+
+  // État pour stocker les collections avec des URL d'image valides
+  const [validCollections, setValidCollections] = useState<Collection[]>([]);
+  
+  // Valider les URL des images au chargement du composant
+  useEffect(() => {
+    const collectionsWithValidUrls = collections.map(collection => ({
+      ...collection,
+      imageUrl: collection.imageUrl && isValidUrl(collection.imageUrl) 
+        ? collection.imageUrl 
+        : FALLBACK_IMAGE
+    }));
+    setValidCollections(collectionsWithValidUrls);
+  }, [collections]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -71,7 +101,7 @@ export default function ModernCollectionsGrid({ collections, title }: ModernColl
           initial="hidden"
           animate={inView ? "visible" : "hidden"}
         >
-          {collections.map((collection) => (
+          {validCollections.map((collection) => (
             <motion.div
               key={collection.id}
               className="relative overflow-hidden rounded-lg shadow-sm group h-[180px] sm:h-[250px] md:h-[300px] lg:h-[350px]"

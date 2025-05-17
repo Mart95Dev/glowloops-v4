@@ -279,10 +279,20 @@ export const useFavoritesStore = create<FavoritesState>()(
           return null;
         }
         
-        // Construire l'URL en fonction de l'environnement
-        const baseUrl = typeof window !== 'undefined' 
-          ? window.location.origin 
-          : 'https://glowloops.com';
+        // Construire l'URL en fonction de l'environnement avec une logique plus sûre
+        let baseUrl;
+        if (typeof window !== 'undefined' && window.location.origin) {
+          try {
+            // Vérifier que l'origine est une URL valide
+            new URL(window.location.origin);
+            baseUrl = window.location.origin;
+          } catch {
+            // Utiliser une URL de secours en cas d'erreur
+            baseUrl = 'https://glowloops.com';
+          }
+        } else {
+          baseUrl = 'https://glowloops.com';
+        }
           
         return `${baseUrl}/wishlist/${settings.slug}`;
       },

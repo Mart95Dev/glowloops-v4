@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import AuthLayout from '@/components/auth/AuthLayout';
 import PhoneLoginForm from '@/components/auth/PhoneLoginForm';
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: 'Connexion par SMS | GlowLoops',
@@ -13,7 +14,9 @@ export default function PhoneLoginPage() {
       title="Connexion par SMS"
       subtitle="Accédez à votre compte en quelques secondes avec votre numéro de téléphone"
     >
-      <PhoneLoginForm />
+      <Suspense fallback={<div className="py-8 text-center">Chargement...</div>}>
+        <PhoneLoginForm />
+      </Suspense>
     </AuthLayout>
   );
 } 

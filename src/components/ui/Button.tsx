@@ -44,8 +44,18 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, fullWidth, isLoading = false, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
+  ({ className, variant, size, fullWidth, isLoading = false, asChild = false, children, ...props }, ref) => {
+    // Correction du problème avec React.Children.only
+    // Lorsque asChild est true et que nous avons plusieurs enfants ou un enfant null,
+    // nous enveloppons dans un fragment ou un div pour éviter l'erreur
+    const childrenCount = React.Children.count(children);
+    
+    // Si asChild est true mais qu'il n'y a pas exactement un enfant React valide,
+    // nous utilisons un bouton normal à la place
+    const shouldUseSlot = asChild && childrenCount === 1 && React.Children.only(children) !== null;
+    
+    const Comp = shouldUseSlot ? Slot : "button";
+    
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, fullWidth, className }))}
@@ -56,7 +66,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {isLoading ? (
           <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
         ) : null}
-        {props.children}
+        {children}
       </Comp>
     );
   }

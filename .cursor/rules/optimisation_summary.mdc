@@ -1,0 +1,229 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Résumé des optimisations de performance GlowLoops
+
+## Optimisations déjà implémentées
+
+### 1. Utilitaires d'optimisation d'images
+
+#### `image-optimization.ts`
+- ✅ Fonction `getOptimizedImageUrl()` pour optimiser les URLs d'images Firebase
+- ✅ Support des presets de taille (`thumbnail`, `small`, `medium`, `large`, `banner`, `hero`)
+- ✅ Conversion automatique en WebP/AVIF pour meilleure compression
+- ✅ Fonction `getImagePreloadProps()` pour précharger les images critiques
+- ✅ Génération de `srcset` responsive
+
+#### `firebase-image-optimizer.ts`
+- ✅ Cache côté client pour éviter de recalculer les URLs
+- ✅ Options d'optimisation spécifiques par type d'image
+- ✅ Fonction `optimizeFirebaseImage()` avec support du cache
+- ✅ Conversion d'URLs Firebase Storage vers optimized CDN URLs
+- ✅ Support des attributs de préchargement pour le LCP
+
+### 2. Composant OptimizedImage
+
+- ✅ Remplacement optimisé de Next.js Image
+- ✅ Support de `critical` pour les images importantes
+- ✅ Qualité adaptative (85 pour images critiques, 75 pour le reste)
+- ✅ Support de `fetchPriority="high"` pour LCP
+- ✅ Gestion des erreurs avec fallback
+- ✅ Support de différents ratios et ajustements
+
+### 3. Configuration Next.js
+
+#### Images
+- ✅ Support des formats modernes (AVIF/WebP)
+- ✅ Cache TTL augmenté (30 jours)
+- ✅ Tailles d'appareils optimisées
+
+#### Webpack
+- ✅ Découpage spécifique pour Firebase (core, auth, firestore, storage)
+- ✅ TerserPlugin avec multi-passes pour réduire la taille
+- ✅ Regroupement intelligent des modules
+
+#### CSS
+- ✅ Optimisation avancée avec cssnano
+- ✅ Inlining des petits CSS
+
+#### Caching
+- ✅ Headers Cache-Control optimisés par type de ressource
+- ✅ Cache agressif pour ressources statiques et images
+
+## Points d'amélioration à prioriser
+
+### 1. LCP (Largest Contentful Paint): actuellement 18.2s ⚠️
+
+#### Problèmes identifiés
+- 🔴 Temps de chargement des images héro trop long
+- 🔴 Trop de JavaScript bloquant avant l'affichage de l'image principale
+- 🔴 Préchargement des assets critiques insuffisant
+
+#### Solutions détaillées
+1. **Implémenter un système de placeholders pour les images**
+   ```tsx
+   // Ajouter un placeholder low-quality à OptimizedImage
+   <OptimizedImage
+     src={imageUrl}
+     placeholderSrc={tinyImageUrl} // Version 10kb de l'image
+     critical={true}
+   />
+   ```
+
+2. **Déplacer l'initialisation Firebase après le LCP**
+   ```tsx
+   // Dans _app.tsx ou layout.tsx
+   useEffect(() => {
+     // Différer l'initialisation non critique de Firebase
+     const timer = setTimeout(() => {
+       initializeFirebaseAnalytics();
+     }, 3000); // Après le LCP
+     return () => clearTimeout(timer);
+   }, []);
+   ```
+
+3. **Implémenter un système de streaming SSR pour le contenu critique**
+   ```tsx
+   // Dans la page d'accueil
+   export default function HomePage() {
+     return (
+       <>
+         <HeroBannerStreamed /> {/* Priorité absolue */}
+         <Suspense fallback={<CategorySkeleton />}>
+           <CategoryShowcase />
+         </Suspense>
+         {/* Autres composants moins critiques */}
+       </>
+     );
+   }
+   ```
+
+### 2. TBT (Total Blocking Time): actuellement 1100ms ⚠️
+
+#### Problèmes identifiés
+- 🔴 Trop de JavaScript exécuté sur le thread principal
+- 🔴 Initialisation Firebase synchrone bloquante
+- 🔴 Composants React avec trop de calculs au montage
+
+#### Solutions détaillées
+1. **Modulariser davantage l'initialisation Firebase**
+   ```tsx
+   // Créer un hook personnalisé pour charger Firebase à la demande
+   function useLazyFirebaseService(service) {
+     const [instance, setInstance] = useState(null);
+     
+     const loadService = useCallback(async () => {
+       const { initializeService } = await import('./firebase-services');
+       const serviceInstance = await initializeService(service);
+       setInstance(serviceInstance);
+     }, [service]);
+     
+     return [instance, loadService];
+   }
+   ```
+
+2. **Déplacer les calculs intensifs vers des Web Workers**
+   - Créer un fichier `performance-worker.js` pour les calculs lourds
+   - Déplacer le traitement des données produits vers le worker
+
+3. **Partitionner le rendu des composants lourds**
+   ```tsx
+   // Avant
+   function ProductGrid({ products }) {
+     return products.map(p => <ProductCard key={p.id} product={p} />);
+   }
+   
+   // Après - avec partitionnement
+   function ProductGrid({ products }) {
+     return (
+       <>
+         <ProductBatch products={products.slice(0, 4)} priority />
+         <Suspense>
+           <ProductBatch products={products.slice(4)} />
+         </Suspense>
+       </>
+     );
+   }
+   ```
+
+### 3. TTI (Time to Interactive): actuellement 18.2s ⚠️
+
+#### Problèmes identifiés
+- 🔴 Trop de scripts chargés au démarrage
+- 🔴 Hydratation React trop lourde
+- 🔴 Bundle principal trop volumineux
+
+#### Solutions détaillées
+1. **Mettre en place un système de chargement progressif**
+   ```tsx
+   // Dans le composant Layout
+   const LazySearchBar = dynamic(() => import('./SearchBar'), {
+     ssr: false,
+     loading: () => <SearchBarPlaceholder />
+   });
+   ```
+
+2. **Réduire le code non critique dans le bundle principal**
+   - Identifier et déplacer les fonctionnalités non critiques
+   - Utiliser `next/dynamic` avec `{ ssr: false }` pour les composants d'UI non critiques
+   - Utiliser l'option `optimizePackageImports` dans next.config.js pour plus de modules
+
+3. **Implémenter une stratégie de "Progressive Hydration"**
+   - Créer un composant `<ProgressiveHydration>` personnalisé
+   - Hydrater uniquement les composants visibles dans la fenêtre
+
+### 4. Optimisations d'images spécifiques
+
+#### Problèmes identifiés
+- 🔴 Format AVIF pas encore implémenté partout
+- 🔴 Préchargement parfois redondant
+- 🔴 Qualité des images non optimale pour tous les contextes
+
+#### Solutions détaillées
+1. **Créer une fonction d'analyse d'importance des images**
+   ```tsx
+   function analyzeImageImportance(imageUrl, context) {
+     // Déterminer si l'image est critique pour le LCP
+     const isHero = context === 'hero';
+     const isAboveFold = context === 'product-main' || context === 'banner';
+     return {
+       critical: isHero || isAboveFold,
+       quality: isHero ? 85 : isAboveFold ? 80 : 75,
+       priority: isHero ? 'high' : 'auto',
+       format: isHero ? 'avif' : 'webp'
+     };
+   }
+   ```
+
+2. **Mettre en place un système de redimensionnement adaptatif au device**
+   - Implémenter une détection des capacités du navigateur et de la connexion
+   - Adapter la qualité selon la connexion (3G, 4G, WiFi)
+   - Ajuster la taille des images selon la densité d'écran (1x, 2x, 3x)
+
+## Plan d'action pour implémentation
+
+### Phase 1: Optimisations critiques LCP
+- [ ] Implémenter le système de placeholders pour les images
+- [ ] Différer l'initialisation Firebase
+- [ ] Optimiser le HTML initial pour afficher le contenu visible rapidement
+
+### Phase 2: Réduction du TBT
+- [ ] Modulariser davantage l'initialisation Firebase
+- [ ] Implémenter des Web Workers pour les calculs lourds
+- [ ] Optimiser les composants avec des calculs coûteux
+
+### Phase 3: Amélioration du TTI
+- [ ] Mettre en place le chargement progressif des composants
+- [ ] Réduire le code non critique
+- [ ] Implémenter la "Progressive Hydration"
+
+### Objectifs de performances
+| Métrique | Situation actuelle | Objectif |
+|----------|-------------------|----------|
+| LCP      | 18.2s             | < 2.5s   |
+| TBT      | 1100ms            | < 200ms  |
+| TTI      | 18.2s             | < 3.8s   |
+| CLS      | 0.032             | < 0.1    |
+| Score    | 47/100            | > 85/100 |

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { InstagramPost } from '@/lib/services/instagram-service';
 import { FaInstagram } from 'react-icons/fa';
+import { useState, useEffect } from 'react';
 
 interface ModernInstagramSectionProps {
   title: string;
@@ -14,6 +15,21 @@ interface ModernInstagramSectionProps {
   instagramPosts: InstagramPost[];
   instagramUsername: string;
 }
+
+// URL de l'image par défaut si l'URL originale n'est pas valide
+const FALLBACK_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/glowloops-v3.appspot.com/o/placeholder.png?alt=media';
+
+// Fonction utilitaire pour vérifier si une URL est valide
+const isValidUrl = (url: string): boolean => {
+  try {
+    if (!url) return false;
+    if (url.startsWith('/')) return true; // URL relative
+    new URL(url); // Teste si l'URL est valide
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 export default function ModernInstagramSection({
   title,
@@ -25,6 +41,18 @@ export default function ModernInstagramSection({
     triggerOnce: true,
     threshold: 0.1,
   });
+
+  // État pour stocker les posts avec des URL d'image valides
+  const [validPosts, setValidPosts] = useState<InstagramPost[]>([]);
+  
+  // Valider les URL des images au chargement du composant
+  useEffect(() => {
+    const postsWithValidUrls = instagramPosts.map(post => ({
+      ...post,
+      imageUrl: isValidUrl(post.imageUrl) ? post.imageUrl : FALLBACK_IMAGE
+    }));
+    setValidPosts(postsWithValidUrls);
+  }, [instagramPosts]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -70,7 +98,7 @@ export default function ModernInstagramSection({
           initial="hidden"
           animate={inView ? "visible" : "hidden"}
         >
-          {instagramPosts.map((post) => (
+          {validPosts.map((post) => (
             <motion.div
               key={post.id}
               className="relative aspect-square overflow-hidden rounded-lg group"

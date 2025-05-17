@@ -7,17 +7,16 @@ import { Product } from '@/lib/types/product';
 import { ProductImage } from '@/lib/types/product-image';
 
 // Image par défaut pour les produits sans image - utiliser une image locale
-const DEFAULT_IMAGE = '/images/default-product.jpg';
+const DEFAULT_IMAGE = '/images/default-product.png';
 
-// Fonction pour vérifier si une URL est valide
+// Fonction pour vérifier si une URL est valide sans utiliser l'objet URL
 const isValidUrl = (url: string | null | undefined): boolean => {
   if (!url) return false;
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
+  
+  // Vérification simple: commence par http:// ou https:// et ne contient pas d'espaces
+  return (url.startsWith('http://') || url.startsWith('https://')) 
+    && !url.includes(' ') 
+    && url.includes('.');
 };
 
 interface ProductWithImages {

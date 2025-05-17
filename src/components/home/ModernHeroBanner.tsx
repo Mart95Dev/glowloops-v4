@@ -1,10 +1,7 @@
 "use client";
 
-import { Button } from '@/components/ui/Button';
-import Link from "next/link";
-import Image from "next/image";
-import { motion } from "framer-motion";
-import { HiArrowNarrowRight } from "react-icons/hi";
+import Link from 'next/link';
+import { OptimizedImage } from '@/components/ui/OptimizedImage';
 
 interface ModernHeroBannerProps {
   title: string;
@@ -14,119 +11,52 @@ interface ModernHeroBannerProps {
   imageUrl: string;
 }
 
+/**
+ * Bannière principale optimisée pour le LCP
+ * Composant critique pour le premier affichage
+ */
 export default function ModernHeroBanner({
   title,
   subtitle,
   ctaText,
   ctaLink,
-  imageUrl,
+  imageUrl
 }: ModernHeroBannerProps) {
   return (
-    <section className="relative h-[85vh] sm:h-[90vh] md:h-[80vh] overflow-hidden bg-gradient-to-b from-lilas-clair/20 to-creme-nude/30">
-      <div className="absolute inset-0 w-full h-full">
-        <div className="relative w-full h-full">
-          <Image
-            src={imageUrl}
-            alt="Collection GlowLoops"
-            className="object-cover object-center"
-            fill
-            priority
-            sizes="100vw"
-            quality={90}
-            fetchPriority="high"
-            loading="eager"
-          />
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
+    <div className="min-w-[375px] w-full relative overflow-hidden">
+      <div className="relative aspect-[4/5] md:aspect-[16/9] lg:aspect-[21/9] w-full">
+        {/* Image de fond - critique pour le LCP */}
+        <OptimizedImage
+          src={imageUrl}
+          alt={title}
+          fill
+          priority
+          quality={85}
+          critical={true}
+          sizes="100vw"
+          className="transition-all duration-500 hover:scale-[1.02]"
+          objectFit="cover"
+          objectPosition="center 30%"
+          sizePreset="hero"
+        />
+        
+        {/* Overlay semi-transparent */}
+        <div className="absolute inset-0 bg-black bg-opacity-40 z-10" />
       </div>
 
-      <div className="relative h-full container mx-auto min-w-[375px] px-4 flex flex-col justify-center items-start">
-        <motion.div
-          className="max-w-lg"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-        >
-          <motion.span
-            className="inline-block px-3 py-1 mb-4 text-xs font-medium tracking-wider uppercase bg-menthe text-white rounded-full"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
+      {/* Contenu de la bannière */}
+      <div className="absolute inset-0 flex flex-col justify-center z-20 text-white">
+        <div className="container mx-auto px-4 md:px-8 text-center">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 font-display">{title}</h1>
+          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">{subtitle}</p>
+          <Link 
+            href={ctaLink}
+            className="inline-block bg-white text-lilas-fonce py-3 px-6 rounded-full font-medium hover:bg-lilas-clair hover:text-white transition-colors duration-300 shadow-md hover:shadow-lg"
           >
-            Nouvelle collection
-          </motion.span>
-          
-          <motion.h1
-            className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 font-display leading-tight"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            {title}
-          </motion.h1>
-
-          <motion.p
-            className="text-base sm:text-lg text-white/90 mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            {subtitle}
-          </motion.p>
-
-          <motion.div
-            className="flex flex-col sm:flex-row gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-          >
-            <Button
-              size="lg"
-              className="rounded-full bg-dore hover:bg-dore/80 text-white border-none shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 group"
-            >
-              <Link href={ctaLink} className="flex items-center">
-                {ctaText}
-                <HiArrowNarrowRight className="ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-              </Link>
-            </Button>
-            
-            <Button
-              variant="outline"
-              size="lg"
-              className="rounded-full bg-transparent border-white text-white hover:bg-white/10 transition-all duration-300"
-            >
-              <Link href="/collections">
-                Voir toutes les collections
-              </Link>
-            </Button>
-          </motion.div>
-        </motion.div>
-      </div>
-      
-      {/* Indicateur de défilement */}
-      <motion.div 
-        className="absolute bottom-6 left-1/2 transform -translate-x-1/2"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 1 }}
-      >
-        <div className="flex flex-col items-center">
-          <span className="text-white text-xs mb-2">Découvrir</span>
-          <motion.div 
-            className="w-1 h-10 bg-white/30 rounded-full overflow-hidden"
-            animate={{ 
-              y: [0, 10, 0],
-            }}
-            transition={{ 
-              duration: 2,
-              repeat: Infinity,
-              repeatType: "loop"
-            }}
-          >
-            <div className="w-full h-1/2 bg-white rounded-full"></div>
-          </motion.div>
+            {ctaText}
+          </Link>
         </div>
-      </motion.div>
-    </section>
+      </div>
+    </div>
   );
-}
+} 

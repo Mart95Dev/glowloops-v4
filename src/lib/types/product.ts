@@ -176,6 +176,7 @@ export interface Product {
   pricing?: {
     regular_price: number;
     sale_price?: number | null;
+    currency?: string;
   };
   content?: {
     short_description?: string;
