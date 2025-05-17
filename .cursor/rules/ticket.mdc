@@ -525,7 +525,30 @@ Optimiser les sous-menus des catégories principales (Style, Vibe, Matériaux) e
 - L'interface est intuitive et esthétique
 - La navigation est fluide entre les différentes catégories
 
-### GLOW-023: Implémentation des pages Nouveautés et Promos
+### GLOW-023: Optimisation côté serveur avec Firebase Cloud Functions
+**Priorité**: Moyenne
+**Estimation**: 8 points
+**Description**:
+Mettre en place des Cloud Functions Firebase pour optimiser les performances côté serveur et améliorer l'expérience utilisateur.
+
+**Tâches**:
+- Développer une Cloud Function pour la génération périodique du sitemap
+- Créer des fonctions pour le prérendu des pages critiques et la mise en cache
+- Implémenter un système de traitement d'images optimisé (redimensionnement automatique)
+- Mettre en place des fonctions pour le cache intelligent des données fréquemment consultées
+- Créer des endpoints d'API optimisés pour les requêtes complexes ou lourdes à Firestore
+- Développer des triggers pour maintenir les données cohérentes (mises à jour des compteurs, statistiques)
+- Mettre en place un système de notifications côté serveur
+
+**Critères d'acceptation**:
+- Les Cloud Functions sont correctement déployées et fonctionnelles
+- Le temps de chargement des pages est significativement amélioré
+- Les images sont automatiquement optimisées lors de l'upload
+- Les requêtes complexes sont plus rapides avec les endpoints optimisés
+- Le sitemap est généré automatiquement et mis à jour régulièrement
+- La charge du client est réduite pour les opérations lourdes
+
+### GLOW-024: Implémentation des pages Nouveautés et Promos
 **Priorité**: Élevée
 **Estimation**: 5 points
 **Description**:
@@ -546,7 +569,7 @@ Développer les pages Nouveautés et Promos complètes pour répondre aux attent
 - Les pages sont responsives sur tous les appareils
 - Les performances de chargement sont optimisées
 
-### GLOW-024: Système de redirection avec filtres pré-appliqués
+### GLOW-025: Système de redirection avec filtres pré-appliqués
 **Priorité**: Moyenne
 **Estimation**: 3 points
 **Description**:
@@ -566,28 +589,3 @@ Développer un système permettant de rediriger l'utilisateur vers la page bouti
 - L'URL reflète les filtres sélectionnés et peut être partagée
 - L'expérience utilisateur est fluide sans rechargement inutile
 - Le système fonctionne sur tous les navigateurs modernes
-
-### GLOW-025: Implémentation des pages Packs et Abonnement
-**Priorité**: Élevée
-**Estimation**: 8 points
-**Description**:
-Développer les pages Packs et Abonnement complètes pour offrir des options d'achat groupé et d'abonnement mensuel à la cible démographique (15-30 ans).
-
-**Tâches**:
-- Créer la page principale des Packs avec filtrage par catégorie
-- Développer les pages détaillées pour chaque pack
-- Implémenter le système de comparaison des packs
-- Créer la page Abonnement avec présentation de la GlowBox mensuelle
-- Développer le système d'inscription et de gestion d'abonnement
-- Intégrer les options de personnalisation pour l'abonnement
-- Créer les bannières et éléments visuels attractifs
-- Implémenter le système de paiement récurrent pour l'abonnement
-
-**Critères d'acceptation**:
-- Les pages affichent correctement les produits depuis Firestore
-- Le système d'abonnement fonctionne avec paiement récurrent
-- Les options de personnalisation sont fonctionnelles
-- L'interface est attractive et incite à l'achat
-- Les pages sont responsives sur tous les appareils
-
-- Les performances de chargement sont optimisées

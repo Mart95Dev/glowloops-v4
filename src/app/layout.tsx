@@ -6,9 +6,21 @@ import { Toaster } from '@/components/ui/toast-utils';
 import { Toaster as SonnerToaster } from 'sonner';
 import AuthInitializer from './_app';
 import FavoritesSync from '@/components/global/favorites-sync';
+import dynamic from 'next/dynamic';
+
+// Import dynamique des composants chargés côté client uniquement
+const WebVitalsTracker = dynamic(
+  () => import('@/components/performance/WebVitalsTracker'),
+  { ssr: false }
+);
+
+const Analytics = dynamic(
+  () => import('@/components/global/Analytics'),
+  { ssr: false }
+);
 
 // Désactiver le client-side JavaScript pour les composants qui ne sont pas explicitement marqués comme client
-export const dynamic = 'force-static';
+export const dynamicRendering = 'force-static';
 // Forcer le rendu statique pour éviter les problèmes de promesse
 export const dynamicParams = false;
 
@@ -29,6 +41,15 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "GlowLoops | Bijoux en résine époxy faits main",
   description: "Boutique artisanale de bijoux en résine époxy personnalisés, faits à la main avec des matériaux de qualité.",
+  // Désactivation temporaire de metadataBase pour éviter l'erreur
+  // metadataBase: new URL(getBaseUrl()),
+  robots: {
+    index: true,
+    follow: true
+  },
+  alternates: {
+    canonical: '/',
+  }
 };
 
 export default function RootLayout({
@@ -44,6 +65,8 @@ export default function RootLayout({
       >
         <AuthInitializer />
         <FavoritesSync />
+        <WebVitalsTracker />
+        <Analytics />
         <Header />
         <main className="pt-32 pb-16 min-h-screen">{children}</main>
         <Footer />

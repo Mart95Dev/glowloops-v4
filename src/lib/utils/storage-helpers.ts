@@ -11,6 +11,15 @@ import { getStorageFileUrl } from '../firebase/firebase-config';
  */
 export const extractStoragePath = (url: string): string => {
   try {
+    // Vérifier si l'URL est valide avant de la traiter
+    if (!url) return '';
+    
+    // Gérer le cas où l'URL pourrait être relative ou mal formatée
+    if (!url.startsWith('http')) {
+      // Si c'est un chemin relatif, le retourner directement
+      return url.startsWith('/') ? url.substring(1) : url;
+    }
+    
     // Format de l'URL: https://storage.googleapis.com/[bucket]/[path]?[params]
     const urlObj = new URL(url);
     const pathParts = urlObj.pathname.split('/');
@@ -21,7 +30,9 @@ export const extractStoragePath = (url: string): string => {
     return path;
   } catch (error) {
     console.error('Erreur lors de l\'extraction du chemin de stockage:', error);
-    return '';
+    console.log('URL problématique:', url);
+    // Retourner l'URL originale ou un chemin par défaut pour éviter la propagation d'erreurs
+    return url && typeof url === 'string' ? url : '';
   }
 };
 
@@ -39,7 +50,7 @@ export const refreshStorageUrl = async (url: string): Promise<string> => {
   }
   
   // Si ce n'est pas une URL Firebase Storage, la retourner telle quelle
-  if (!url.includes('storage.googleapis.com')) {
+  if (!url.includes('storage.googleapis.com') && !url.includes('firebasestorage.googleapis.com')) {
     return url;
   }
   

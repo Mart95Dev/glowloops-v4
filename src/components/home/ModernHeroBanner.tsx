@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { HiArrowNarrowRight } from "react-icons/hi";
+import { useState, useEffect } from 'react';
 
 interface ModernHeroBannerProps {
   title: string;
@@ -14,6 +15,21 @@ interface ModernHeroBannerProps {
   imageUrl: string;
 }
 
+// URL de l'image par défaut si l'URL originale n'est pas valide
+const FALLBACK_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/glowloops-v3.appspot.com/o/banners%2Fdefault-hero.jpg?alt=media';
+
+// Fonction utilitaire pour vérifier si une URL est valide
+const isValidUrl = (url: string): boolean => {
+  try {
+    if (!url) return false;
+    if (url.startsWith('/')) return true; // URL relative
+    new URL(url); // Teste si l'URL est valide
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export default function ModernHeroBanner({
   title,
   subtitle,
@@ -21,12 +37,20 @@ export default function ModernHeroBanner({
   ctaLink,
   imageUrl,
 }: ModernHeroBannerProps) {
+  // État pour stocker l'URL de l'image vérifiée
+  const [validImageUrl, setValidImageUrl] = useState<string>(FALLBACK_IMAGE);
+  
+  // Valider l'URL de l'image au chargement du composant
+  useEffect(() => {
+    setValidImageUrl(isValidUrl(imageUrl) ? imageUrl : FALLBACK_IMAGE);
+  }, [imageUrl]);
+
   return (
     <section className="relative h-[85vh] sm:h-[90vh] md:h-[80vh] overflow-hidden bg-gradient-to-b from-lilas-clair/20 to-creme-nude/30">
       <div className="absolute inset-0 w-full h-full">
         <div className="relative w-full h-full">
           <Image
-            src={imageUrl}
+            src={validImageUrl}
             alt="Collection GlowLoops"
             className="object-cover object-center"
             fill
