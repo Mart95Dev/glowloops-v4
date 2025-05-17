@@ -1,6 +1,6 @@
 'use client';
 
-import { useState} from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiChevronDown, HiOutlineSearch, HiLightBulb, HiSparkles, HiThumbUp } from 'react-icons/hi';
@@ -17,33 +17,33 @@ const categories = [
 ];
 
 // Histoires client·e·s pour chaque catégorie
-const clientStories = {
-  'livraison': {
-    name: 'Julie M.',
-    story: 'Les boucles d&apos;oreilles sont arrivées parfaitement emballées, dans leur jolie boîte en velours protectrice. J&apos;ai adoré découvrir la carte manuscrite de l&apos;artisane !',
-    image: '/images/avatar-chatbot/avatar2.jpg'
-  },
-  'produits': {
-    name: 'Aurélie L.',
-    story: 'Mes mini-hoops en argent sont hypoallergéniques comme promis ! Je les porte depuis 3 mois sans aucune réaction, même avec ma peau sensible.',
-    image: '/images/avatar-chatbot/avatar3.jpg'
-  },
-  'entretien': {
-    name: 'Sarah K.',
-    story: 'Grâce aux conseils d&apos;entretien, mes créoles dorées brillent toujours comme au premier jour après 6 mois d&apos;utilisation quotidienne.',
-    image: '/images/avatar-chatbot/avatar4.jpg'
-  },
-  'retours': {
-    name: 'Marine B.',
-    story: 'J&apos;ai dû échanger une paire trop grande. Le processus était ultra simple et la nouvelle paire m&apos;est parvenue en 48h seulement !',
-    image: '/images/avatar-chatbot/avatar5.jpg'
-  },
-  'commande': {
-    name: 'Emma T.',
-    story: 'J&apos;hésitais entre deux modèles, le service client m&apos;a envoyé des photos supplémentaires pour m&apos;aider à choisir. Quelle attention !',
-    image: '/images/avatar-chatbot/avatar1.jpg'
-  }
-};
+// const clientStories = {
+//   'livraison': {
+//     name: 'Julie M.',
+//     story: 'Les boucles d&apos;oreilles sont arrivées parfaitement emballées, dans leur jolie boîte en velours protectrice. J&apos;ai adoré découvrir la carte manuscrite de l&apos;artisane !',
+//     image: '/images/avatar-chatbot/avatar2.jpg'
+//   },
+//   'produits': {
+//     name: 'Aurélie L.',
+//     story: 'Mes mini-hoops en argent sont hypoallergéniques comme promis ! Je les porte depuis 3 mois sans aucune réaction, même avec ma peau sensible.',
+//     image: '/images/avatar-chatbot/avatar3.jpg'
+//   },
+//   'entretien': {
+//     name: 'Sarah K.',
+//     story: 'Grâce aux conseils d&apos;entretien, mes créoles dorées brillent toujours comme au premier jour après 6 mois d&apos;utilisation quotidienne.',
+//     image: '/images/avatar-chatbot/avatar4.jpg'
+//   },
+//   'retours': {
+//     name: 'Marine B.',
+//     story: 'J&apos;ai dû échanger une paire trop grande. Le processus était ultra simple et la nouvelle paire m&apos;est parvenue en 48h seulement !',
+//     image: '/images/avatar-chatbot/avatar5.jpg'
+//   },
+//   'commande': {
+//     name: 'Emma T.',
+//     story: 'J&apos;hésitais entre deux modèles, le service client m&apos;a envoyé des photos supplémentaires pour m&apos;aider à choisir. Quelle attention !',
+//     image: '/images/avatar-chatbot/avatar1.jpg'
+//   }
+// };
 
 // Citations inspirantes pour le storytelling
 const inspiringQuotes = [
@@ -136,25 +136,25 @@ const FAQItem: React.FC<{ question: string; answer: string; isOpen: boolean; onC
 };
 
 // Composant pour afficher un témoignage client
-const ClientStory: React.FC<{ category: string }> = ({ category }) => {
-  const story = clientStories[category as keyof typeof clientStories];
+// const ClientStory: React.FC<{ category: string }> = ({ category }) => {
+//   const story = clientStories[category as keyof typeof clientStories];
   
-  if (!story) return null;
+//   if (!story) return null;
   
-  return (
-    <div className="bg-white rounded-lg p-4 shadow-sm mb-6 flex items-start">
-      <div className="w-10 h-10 rounded-full bg-gray-200 mr-3 overflow-hidden flex-shrink-0">
-        {story.image && (
-          <img src={story.image} alt={story.name} className="w-full h-full object-cover" />
-        )}
-      </div>
-      <div>
-        <p className="text-sm text-gray-600 italic mb-1">&quot;{story.story}&quot;</p>
-        <p className="text-xs font-medium text-gray-800">{story.name}</p>
-      </div>
-    </div>
-  );
-};
+//   return (
+//     <div className="bg-white rounded-lg p-4 shadow-sm mb-6 flex items-start">
+//       <div className="w-10 h-10 rounded-full bg-gray-200 mr-3 overflow-hidden flex-shrink-0">
+//         {story.image && (
+//           <img src={story.image} alt={story.name} className="w-full h-full object-cover" />
+//         )}
+//       </div>
+//       <div>
+//         <p className="text-sm text-gray-600 italic mb-1">&quot;{story.story}&quot;</p>
+//         <p className="text-xs font-medium text-gray-800">{story.name}</p>
+//       </div>
+//     </div>
+//   );
+// };
 
 export default function FAQ() {
   const [activeCategory, setActiveCategory] = useState<string>('all');
@@ -194,9 +194,9 @@ export default function FAQ() {
           Matériaux éthiques, conseils d&apos;entretien, astuces de style... Toutes les réponses pour sublimer votre expérience avec vos bijoux GlowLoops au quotidien !
         </p>
         <div className="flex justify-center items-center mt-4">
-          <span className="text-sm bg-menthe/10 text-menthe px-3 py-1 rounded-full">
+          <div className="text-sm bg-menthe text-black px-4 py-2 rounded-lg shadow-md font-medium">
             <strong>98% des client·e·s</strong> trouvent leur réponse en moins d&apos;une minute
-          </span>
+          </div>
         </div>
       </div>
       
@@ -232,7 +232,8 @@ export default function FAQ() {
       
       {/* Liste de FAQs */}
       <div className="space-y-8">
-        {activeCategory !== 'all' && <ClientStory category={activeCategory} />}
+        {/* {activeCategory !== 'all' && <ClientStory category={activeCategory} />} */}
+       
         
         {activeCategory === 'all' ? (
           // Affichage par catégories
@@ -243,7 +244,7 @@ export default function FAQ() {
             return (
               <div key={category}>
                 <h2 className="text-xl font-semibold mb-4 text-lilas-fonce">{categoryLabel}</h2>
-                <ClientStory category={category} />
+                {/* <ClientStory category={category} /> */}
                 <div className="bg-white rounded-lg shadow-lg overflow-hidden">
                   {faqs.map((faq) => (
                     <FAQItem 
@@ -311,25 +312,6 @@ export default function FAQ() {
             Obtenez votre conseil personnalisé
           </button>
         </Link>
-      </div>
-      
-      {/* Preuve sociale */}
-      <div className="mt-12 pt-10 border-t border-gray-100">
-        <h2 className="text-xl font-semibold mb-6 text-center text-lilas-fonce">Les plus récentes photos de nos client·e·s</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          <div className="aspect-[4/5] rounded-md overflow-hidden bg-gray-100">
-            <img src="/instagram/insta1.jpg" alt="Cliente portant des boucles d'oreilles pendantes dorées" className="w-full h-full object-cover hover:scale-105 transition-transform" />
-          </div>
-          <div className="aspect-[4/5] rounded-md overflow-hidden bg-gray-100">
-            <img src="/instagram/insta2.jpg" alt="Cliente portant des mini-hoops argentées" className="w-full h-full object-cover hover:scale-105 transition-transform" />
-          </div>
-          <div className="aspect-[4/5] rounded-md overflow-hidden bg-gray-100">
-            <img src="/instagram/insta3.jpg" alt="Cliente portant des créoles avec pierre rose" className="w-full h-full object-cover hover:scale-105 transition-transform" />
-          </div>
-          <div className="aspect-[4/5] rounded-md overflow-hidden bg-gray-100">
-            <img src="/instagram/insta4.jpg" alt="Cliente portant des boucles asymétriques" className="w-full h-full object-cover hover:scale-105 transition-transform" />
-          </div>
-        </div>
       </div>
     </div>
   );
