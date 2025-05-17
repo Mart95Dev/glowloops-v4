@@ -14,15 +14,20 @@ const IMAGE_SIZES = {
   hero: { width: 1920, height: 800 },
 };
 
+// Breakpoints standards pour le responsive
+const DEFAULT_BREAKPOINTS = [375, 640, 768, 1024, 1280, 1536, 1920];
+
 // Type pour les options d'optimisation
 export interface ImageOptimizationOptions {
   width?: number;
   height?: number;
   quality?: number;
-  format?: 'webp' | 'avif' | 'jpeg' | 'png';
+  format?: 'avif' | 'webp' | 'jpeg' | 'png';
   sizePreset?: keyof typeof IMAGE_SIZES;
   crop?: boolean;
   fetchPriority?: 'high' | 'low' | 'auto';
+  breakpoints?: number[]; // Breakpoints personnalisés pour srcSet
+  lowQualityPreview?: boolean; // Génère une version basse qualité pour le chargement progressif
 }
 
 /**
@@ -40,7 +45,7 @@ export function getOptimizedImageUrl(url: string, options: ImageOptimizationOpti
     width,
     height,
     quality = 75,
-    format = 'webp',
+    format = 'avif', // AVIF par défaut pour une meilleure compression
     sizePreset,
     crop = false,
   } = options;
@@ -80,7 +85,7 @@ export function getOptimizedImageUrl(url: string, options: ImageOptimizationOpti
         // Qualité d'image (réduire pour améliorer la performance)
         params.append('q', quality.toString());
         
-        // Format WebP pour une meilleure compression
+        // Format optimisé (AVIF ou WebP pour une meilleure compression)
         params.append('f', format);
         
         // Cropping si nécessaire
@@ -122,7 +127,7 @@ export function getOptimizedImageUrl(url: string, options: ImageOptimizationOpti
     // Qualité d'image
     urlObj.searchParams.set('q', quality.toString());
     
-    // Format WebP pour une meilleure compression
+    // Format optimisé
     urlObj.searchParams.set('f', format);
     
     // Cropping si nécessaire
@@ -152,7 +157,7 @@ export function getOptimizedImageUrl(url: string, options: ImageOptimizationOpti
 export function getImagePreloadProps(url: string, isCritical: boolean = false) {
   if (!isCritical || !url) return {};
 
-  // Déterminer le type MIME basé sur l'extension
+  // Déterminer le type MIME basé sur l'extension ou les paramètres d'URL
   let type = 'image/jpeg'; // par défaut
   if (url.includes('.webp') || url.includes('f=webp')) type = 'image/webp';
   if (url.includes('.avif') || url.includes('f=avif')) type = 'image/avif';
@@ -172,22 +177,31 @@ export function getImagePreloadProps(url: string, isCritical: boolean = false) {
 /**
  * Génère un srcset pour le chargement responsive des images
  * @param url - L'URL de base de l'image
+ * @param options - Options supplémentaires pour la génération du srcset
  * @returns Une chaîne srcset pour le préchargement
  */
-function generateSrcSet(url: string): string {
+export function generateSrcSet(
+  url: string, 
+  options: Omit<ImageOptimizationOptions, 'width' | 'height'> & { breakpoints?: number[] } = {}
+): string {
   if (!url || (!url.includes('firebasestorage.googleapis.com') && !url.includes('storage.googleapis.com'))) {
     return '';
   }
   
   // Générer des variantes pour différentes tailles d'écran
   try {
-    const widths = [375, 640, 750, 828, 1080, 1200, 1920];
-    const srcSetEntries = widths.map(w => {
+    // Utiliser les breakpoints fournis ou les valeurs par défaut
+    const widths = options.breakpoints || DEFAULT_BREAKPOINTS;
+    
+    // Garantir que les largeurs sont triées et uniques
+    const sortedWidths = Array.from(new Set(widths)).sort((a, b) => a - b);
+    
+    const srcSetEntries = sortedWidths.map(w => {
       // Optimisation pour chaque largeur
       const optimizedUrl = getOptimizedImageUrl(url, { 
         width: w, 
-        format: 'webp',
-        quality: 75
+        format: options.format || 'avif',
+        quality: options.quality || 75
       });
       return `${optimizedUrl} ${w}w`;
     });
@@ -207,8 +221,13 @@ function generateSrcSet(url: string): string {
  * @returns Les métadonnées optimisées pour Firebase Storage
  */
 export function getStorageMetadata(contentType: string, isPublic: boolean = true) {
+  // Utiliser AVIF si possible pour les images
+  const optimizedContentType = contentType.startsWith('image/') && !contentType.includes('svg') 
+    ? 'image/avif' 
+    : contentType;
+  
   return {
-    contentType,
+    contentType: optimizedContentType,
     cacheControl: isPublic 
       ? 'public, max-age=31536000, s-maxage=31536000' // Cache d'un an pour les fichiers publics avec CDN
       : 'private, max-age=3600',   // Cache d'une heure pour les fichiers privés

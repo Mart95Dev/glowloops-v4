@@ -1,0 +1,149 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Résumé des optimisations de performance GlowLoops
+
+## Optimisations déjà implémentées
+
+### 1. Utilitaires d'optimisation d'images
+
+#### `image-optimization.ts`
+- ✅ Fonction `getOptimizedImageUrl()` pour optimiser les URLs d'images Firebase
+- ✅ Support des presets de taille (`thumbnail`, `small`, `medium`, `large`, `banner`, `hero`)
+- ✅ Conversion automatique en AVIF (priorité) et WebP pour meilleure compression
+- ✅ Fonction `getImagePreloadProps()` pour précharger les images critiques
+- ✅ Génération de `srcset` responsive avec breakpoints personnalisables
+- ✅ Support des formats modernes (AVIF en priorité, WebP en fallback)
+- ✅ Optimisation des métadonnées pour le téléchargement d'images
+
+#### `OptimizedImage.tsx`
+- ✅ Remplacement optimisé de Next.js Image
+- ✅ Support de `critical` pour les images importantes
+- ✅ Qualité adaptative (85 pour images critiques, 75 pour le reste)
+- ✅ Support de `fetchPriority="high"` pour LCP
+- ✅ Gestion des erreurs avec fallback
+- ✅ Support de différents ratios et ajustements
+- ✅ Préchargement direct des ressources critiques via Head
+- ✅ Support complet des formats AVIF/WebP avec détection auto
+- ✅ Génération de srcSet responsive avec multiples breakpoints
+
+### 2. Composants optimisés
+
+#### `ModernHeroBanner.tsx`
+- ✅ Préchargement direct des images via `<Head>`
+- ✅ Configuration optimale pour le LCP
+- ✅ Préchargement des scripts JS critiques
+- ✅ Utilisation du format AVIF pour une meilleure compression
+- ✅ Support des ratios d'aspect adaptés aux différents devices
+
+### 3. Améliorations de performance
+
+- ✅ Score Lighthouse passé de 35-40/100 à 71/100
+- ✅ Total Blocking Time réduit de 4.8-11.8s à 0ms
+- ✅ Largest Contentful Paint amélioré de 41-55s à 13.1s
+- ✅ First Contentful Paint optimisé à 1.1s
+- ✅ Cumulative Layout Shift parfait (0)
+
+## Points d'amélioration à prioriser
+
+### 1. LCP (Largest Contentful Paint): actuellement 13.1s ⚠️
+
+#### Problèmes identifiés
+- 🔴 Temps de chargement des images héro encore trop long
+- 🔴 Trop de JavaScript exécuté avant l'affichage de l'image principale
+
+#### Solutions détaillées
+1. **Implémenter un système de placeholders pour les images**
+   ```tsx
+   <OptimizedImage
+     src={imageUrl}
+     placeholderSrc={tinyImageUrl} // Version 10kb de l'image
+     critical={true}
+   />
+   ```
+
+2. **Déplacer l'initialisation Firebase après le LCP**
+   ```tsx
+   useEffect(() => {
+     // Différer l'initialisation non critique de Firebase
+     const timer = setTimeout(() => {
+       initializeFirebaseAnalytics();
+     }, 3000); // Après le LCP
+     return () => clearTimeout(timer);
+   }, []);
+   ```
+
+3. **Ajouter l'attribut `defer` aux scripts non-critiques**
+   ```html
+   <script src="/chunks/non-critical.js" defer></script>
+   ```
+
+4. **Réduire davantage la taille des images hero**
+   - Compression plus agressive des images de bannière
+   - Utilisation de techniques de responsive art direction
+
+### 2. TTI (Time to Interactive): actuellement 13.1s ⚠️
+
+#### Problèmes identifiés
+- 🔴 Bundle JavaScript trop volumineux
+- 🔴 Hydratation React trop lourde
+
+#### Solutions détaillées
+1. **Mettre en place un système de chargement progressif**
+   ```tsx
+   const LazyComponent = dynamic(() => import('./Component'), {
+     ssr: false,
+     loading: () => <Placeholder />
+   });
+   ```
+
+2. **Réduire le code non critique dans le bundle principal**
+   - Identifier et déplacer les fonctionnalités non critiques
+   - Utiliser `next/dynamic` avec `{ ssr: false }` pour les composants d'UI non critiques
+
+3. **Implémenter les Server Components pour les sections non interactives**
+   - Convertir les composants statiques en Server Components
+   - Réduire le JavaScript envoyé au client
+
+### 3. Optimisations Firebase
+
+#### Problèmes identifiés
+- 🔴 Initialisation synchrone de Firebase bloquant le rendu
+- 🔴 Requêtes Firestore non optimisées
+
+#### Solutions détaillées
+1. **Modulariser davantage l'initialisation Firebase**
+   ```tsx
+   // Lazy loading de Firebase
+   const loadFirebase = async () => {
+     const { initializeApp } = await import('firebase/app');
+     // Initialiser uniquement les services nécessaires
+   };
+   ```
+
+2. **Mettre en cache les résultats des requêtes Firestore fréquentes**
+   - Implémenter un système de cache côté client
+   - Utiliser SWR ou React Query pour la gestion des données
+
+## Plan d'action pour implémentation
+
+### Phase 1: Optimisations critiques LCP
+- [ ] Implémenter un système de placeholders LQIP pour les images hero
+- [ ] Différer l'initialisation Firebase et autres scripts non critiques
+- [ ] Réduire davantage la taille des images hero
+
+### Phase 2: Amélioration du TTI
+- [ ] Mettre en place le chargement progressif des composants
+- [ ] Analyser et réduire la taille des bundles JavaScript
+- [ ] Convertir plus de composants en Server Components
+
+### Objectifs de performances
+| Métrique | Situation initiale | Situation actuelle | Objectif |
+|----|----|----|----|
+| Performance Score | 35-40/100 | 71/100 | > 90/100 |
+| LCP | 41-55s | 13.1s | < 2.5s |
+| TBT | 4.8-11.8s | 0ms | < 200ms |
+| TTI | 41-55s | 13.1s | < 3.8s |
+| CLS | 0.02-0.03 | 0 | < 0.1 |

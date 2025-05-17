@@ -1,0 +1,217 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Règles d'implémentation pour l'optimisation des performances GlowLoops
+
+## 1. Images et médias
+
+### Utilisation des utilitaires d'optimisation
+- **OBLIGATOIRE**: Utiliser `OptimizedImage` au lieu de `Image` de Next.js pour toutes les images
+- **OBLIGATOIRE**: Spécifier le type d'image à travers `sizePreset` ou dimensions exactes
+- **OBLIGATOIRE**: Définir `critical={true}` pour les images au-dessus de la ligne de flottaison
+- **OBLIGATOIRE**: Privilégier le format AVIF via `format="avif"` pour une compression optimale
+
+```tsx
+// ✓ CORRECT
+<OptimizedImage 
+  src={imageUrl} 
+  alt="Description" 
+  sizePreset="hero" 
+  critical={true} 
+  sizes="100vw"
+  format="avif"
+/>
+
+// ✗ INCORRECT
+<Image 
+  src={imageUrl} 
+  alt="Description" 
+  width={1200} 
+  height={600}
+/>
+```
+
+### Images Firebase Storage
+- **OBLIGATOIRE**: Utiliser `optimizeFirebaseImage()` pour toutes les URLs Firebase
+- **OBLIGATOIRE**: Spécifier le type d'image (`hero`, `product`, `collection`, etc.)
+- **OBLIGATOIRE**: Spécifier le format d'image cible, privilégier AVIF quand possible
+- **OBLIGATOIRE**: Précharger les images critiques via `<Head>` avec `fetchPriority="high"`
+
+```tsx
+// ✓ CORRECT
+const optimizedUrl = getOptimizedImageUrl(url, {
+  sizePreset: 'hero',
+  format: 'avif',
+  quality: 85
+});
+
+// Préchargement direct dans ModernHeroBanner
+<Head>
+  <link 
+    rel="preload" 
+    as="image" 
+    href={imageUrl} 
+    fetchPriority="high"
+    type="image/avif"
+  />
+</Head>
+
+// ✗ INCORRECT
+const imageUrl = url;
+```
+
+### Responsive et chargement adaptatif
+- **OBLIGATOIRE**: Fournir l'attribut `sizes` approprié pour toutes les images
+- **OBLIGATOIRE**: Utiliser `generateSrcSet()` pour générer des srcset complets avec multiples breakpoints
+- **OBLIGATOIRE**: Spécifier les breakpoints adaptés au design responsive
+- **RECOMMANDÉ**: Utiliser les dimensions correctes selon le contexte d'affichage
+
+```tsx
+// ✓ CORRECT - Génération complète de srcSet
+const srcSet = generateSrcSet(imageUrl, {
+  format: 'avif',
+  quality: 80,
+  breakpoints: [375, 640, 768, 1024, 1280, 1536, 1920]
+});
+
+// ✓ CORRECT - Déclaration des tailles attendues
+<OptimizedImage
+  src={imageUrl}
+  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+  // autres attributs...
+/>
+```
+
+## 2. Composants et rendu
+
+### Optimisation du LCP (Largest Contentful Paint)
+- **OBLIGATOIRE**: Précharger l'image principale avec `fetchPriority="high"`
+- **OBLIGATOIRE**: Précharger les scripts JS critiques pour la page
+- **OBLIGATOIRE**: Utiliser les Server Components pour les éléments statiques
+- **OBLIGATOIRE**: Ajouter l'attribut `defer` aux scripts non-critiques
+
+```tsx
+// ✓ CORRECT - Préchargement complet
+<Head>
+  <link 
+    rel="preload" 
+    as="image" 
+    href={imageUrl} 
+    fetchPriority="high"
+    type="image/avif"
+  />
+  <link 
+    rel="preload" 
+    as="script" 
+    href="/chunks/app/page.js" 
+    fetchPriority="high" 
+  />
+</Head>
+```
+
+### Limiter l'utilisation de "use client"
+- **OBLIGATOIRE**: Limiter l'utilisation de la directive `"use client"` aux composants qui en ont vraiment besoin
+- **RECOMMANDÉ**: Créer des "îlots d'interactivité" plutôt que de rendre toute la page interactive
+
+```tsx
+// ✓ CORRECT - Server Component parent avec un îlot interactif
+export default function ProductPage() {
+  return (
+    <div>
+      <ProductHeader /> {/* Server Component */}
+      <InteractiveProductGallery /> {/* Client Component */}
+      <ProductDescription /> {/* Server Component */}
+    </div>
+  );
+}
+
+// ✗ INCORRECT - Tout est un Client Component
+'use client';
+export default function ProductPage() {
+  // ...
+}
+```
+
+### Gestion des états et événements
+- **OBLIGATOIRE**: Éviter les calculs intensifs dans les gestionnaires d'événements
+- **OBLIGATOIRE**: Utiliser `useCallback` et `useMemo` pour éviter les re-rendus inutiles
+- **OBLIGATOIRE**: Différer les initialisations Firebase non essentielles
+- **RECOMMANDÉ**: Implémenter un système de lazy-loading pour les fonctionnalités non critiques
+
+```tsx
+// ✓ CORRECT - Initialisation différée de Firebase
+useEffect(() => {
+  // Différer l'initialisation non critique
+  const timer = setTimeout(() => {
+    initializeFirebaseAnalytics();
+  }, 3000); // Après le LCP
+  return () => clearTimeout(timer);
+}, []);
+```
+
+## 3. Styles et CSS
+
+### Optimisation des styles
+- **OBLIGATOIRE**: Suivre les conventions Tailwind CSS établies
+- **OBLIGATOIRE**: Utiliser les bonnes classes de ratio d'aspect pour éviter les CLS
+- **RECOMMANDÉ**: Éviter les styles inline dynamiques qui causent des re-rendus
+- **RECOMMANDÉ**: Regrouper les animations utilisant `transform` plutôt que des propriétés comme `top`, `left`
+
+### Animations
+- **OBLIGATOIRE**: Limiter les animations complexes sur mobile
+- **OBLIGATOIRE**: Animer uniquement les propriétés performantes (`transform`, `opacity`)
+- **RECOMMANDÉ**: Désactiver les animations pour `prefers-reduced-motion`
+
+## 4. Chargement des données
+
+### Suspense et chargement
+- **OBLIGATOIRE**: Utiliser Suspense pour le chargement des données
+- **OBLIGATOIRE**: Implémenter des squelettes (skeletons) pour le contenu en chargement
+- **OBLIGATOIRE**: Prévoir un fallback pour les images non chargées
+- **RECOMMANDÉ**: Précharger les données critiques au niveau du layout
+
+```tsx
+// ✓ CORRECT
+<Suspense fallback={<ProductSkeleton />}>
+  <Product />
+</Suspense>
+
+// ✗ INCORRECT
+{isLoading ? <Loading /> : <Product />}
+```
+
+### Firebase et APIs externes
+- **OBLIGATOIRE**: Utiliser `getOptimizedImageUrl()` pour toutes les URLs d'images Firebase
+- **OBLIGATOIRE**: Mettre en cache les résultats des requêtes Firestore fréquentes
+- **OBLIGATOIRE**: Lazy-load les services Firebase non critiques
+- **RECOMMANDÉ**: Implémenter un SWR (stale-while-revalidate) pour les données
+
+## 5. Tests de performance
+
+### Validation des performances
+- **OBLIGATOIRE**: Tester sur des appareils mobiles réels ou en émulation
+- **OBLIGATOIRE**: Vérifier les métriques Web Vitals (LCP, TBT, CLS) avant chaque mise en production
+- **OBLIGATOIRE**: S'assurer que le Total Blocking Time reste sous 200ms
+- **RECOMMANDÉ**: Créer des tests automatisés pour les scores Lighthouse
+
+```bash
+# Commande pour tester les performances (à exécuter avant chaque déploiement)
+npm run lighthouse:mobile
+```
+
+## 6. Configuration build
+
+### Optimisations Next.js
+- **OBLIGATOIRE**: Maintenir les optimisations dans `next.config.js`
+- **OBLIGATOIRE**: Surveiller la taille des bundles après chaque modification
+- **OBLIGATOIRE**: Utiliser AVIF comme format d'image par défaut dans les optimisations Next.js
+- **RECOMMANDÉ**: Analyser les bundles avec `@next/bundle-analyzer` si la performance régresse
+
+## Résumé des points critiques
+
+1. ⚠️ **LCP**: Précharger les images critiques, utiliser AVIF/WebP, précharger les scripts critiques
+2. ⚠️ **TBT**: Utiliser `defer` pour les scripts non-critiques, différer les calculs non essentiels
+3. ⚠️ **CLS**: Définir des dimensions et ratios d'aspect pour toutes les images, utiliser des placeholders
+4. ⚠️ **TTI**: Réduire les bundles JavaScript, utiliser des Server Components, implémenter le lazy-loading

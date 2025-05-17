@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils/cn';
-import { getOptimizedImageUrl, getImagePreloadProps, ImageOptimizationOptions } from '@/lib/utils/image-optimization';
+import { getOptimizedImageUrl, getImagePreloadProps, generateSrcSet, ImageOptimizationOptions } from '@/lib/utils/image-optimization';
 import Head from 'next/head';
 
 export interface OptimizedImageProps {
@@ -26,6 +26,7 @@ export interface OptimizedImageProps {
   ratio?: 'portrait' | 'landscape' | 'square' | 'auto';
   critical?: boolean; // Indique si l'image est critique pour le LCP
   sizePreset?: 'thumbnail' | 'small' | 'medium' | 'large' | 'banner' | 'hero';
+  format?: 'avif' | 'webp' | 'jpeg' | 'png'; // Priorité du format d'image
 }
 
 const DEFAULT_FALLBACK = '/images/default-product.png';
@@ -37,13 +38,16 @@ const BLUR_DATA_URL = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy5
 const DEFAULT_QUALITY_CRITICAL = 85; // Augmenté pour les images critiques pour le LCP
 const DEFAULT_QUALITY_NORMAL = 75;  // Optimisé pour un meilleur équilibre qualité/performance
 
+// Breakpoints standard pour le responsive
+const RESPONSIVE_BREAKPOINTS = [375, 640, 768, 1024, 1280, 1536, 1920];
+
 export function OptimizedImage({
   src,
   alt,
   width,
   height,
   fill = false,
-  sizes = '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw',
+  sizes = '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw',
   priority = false,
   quality,
   className,
@@ -57,6 +61,7 @@ export function OptimizedImage({
   ratio = 'auto',
   critical = false, // Indique si l'image est critique pour le LCP
   sizePreset,
+  format = 'avif', // Par défaut, on privilégie AVIF pour une meilleure compression
 }: OptimizedImageProps) {
   // Détermine si cette image est critique (pour le LCP ou explicitement définie comme critique)
   const isCritical = critical || priority;
@@ -64,48 +69,82 @@ export function OptimizedImage({
   // Déterminer la qualité en fonction de la criticité
   const imageQuality = quality || (isCritical ? DEFAULT_QUALITY_CRITICAL : DEFAULT_QUALITY_NORMAL);
   
-  const [imgSrc, setImgSrc] = useState<string>('');
-  const [optimizedSrc, setOptimizedSrc] = useState<string>('');
+  // Calcule l'URL optimisée immédiatement pour éviter les différences d'hydratation
+  const initialSrc = (!src || src.trim() === '') 
+    ? fallbackSrc
+    : src;
+  
+  // État pour gérer le chargement et les erreurs
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Préparer les options d'optimisation
-  const getOptimizationOptions = (): ImageOptimizationOptions => {
-    const options: ImageOptimizationOptions = {
-      quality: imageQuality,
-      format: 'webp',
-      fetchPriority: isCritical ? 'high' : 'auto',
-    };
+  const [imgSrc, setImgSrc] = useState(initialSrc);
+  const [isClient, setIsClient] = useState(false);
+  const [srcSet, setSrcSet] = useState<string>('');
 
-    // Ajouter les dimensions spécifiques si fournies
-    if (width) options.width = width;
-    if (height) options.height = height;
-    
-    // Utiliser le preset de taille si fourni
-    if (sizePreset) options.sizePreset = sizePreset;
-    
-    return options;
-  };
-  
-  // Initialiser la source au montage du composant
+  // Marquer que nous sommes côté client pour éviter les erreurs d'hydratation
   useEffect(() => {
-    if (!src || src.trim() === '') {
-      const optimized = getOptimizedImageUrl(fallbackSrc, getOptimizationOptions());
-      setImgSrc(optimized);
-      setOptimizedSrc(optimized);
-      return;
+    setIsClient(true);
+    
+    // Dans le useEffect, nous pouvons appliquer l'optimisation de l'image
+    try {
+      // Préparer les options d'optimisation
+      const options: ImageOptimizationOptions = {
+        quality: imageQuality,
+        format: format, // Utiliser le format spécifié (avif par défaut)
+        fetchPriority: isCritical ? 'high' : 'auto',
+      };
+
+      // Ajouter les dimensions spécifiques si fournies
+      if (width) options.width = width;
+      if (height) options.height = height;
+      
+      // Utiliser le preset de taille si fourni
+      if (sizePreset) options.sizePreset = sizePreset;
+      
+      const optimizedUrl = getOptimizedImageUrl(
+        (!src || src.trim() === '') ? fallbackSrc : src, 
+        options
+      );
+      
+      setImgSrc(optimizedUrl);
+      
+      // Générer le srcSet pour le responsive
+      if (src) {
+        const generatedSrcSet = generateSrcSet(src, {
+          ...options,
+          breakpoints: RESPONSIVE_BREAKPOINTS
+        });
+        setSrcSet(generatedSrcSet);
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'optimisation de l'image:", error);
+      setImgSrc((!src || src.trim() === '') ? fallbackSrc : src);
     }
+  }, [src, fallbackSrc, width, height, imageQuality, sizePreset, isCritical, format]);
+
+  // Génération du composant de préchargement pour les images critiques
+  const PreloadLink = () => {
+    if (!isClient || !isCritical || !imgSrc) return null;
     
-    // Optimiser l'URL avec notre fonction utilitaire améliorée
-    const optimized = getOptimizedImageUrl(src, getOptimizationOptions());
-    setImgSrc(optimized);
-    setOptimizedSrc(optimized);
+    const preloadProps = getImagePreloadProps(imgSrc, true);
     
-  }, [src, fallbackSrc, width, height, imageQuality, sizePreset]);
+    return (
+      <Head>
+        <link 
+          rel="preload" 
+          as="image" 
+          href={imgSrc} 
+          fetchPriority="high"
+          {...(srcSet ? { imagesrcset: srcSet } : {})}
+          {...(sizes ? { imagesizes: sizes } : {})}
+          {...(preloadProps.type ? { type: preloadProps.type } : {})}
+        />
+      </Head>
+    );
+  };
 
   const handleError = () => {
     if (imgSrc !== fallbackSrc) {
-      const optimized = getOptimizedImageUrl(fallbackSrc, getOptimizationOptions());
-      setImgSrc(optimized);
+      setImgSrc(fallbackSrc);
     } else if (fallbackSrc !== DEFAULT_FALLBACK) {
       setImgSrc(DEFAULT_FALLBACK);
     }
@@ -153,23 +192,14 @@ export function OptimizedImage({
     height: fill ? '100%' : undefined,
   };
   
-  // Obtenir les attributs de préchargement pour les images critiques
-  const preloadProps = isCritical ? getImagePreloadProps(optimizedSrc, true) : null;
+  // Aspect ratio spécifique pour le placeholder
+  const aspectRatioStyle = {
+    aspectRatio: ratio === 'portrait' ? '3/4' : ratio === 'landscape' ? '16/9' : ratio === 'square' ? '1/1' : undefined,
+  };
   
   return (
     <>
-      {/* Précharger l'image si elle est critique */}
-      {isCritical && optimizedSrc && (
-        <Head>
-          <link 
-            rel="preload" 
-            as="image" 
-            href={optimizedSrc} 
-            {...(preloadProps || {})}
-          />
-        </Head>
-      )}
-      
+      {isCritical && <PreloadLink />}
       <div 
         className={cn(
           'relative',
@@ -178,7 +208,8 @@ export function OptimizedImage({
         )}
         style={containerStyles}
       >
-        {imgSrc && (
+        {/* Utiliser une approche universelle qui fonctionne côté serveur et client */}
+        {isClient ? (
           <Image
             src={imgSrc}
             alt={alt}
@@ -190,7 +221,7 @@ export function OptimizedImage({
             quality={imageQuality}
             loading={loadingStrategy as 'eager' | 'lazy'}
             fetchPriority={fetchPriorityValue as 'high' | 'low' | 'auto'}
-            style={imageStyles}
+            style={{...imageStyles, ...aspectRatioStyle}}
             onError={handleError}
             onLoad={handleLoad}
             className={cn(
@@ -199,7 +230,12 @@ export function OptimizedImage({
             )}
             placeholder={blur ? 'blur' : undefined}
             blurDataURL={blur ? BLUR_DATA_URL : undefined}
-            unoptimized={false}
+          />
+        ) : (
+          /* Placeholder visible jusqu'à ce que le client soit chargé */
+          <div 
+            className="w-full h-full bg-gray-100" 
+            style={{...aspectRatioStyle, ...imageStyles}}
           />
         )}
       </div>
