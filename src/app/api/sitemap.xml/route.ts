@@ -1,111 +1,58 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/firebase-config';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { navigationData } from '@/lib/data/navigation-data';
+import { getSitemapEntries } from '@/lib/utils/seo-helpers';
 
-// Fonction utilitaire simplifiée qui évite l'utilisation de l'objet URL
-const getBaseUrl = (): string => {
-  // Utiliser directement la variable d'environnement si elle existe
-  if (process.env.NEXT_PUBLIC_SITE_URL && typeof process.env.NEXT_PUBLIC_SITE_URL === 'string' && process.env.NEXT_PUBLIC_SITE_URL.startsWith('http')) {
-    return process.env.NEXT_PUBLIC_SITE_URL.trim();
-  }
-  
-  // Utiliser localhost en développement, URL de production par défaut sinon
-  return process.env.NODE_ENV === 'development' 
-    ? 'http://localhost:3000' 
-    : 'https://glowloops.com';
-};
-
-export async function GET() {
-  const baseUrl = getBaseUrl();
-  
-  // Initialiser le contenu XML
-  let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
-
-  // Ajouter les pages statiques
-  const staticPages = [
-    { url: '', priority: 1.0, changefreq: 'daily' },
-    { url: '/shop', priority: 0.9, changefreq: 'daily' },
-    { url: '/panier', priority: 0.8, changefreq: 'daily' },
-    { url: '/mon-compte', priority: 0.7, changefreq: 'weekly' },
-    // Ajouter d'autres pages statiques ici
-  ];
-
-  staticPages.forEach(page => {
-    xml += `
-  <url>
-    <loc>${baseUrl}${page.url}</loc>
-    <changefreq>${page.changefreq}</changefreq>
-    <priority>${page.priority}</priority>
-  </url>`;
-  });
-
-  // Ajouter les pages de produits
+/**
+ * Génère dynamiquement un fichier sitemap.xml
+ * @returns Réponse XML contenant le sitemap
+ */
+export async function GET(): Promise<NextResponse> {
   try {
-    const productsRef = collection(db, 'products');
-    const q = query(productsRef, where('status', '==', 'active'));
-    const productsSnapshot = await getDocs(q);
+    // Récupérer l'URL de base depuis les variables d'environnement
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://glowloops.fr';
     
-    productsSnapshot.forEach(doc => {
-      const productData = doc.data();
-      const slug = productData.basic_info?.slug || doc.id;
-      
-      xml += `
-  <url>
-    <loc>${baseUrl}/produits/${slug}</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>`;
-    });
-  } catch (error) {
-    console.error('Erreur lors de la récupération des produits pour le sitemap:', error);
-  }
-
-  // Ajouter les pages de catégories
-  try {
-    // Parcourir les données de navigation pour les catégories Style, Vibe, Matériaux
-    navigationData.forEach(category => {
-      // Ajouter la page principale de la catégorie
-      if (['Style', 'Vibe', 'Matériaux'].includes(category.name)) {
-        const categorySlug = category.name.toLowerCase();
-        
-        xml += `
-  <url>
-    <loc>${baseUrl}/${categorySlug}</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>`;
-        
-        // Ajouter les sous-catégories
-        if (category.subcategories) {
-          category.subcategories.forEach(subcategory => {
-            const subcategoryPath = subcategory.href;
-            
-            xml += `
-  <url>
-    <loc>${baseUrl}${subcategoryPath}</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>`;
-          });
-        }
+    // Récupérer toutes les entrées du sitemap (pages statiques et dynamiques)
+    const entries = await getSitemapEntries();
+    
+    // Générer le XML du sitemap
+    const xmlContent = generateSitemapXml(entries, baseUrl);
+    
+    // Retourner le XML avec les bons en-têtes
+    return new NextResponse(xmlContent, {
+      headers: {
+        'Content-Type': 'application/xml',
+        'Cache-Control': 'public, max-age=86400, stale-while-revalidate=43200'
       }
     });
   } catch (error) {
-    console.error('Erreur lors de la génération des liens de catégorie pour le sitemap:', error);
+    console.error('Erreur lors de la génération du sitemap:', error);
+    return NextResponse.json(
+      { error: 'Erreur lors de la génération du sitemap' },
+      { status: 500 }
+    );
   }
+}
 
-  // Fermer la balise urlset
-  xml += `
+/**
+ * Génère le XML du sitemap à partir des entrées
+ */
+function generateSitemapXml(entries: Array<{
+  url: string;
+  lastModified?: Date;
+  changeFrequency?: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
+  priority?: number;
+}>, baseUrl: string): string {
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  ${entries.map(entry => {
+    const url = entry.url.startsWith('http') ? entry.url : `${baseUrl}${entry.url.startsWith('/') ? entry.url : `/${entry.url}`}`;
+    return `<url>
+    <loc>${url}</loc>
+    ${entry.lastModified ? `<lastmod>${entry.lastModified.toISOString()}</lastmod>` : ''}
+    ${entry.changeFrequency ? `<changefreq>${entry.changeFrequency}</changefreq>` : ''}
+    ${entry.priority !== undefined ? `<priority>${entry.priority.toFixed(1)}</priority>` : ''}
+  </url>`;
+  }).join('\n  ')}
 </urlset>`;
 
-  // Retourner le sitemap sous forme de réponse XML
-  return new NextResponse(xml, {
-    status: 200,
-    headers: {
-      'Content-Type': 'text/xml',
-      'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=43200'
-    }
-  });
+  return xml;
 } 

@@ -1,213 +1,295 @@
 import { Metadata } from 'next';
-import { Product } from '@/lib/types/product';
+import { getOptimizedSrc } from './image-helpers';
+import { db } from '@/lib/firebase/firebase-config';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
-interface SeoBaseParams {
+export interface SeoProps {
   title?: string;
   description?: string;
   keywords?: string[];
+  url?: string;
+  ogType?: 'website' | 'article' | 'product' | 'profile';
+  ogImage?: string;
+  twitterCard?: 'summary' | 'summary_large_image' | 'app' | 'player';
+  noIndex?: boolean;
+  alternateLocales?: { locale: string; url: string }[];
+}
+
+// Interface pour les objets produit
+export interface ProductSeoData {
+  id?: string;
+  slug?: string;
+  name?: string;
+  title?: string;
+  description?: string;
+  shortDescription?: string;
+  price?: number;
+  currentPrice?: number;
+  categories?: string[];
+  tags?: string[];
   image?: string;
-  type?: 'website' | 'article' | 'product';
-  canonical?: string;
-  noindex?: boolean;
+  mainImage?: string;
+  images?: Array<{url: string}>;
 }
 
-interface GenerateProductSeoParams extends SeoBaseParams {
-  product: Product;
+// Interface pour les objets catégorie
+export interface CategorySeoData {
+  id?: string;
+  slug?: string;
+  name: string;
+  description?: string;
+  tags?: string[];
+  image?: string;
 }
 
-interface GenerateCategorySeoParams extends SeoBaseParams {
-  categoryName: string;
-  subcategory?: string;
-  categoryType: 'style' | 'vibe' | 'materiaux';
+// Interface pour les entrées de sitemap
+export interface SitemapEntry {
+  url: string;
+  lastModified?: Date;
+  changeFrequency?: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
+  priority?: number;
+}
+
+type OpenGraphImages = {
+  url: string;
+  alt?: string;
+  width?: number;
+  height?: number;
+};
+
+// Constantes SEO pour le site
+const SITE_NAME = 'GlowLoops';
+const DEFAULT_TITLE = 'GlowLoops - Bijoux en résine époxy faits main';
+const DEFAULT_DESCRIPTION = 'Découvrez notre collection unique de bijoux en résine époxy faits main. Bijoux personnalisables, créations originales et bijoux artisanaux de qualité.';
+const DEFAULT_KEYWORDS = ['bijoux résine époxy', 'bijoux artisanaux', 'bijoux faits main', 'créations personnalisées', 'bijoux résinés', 'bijouterie en ligne'];
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://glowloops.fr';
+const DEFAULT_OG_IMAGE = '/images/og-default.png';
+
+/**
+ * Récupère toutes les entrées pour le sitemap
+ * Combine les pages statiques et dynamiques (produits, catégories)
+ */
+export async function getSitemapEntries(): Promise<SitemapEntry[]> {
+  const entries: SitemapEntry[] = [];
+
+  // 1. Ajouter les pages statiques
+  const staticPages: SitemapEntry[] = [
+    { url: '/', lastModified: new Date(), changeFrequency: 'daily', priority: 1.0 },
+    { url: '/boutique', lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    { url: '/a-propos', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    { url: '/contact', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    { url: '/faq', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    { url: '/mentions-legales', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.5 },
+    { url: '/conditions-generales-de-vente', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.5 },
+    { url: '/politique-de-confidentialite', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.5 },
+  ];
+  
+  entries.push(...staticPages);
+
+  // 2. Ajouter les pages de produits depuis Firestore
+  try {
+    const productsRef = collection(db, 'products');
+    const q = query(productsRef, where('status', '==', 'active'));
+    const productsSnapshot = await getDocs(q);
+    
+    productsSnapshot.forEach(doc => {
+      const productData = doc.data();
+      const slug = productData.basic_info?.slug || doc.id;
+      const updatedAt = productData.updatedAt ? new Date(productData.updatedAt) : new Date();
+      
+      entries.push({
+        url: `/produit/${slug}`,
+        lastModified: updatedAt,
+        changeFrequency: 'weekly',
+        priority: 0.8
+      });
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des produits pour le sitemap:', error);
+  }
+
+  // 3. Ajouter les pages de catégories depuis Firestore
+  try {
+    const categoriesRef = collection(db, 'categories');
+    const categoriesSnapshot = await getDocs(categoriesRef);
+    
+    categoriesSnapshot.forEach(doc => {
+      const categoryData = doc.data();
+      const slug = categoryData.slug || doc.id;
+      const updatedAt = categoryData.updatedAt ? new Date(categoryData.updatedAt) : new Date();
+      
+      entries.push({
+        url: `/categorie/${slug}`,
+        lastModified: updatedAt,
+        changeFrequency: 'weekly',
+        priority: 0.7
+      });
+    });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des catégories pour le sitemap:', error);
+  }
+
+  return entries;
 }
 
 /**
- * Génère les métadonnées de base pour toutes les pages
+ * Génère les métadonnées SEO pour les pages Next.js
  */
 export function generateSeoMetadata({
   title,
   description,
   keywords = [],
-  image,
-  type = 'website',
-  canonical,
-  noindex = false
-}: SeoBaseParams): Metadata {
-  // Valeurs par défaut pour GlowLoops
-  const siteName = 'GlowLoops | Bijoux en résine époxy faits main';
-  const defaultDescription = 'Boutique artisanale de bijoux en résine époxy personnalisés, faits à la main avec des matériaux de qualité.';
-  const defaultImage = '/images/og-default.jpg';
+  url,
+  ogType = 'website',
+  ogImage,
+  twitterCard = 'summary_large_image',
+  noIndex = false,
+  alternateLocales = [],
+}: SeoProps = {}): Metadata {
+  // Construire l'URL complète
+  const canonicalUrl = url ? `${BASE_URL}${url.startsWith('/') ? url : `/${url}`}` : BASE_URL;
   
-  // Construction du titre avec le format approprié
-  const metaTitle = title 
-    ? `${title} | GlowLoops` 
-    : siteName;
+  // Optimiser l'image OpenGraph
+  const optimizedOgImage = getOptimizedSrc(ogImage, DEFAULT_OG_IMAGE);
   
+  // Construire les images OpenGraph
+  const images: OpenGraphImages[] = [
+    {
+      url: optimizedOgImage,
+      width: 1200,
+      height: 630,
+      alt: title || DEFAULT_TITLE,
+    }
+  ];
+
+  // Combinaison des mots-clés par défaut et personnalisés
+  const metaKeywords = [...DEFAULT_KEYWORDS, ...keywords];
+
+  // Pour la vérification du domaine Facebook
+  const fbDomainVerification = process.env.NEXT_PUBLIC_FB_DOMAIN_VERIFICATION || '';
+
   const metadata: Metadata = {
-    title: metaTitle,
-    description: description || defaultDescription,
-    keywords: keywords.join(', '),
-    openGraph: {
-      title: metaTitle,
-      description: description || defaultDescription,
-      url: canonical,
-      siteName,
-      images: [
-        {
-          url: image || defaultImage,
-          width: 1200,
-          height: 630,
-          alt: metaTitle,
-        },
-      ],
-      ...(type === 'product' ? { type: 'website' } : { type }),
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: metaTitle,
-      description: description || defaultDescription,
-      images: [image || defaultImage],
-    },
+    // Métadonnées de base
+    title: title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE,
+    description: description || DEFAULT_DESCRIPTION,
+    applicationName: SITE_NAME,
+    referrer: 'origin-when-cross-origin',
+    keywords: metaKeywords,
+    authors: [{ name: SITE_NAME, url: BASE_URL }],
+    generator: 'Next.js',
+    
+    // Métadonnées pour l'indexation
+    robots: noIndex ? 'noindex, nofollow' : 'index, follow',
+    
+    // Métadonnées pour la localisation
     alternates: {
-      canonical: canonical,
+      canonical: canonicalUrl,
+      languages: alternateLocales.reduce((acc, { locale, url }) => {
+        acc[locale] = url;
+        return acc;
+      }, {} as Record<string, string>),
     },
-    robots: noindex ? 'noindex, nofollow' : 'index, follow',
+    
+    // Métadonnées OpenGraph - corriger le type pour inclure 'product'
+    openGraph: {
+      // @ts-expect-error - Next.js metadata accepte 'product' mais TypeScript ne le définit pas
+      type: ogType,
+      title: title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE,
+      description: description || DEFAULT_DESCRIPTION,
+      siteName: SITE_NAME,
+      url: canonicalUrl,
+      images,
+    },
+    
+    // Métadonnées Twitter
+    twitter: {
+      card: twitterCard,
+      title: title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE,
+      description: description || DEFAULT_DESCRIPTION,
+      images: optimizedOgImage ? [optimizedOgImage] : undefined,
+      site: '@glowloops',
+      creator: '@glowloops',
+    },
+    
+    // Métadonnées pour les appareils mobiles
+    viewport: 'width=device-width, initial-scale=1, maximum-scale=5',
+    
+    // Métadonnées pour la vérification via les outils de webmaster
+    verification: {
+      google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || '',
+      other: {
+        'facebook-domain-verification': fbDomainVerification,
+      }
+    },
   };
 
   return metadata;
 }
 
 /**
- * Génère les métadonnées pour les pages produit
+ * Génère des métadonnées spécifiques aux produits
  */
-export function generateProductSeoMetadata({
-  product,
-  ...baseParams
-}: GenerateProductSeoParams): Metadata {
-  if (!product) {
-    return generateSeoMetadata({
-      title: 'Produit non trouvé',
-      description: 'Le produit que vous recherchez n\'existe pas ou a été supprimé.',
-      noindex: true,
-      ...baseParams
-    });
-  }
-
-  const name = product.name || product.basic_info?.name || '';
-  const description = product.description || product.content?.short_description || `Découvrez ${name}, une création artisanale de GlowLoops.`;
+export function generateProductSeoMetadata(product: ProductSeoData): Metadata {
+  if (!product) return generateSeoMetadata();
   
-  // Récupération des mots-clés optimisés pour le SEO
-  const keywords: string[] = [];
-  
-  // Ajouter les tags si disponibles
-  if (product.basic_info?.tags) {
-    keywords.push(...product.basic_info.tags);
-  }
-  
-  // Ajouter catégorie, collection, matériaux si disponibles
-  if (product.basic_info?.categoryId) keywords.push(product.basic_info.categoryId);
-  if (product.basic_info?.collection) keywords.push(product.basic_info.collection);
-  
-  // Type sécurisé pour specifications
-  const productWithSpecs = product as Product & { specifications?: { materials?: string[] } };
-  if (productWithSpecs.specifications?.materials) {
-    keywords.push(...productWithSpecs.specifications.materials);
-  }
-  
-  // Ajouter style, vibes comme mots-clés supplémentaires
-  if (product.styles) {
-    keywords.push(...(Array.isArray(product.styles) ? product.styles : []));
-  }
-  if (product.vibes) {
-    const vibesArray = Array.isArray(product.vibes) 
-      ? product.vibes 
-      : Object.keys(product.vibes);
-    keywords.push(...vibesArray);
-  }
-  
-  // Récupération de l'image principale pour l'OG tag
-  const image = product.images?.[0] || 
-    product.media?.mainImageUrl || 
-    product.media?.thumbnailUrl || 
-    baseParams.image;
+  const price = product.price || product.currentPrice || 0;
+  const priceText = price ? `${price}€` : '';
   
   return generateSeoMetadata({
-    title: name,
-    description,
-    keywords,
-    image,
-    type: 'product',
-    ...baseParams
+    title: `${product.name || product.title} ${priceText}`,
+    description: product.description || `Découvrez ${product.name || product.title}, un bijou en résine époxy fait main par GlowLoops. ${product.shortDescription || ''}`,
+    keywords: [
+      product.name || product.title || '',
+      ...(product.categories || []),
+      ...(product.tags || []),
+      'bijou personnalisé',
+      'bijou résine époxy',
+    ],
+    url: `/produit/${product.slug || product.id}`,
+    ogType: 'product',
+    ogImage: product.image || product.mainImage || (product.images && product.images.length > 0 ? product.images[0].url : undefined),
   });
 }
 
 /**
- * Génère les métadonnées pour les pages de catégorie
+ * Génère des métadonnées spécifiques aux catégories
  */
-export function generateCategorySeoMetadata({
-  categoryName,
-  subcategory,
-  categoryType,
-  ...baseParams
-}: GenerateCategorySeoParams): Metadata {
-  // Construction dynamique du titre selon le type de catégorie
-  let title: string;
-  let description: string;
-  
-  const categoryTypeMap = {
-    'style': 'Style',
-    'vibe': 'Vibe',
-    'materiaux': 'Matériaux'
-  };
-  
-  const mainCategory = categoryTypeMap[categoryType];
-  
-  if (subcategory) {
-    title = `${subcategory} | ${mainCategory}`;
-    description = `Découvrez notre collection de boucles d'oreilles ${subcategory.toLowerCase()} dans notre sélection ${mainCategory.toLowerCase()}.`;
-  } else {
-    title = mainCategory;
-    description = `Explorez notre gamme de bijoux classés par ${mainCategory.toLowerCase()} - trouvez la pièce parfaite qui correspond à votre personnalité.`;
-  }
-  
-  // Mots-clés spécifiques à la catégorie
-  const keywords = [
-    mainCategory,
-    categoryName,
-    subcategory || '',
-    'bijoux',
-    'boucles d\'oreilles',
-    'accessoires',
-    'fait main',
-    'artisanal',
-    'GlowLoops'
-  ].filter(Boolean);
+export function generateCategorySeoMetadata(category: CategorySeoData): Metadata {
+  if (!category) return generateSeoMetadata();
   
   return generateSeoMetadata({
-    title,
-    description,
-    keywords,
-    ...baseParams
+    title: `${category.name} - Collection de bijoux en résine époxy`,
+    description: category.description || `Découvrez notre collection de ${category.name}. Bijoux en résine époxy faits main, styles uniques et créations originales.`,
+    keywords: [
+      category.name,
+      'collection bijoux',
+      'bijoux résine époxy',
+      ...(category.tags || []),
+    ],
+    url: `/categorie/${category.slug || category.id}`,
+    ogType: 'website',
+    ogImage: category.image,
   });
+}
+
+/**
+ * Construit une URL canonique complète
+ */
+export function buildCanonicalUrl(path: string): string {
+  if (!path) return BASE_URL;
+  
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${BASE_URL}${cleanPath}`;
 }
 
 /**
  * Génère les métadonnées pour la page d'accueil
  */
-export function generateHomeSeoMetadata(params: SeoBaseParams = {}): Metadata {
+export function generateHomeSeoMetadata(params: SeoProps = {}): Metadata {
   return generateSeoMetadata({
     title: 'Bijoux en résine époxy faits main',
-    description: 'GlowLoops - Boutique artisanale de bijoux en résine époxy personnalisés, faits à la main avec des matériaux de qualité. Créations uniques et colorées.',
-    keywords: [
-      'bijoux', 
-      'boucles d\'oreilles', 
-      'résine époxy', 
-      'fait main', 
-      'artisanal', 
-      'créations', 
-      'accessoires', 
-      'bijoux personnalisés'
-    ],
+    description: 'Découvrez notre collection unique de bijoux en résine époxy faits main. Bijoux personnalisables, créations originales et pièces personnalisées pour tous les styles.',
+    url: '/',
     ...params
   });
 }
@@ -215,19 +297,11 @@ export function generateHomeSeoMetadata(params: SeoBaseParams = {}): Metadata {
 /**
  * Génère les métadonnées pour la page boutique
  */
-export function generateShopSeoMetadata(params: SeoBaseParams = {}): Metadata {
+export function generateShopSeoMetadata(params: SeoProps = {}): Metadata {
   return generateSeoMetadata({
     title: 'Boutique',
-    description: 'Découvrez notre collection complète de bijoux artisanaux. Filtrez par style, vibe et matériaux pour trouver vos bijoux parfaits.',
-    keywords: [
-      'boutique', 
-      'bijoux', 
-      'collection', 
-      'boucles d\'oreilles', 
-      'accessoires', 
-      'fait main', 
-      'résine époxy'
-    ],
+    description: "Parcourez notre collection de bijoux en résine époxy faits main. Boucles d'oreilles, colliers, bracelets et plus encore, disponibles en ligne.",
+    url: '/boutique',
     ...params
   });
 } 

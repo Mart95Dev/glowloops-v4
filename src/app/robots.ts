@@ -1,36 +1,32 @@
 import { MetadataRoute } from 'next';
 
-// Fonction utilitaire simplifiée qui évite l'utilisation de l'objet URL
-const getBaseUrl = (): string => {
-  // Utiliser directement la variable d'environnement si elle existe
-  if (process.env.NEXT_PUBLIC_SITE_URL && typeof process.env.NEXT_PUBLIC_SITE_URL === 'string' && process.env.NEXT_PUBLIC_SITE_URL.startsWith('http')) {
-    return process.env.NEXT_PUBLIC_SITE_URL.trim();
-  }
-  
-  // Utiliser localhost en développement, URL de production par défaut sinon
-  return process.env.NODE_ENV === 'development' 
-    ? 'http://localhost:3000' 
-    : 'https://glowloops.com';
-};
-
+/**
+ * Génère le fichier robots.txt pour le site
+ * Cette fonction est appelée automatiquement par Next.js 
+ * lors de la génération de la route /robots.txt
+ */
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = getBaseUrl();
-  
+  // Récupérer l'URL du site depuis les variables d'environnement
+  // ou utiliser une URL par défaut
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://glowloops.fr';
+
   return {
+    // Règles pour tous les robots
     rules: {
       userAgent: '*',
       allow: '/',
+      // Interdire l'accès aux pages d'administration et de test
       disallow: [
-        '/api/',
         '/admin/',
+        '/test-*',
+        '/api/',
+        '/checkout/confirmation',
         '/mon-compte/',
-        '/panier/',
-        '/paiement/',
-        '/test/',
-        '/_next/',
-        // Ajoutez ici d'autres chemins à ne pas indexer
       ],
     },
-    sitemap: `${baseUrl}/api/sitemap.xml`,
+    // Chemin vers le sitemap
+    sitemap: `${baseUrl}/sitemap.xml`,
+    // Options supplémentaires
+    host: baseUrl,
   };
 } 

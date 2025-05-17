@@ -1,134 +1,104 @@
-"use client";
-
 // Forcer le rendu statique pour éviter les problèmes de promesse
 export const dynamic = 'force-static';
 export const dynamicParams = false;
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense } from 'react';
 import { getNewArrivals, getPopularProducts, convertToProductDisplay } from '@/lib/services/product-service';
 import { getActiveCollections } from '@/lib/services/collection-service';
 import { getRecentInstagramPosts } from '@/lib/services/instagram-service';
 import { getFrequentFaqs } from '@/lib/services/faq-service';
 import { getActiveAdvantages } from '@/lib/services/advantages-service';
-import { bannerService } from '@/lib/services/firestore-service';
+// Commenté car non utilisé suite à la désactivation de ModernHeroBanner
+// import { bannerService } from '@/lib/services/firestore-service';
 import { AdvantageIcon } from '@/components/ui/AdvantageIcon';
+import { generateHomeSeoMetadata } from '@/lib/utils/seo-helpers';
+import OrganizationJsonLd from '@/components/seo/OrganizationJsonLd';
+
+// Import direct des composants sauf ModernHeroBanner (commenté)
+// import ModernHeroBanner from '@/components/home/ModernHeroBanner';
 import ModernNewArrivalsSlider from '@/components/home/ModernNewArrivalsSlider';
+import ModernCollectionsGrid from '@/components/home/ModernCollectionsGrid';
 import ModernBestSellersSection from '@/components/home/ModernBestSellersSection';
-import {
-  ModernHeroBanner,
-  ModernCollectionsGrid,
-  ModernInstagramSection,
-  ModernFaqAccordion,
-  ModernAdvantagesBanner,
-  ModernNewsletterForm
-} from '@/components/home/modern-index';
-import { CartTester } from '@/components/test/CartTester';
-import { ProductDisplay } from '@/lib/types/product';
-import type { Collection } from '@/lib/services/collection-service';
-import type { InstagramPost } from '@/lib/services/instagram-service';
-import type { FaqItem } from '@/lib/services/faq-service';
-import type { Advantage } from '@/lib/services/advantages-service';
-import type { Banner } from '@/lib/services/firestore-service';
+import ModernInstagramSection from '@/components/home/ModernInstagramSection';
+import ModernFaqAccordion from '@/components/home/ModernFaqAccordion';
+import ModernNewsletterForm from '@/components/home/ModernNewsletterForm';
 
-export default function Home() {
-  // État pour stocker les données
-  const [newArrivals, setNewArrivals] = useState<ProductDisplay[]>([]);
-  const [collectionsData, setCollectionsData] = useState<Collection[]>([]);
-  const [popularProducts, setPopularProducts] = useState<ProductDisplay[]>([]);
-  const [instagramPostsData, setInstagramPostsData] = useState<InstagramPost[]>([]);
-  const [faqsData, setFaqsData] = useState<FaqItem[]>([]);
-  const [advantagesWithIcons, setAdvantagesWithIcons] = useState<Array<Advantage & { icon: JSX.Element }>>([]);
-  const [heroBanners, setHeroBanners] = useState<Banner[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+// Générer les métadonnées SEO pour la page d'accueil
+export const metadata = generateHomeSeoMetadata({
+  url: '/',
+});
 
-  // Charger les données au chargement du composant
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Récupération des données
-        const newArrivalsData = await getNewArrivals(8);
-        const collectionsRawData = await getActiveCollections(6);
-        // S'assurer que toutes les collections ont une URL d'image valide
-        const filteredCollections = collectionsRawData.filter(collection => !!collection.imageUrl);
-        const popularProductsData = await getPopularProducts(8);
-        const instagramPosts = await getRecentInstagramPosts(6);
-        const faqs = await getFrequentFaqs(5);
-        const advantagesData = await getActiveAdvantages(5);
-        
-        // Récupération de la bannière hero depuis Firestore
-        const banners = await bannerService.getActiveBanners('hero');
-        
-        // Conversion des produits au format d'affichage
-        const convertedNewArrivals = newArrivalsData.map(convertToProductDisplay);
-        const convertedPopularProducts = popularProductsData.map(convertToProductDisplay);
-        
-        // Préparation des avantages avec les icônes
-        const advantagesIcons = advantagesData.map(advantage => ({
-          id: advantage.id,
-          title: advantage.title,
-          description: advantage.description,
-          iconName: advantage.iconName,
-          order: advantage.order,
-          isActive: advantage.isActive,
-          icon: <AdvantageIcon iconName={advantage.iconName} className="h-8 w-8 text-lilas-fonce" />
-        }));
+// Utiliser une fonction asynchrone pour charger les données côté serveur
+export default async function Home() {
+  // Récupération des données
+  const [
+    newArrivalsData,
+    popularProductsData,
+    collectionsData,
+    instagramPostsData,
+    faqsData,
+    advantagesData,
+    // Commenté car non utilisé suite à la désactivation de ModernHeroBanner
+    // heroBannersData
+  ] = await Promise.all([
+    getNewArrivals(6),
+    getPopularProducts(8),
+    getActiveCollections(),
+    getRecentInstagramPosts(6),
+    getFrequentFaqs(5),
+    getActiveAdvantages(),
+    // Commenté car non utilisé
+    // bannerService.getActiveBanners('hero')
+  ]);
 
-        // Mettre à jour les états
-        setNewArrivals(convertedNewArrivals);
-        setCollectionsData(filteredCollections);
-        setPopularProducts(convertedPopularProducts);
-        setInstagramPostsData(instagramPosts);
-        setFaqsData(faqs);
-        setAdvantagesWithIcons(advantagesIcons);
-        setHeroBanners(banners);
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Erreur lors du chargement des données:", error);
-        setIsLoading(false);
-      }
-    };
+  // Conversion des données produits
+  const newArrivals = newArrivalsData.map(convertToProductDisplay);
+  const popularProducts = popularProductsData.map(convertToProductDisplay);
 
-    fetchData();
-  }, []);
+  // Préparation des données avantages avec icônes (filtrage des entrées sans iconName)
+  const advantagesWithIcons = advantagesData
+    .filter(advantage => typeof advantage.iconName === 'string' && advantage.iconName.length > 0)
+    .map(advantage => ({
+      id: advantage.id,
+      title: advantage.title,
+      description: advantage.description,
+      icon: <AdvantageIcon iconName={advantage.iconName} />,
+      order: advantage.order,
+      isActive: advantage.isActive
+    }));
 
-  // Afficher un indicateur de chargement si les données ne sont pas encore prêtes
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="h-32 w-32 bg-lilas-clair/30 rounded-full mb-4"></div>
-          <div className="h-6 w-48 bg-lilas-clair/30 rounded-md"></div>
-        </div>
-      </div>
-    );
-  }
+  // Filtrer les bannières pour celles qui sont actives
+  // const heroBanners = heroBannersData || [];
+  // Commenté car non utilisé suite à la désactivation de ModernHeroBanner
 
   return (
     <div className="min-w-[375px] min-h-screen">
+      <OrganizationJsonLd />
       <main>
-        {/* Composant de test pour le panier */}
-        <CartTester />
-        
-        {/* Hero Banner - Design moderne et immersif */}
-        <Suspense fallback={<div className="h-[85vh] w-full bg-gray-200 animate-pulse"></div>}>
-          {heroBanners.length > 0 && (
-            <ModernHeroBanner 
-              title={heroBanners[0].title}
-              subtitle={heroBanners[0].subtitle}
-              ctaText={heroBanners[0].ctaText}
-              ctaLink={heroBanners[0].ctaLink}
-              imageUrl={heroBanners[0].imageUrl}
-            />
-          )}
+        {/* HeroBanner remplacé par une section simple */}
+        <section className="h-[50vh] flex items-center justify-center bg-lilas-clair/20">
+          <div className="container mx-auto text-center">
+            <h1 className="text-4xl font-bold mb-4 font-display">GlowLoops</h1>
+            <p className="text-xl">Des bijoux uniques pour sublimer votre style</p>
+          </div>
+        </section>
+
+        {/* Nouveautés - Chargement prioritaire car au-dessus de la ligne de flottaison */}
+        <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
+          <ModernNewArrivalsSlider 
+            products={newArrivals} 
+            title="Nos nouveautés" 
+          />
         </Suspense>
 
-        {/* Les autres sections de la page d'accueil */}
-        <ModernNewArrivalsSlider products={newArrivals} title="Nos nouveautés" />
-        <ModernBestSellersSection 
-          products={popularProducts} 
-          title="Nos best-sellers" 
-          subtitle="Découvrez nos produits les plus populaires, plébiscités par notre communauté"
-        />
+        {/* Best-sellers - Optimisé pour le chargement paresseux */}
+        <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
+          <ModernBestSellersSection 
+            products={popularProducts} 
+            title="Nos best-sellers" 
+            subtitle="Découvrez nos produits les plus populaires, plébiscités par notre communauté"
+          />
+        </Suspense>
 
         {/* Collections - Grille moderne avec effets au survol */}
         <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
@@ -168,7 +138,32 @@ export default function Home() {
         
         {/* Avantages - Design moderne avec icônes et animations - Placé avant le footer */}
         <Suspense fallback={<div className="h-64 w-full bg-gray-200 animate-pulse"></div>}>
-          <ModernAdvantagesBanner advantages={advantagesWithIcons} />
+          <section className="min-w-[375px] py-12 md:py-16 px-4 bg-white border-t border-gray-100 text-gray-800">
+            <div className="container mx-auto">
+              <div className="text-center mb-10">
+                <h2 className="text-2xl md:text-3xl font-bold font-display mb-4">
+                  Pourquoi choisir GlowLoops ?
+                </h2>
+                <p className="text-gray-600 max-w-2xl mx-auto">
+                  Des boucles d&apos;oreilles uniques, éthiques et abordables pour sublimer votre style
+                </p>
+              </div>
+              <div className="grid grid-cols-1 min-[700px]:grid-cols-2 lg:grid-cols-5 gap-6 overflow-visible place-items-center">
+                {advantagesWithIcons.map((advantage) => (
+                  <div 
+                    key={advantage.id}
+                    className="bg-white/10 backdrop-blur-sm rounded-xl p-4 md:p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex-shrink-0 w-[280px] md:w-auto snap-center"
+                  >
+                    <div className="bg-dore rounded-full w-14 h-14 flex items-center justify-center mb-4 mx-auto">
+                      {advantage.icon}
+                    </div>
+                    <h3 className="text-xl font-bold mb-3 text-center font-display">{advantage.title}</h3>
+                    <p className="text-gray-600 text-center text-sm">{advantage.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
         </Suspense>
       </main>
     </div>
