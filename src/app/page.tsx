@@ -8,14 +8,15 @@ import { getActiveCollections } from '@/lib/services/collection-service';
 import { getRecentInstagramPosts } from '@/lib/services/instagram-service';
 import { getFrequentFaqs } from '@/lib/services/faq-service';
 import { getActiveAdvantages } from '@/lib/services/advantages-service';
-// Commenté car non utilisé suite à la désactivation de ModernHeroBanner
-// import { bannerService } from '@/lib/services/firestore-service';
+// Réactiver l'import du service de bannières
+import { bannerService } from '@/lib/services/firestore-service';
 import { AdvantageIcon } from '@/components/ui/AdvantageIcon';
 import { generateHomeSeoMetadata } from '@/lib/utils/seo-helpers';
 import OrganizationJsonLd from '@/components/seo/OrganizationJsonLd';
 
-// Import direct des composants sauf ModernHeroBanner (commenté)
-// import ModernHeroBanner from '@/components/home/ModernHeroBanner';
+// Import direct des composants
+// Réactiver ModernHeroBanner qui a été corrigé
+import ModernHeroBanner from '@/components/home/ModernHeroBanner';
 import ModernNewArrivalsSlider from '@/components/home/ModernNewArrivalsSlider';
 import ModernCollectionsGrid from '@/components/home/ModernCollectionsGrid';
 import ModernBestSellersSection from '@/components/home/ModernBestSellersSection';
@@ -38,8 +39,8 @@ export default async function Home() {
     instagramPostsData,
     faqsData,
     advantagesData,
-    // Commenté car non utilisé suite à la désactivation de ModernHeroBanner
-    // heroBannersData
+    // Réactiver heroBannersData
+    heroBannersData
   ] = await Promise.all([
     getNewArrivals(6),
     getPopularProducts(8),
@@ -47,8 +48,8 @@ export default async function Home() {
     getRecentInstagramPosts(6),
     getFrequentFaqs(5),
     getActiveAdvantages(),
-    // Commenté car non utilisé
-    // bannerService.getActiveBanners('hero')
+    // Réactiver la récupération des bannières
+    bannerService.getActiveBanners('hero')
   ]);
 
   // Conversion des données produits
@@ -68,20 +69,42 @@ export default async function Home() {
     }));
 
   // Filtrer les bannières pour celles qui sont actives
-  // const heroBanners = heroBannersData || [];
-  // Commenté car non utilisé suite à la désactivation de ModernHeroBanner
+  const heroBanners = heroBannersData || [];
+  
+  // Fallback pour les bannières si aucune bannière n'est disponible
+  if (heroBanners.length === 0) {
+    console.log('Aucune bannière disponible, utilisation du fallback');
+    heroBanners.push({
+      id: 'fallback-banner',
+      title: 'Bijoux Artisanaux en Résine',
+      subtitle: 'Des créations uniques et personnalisables qui subliment votre style',
+      ctaText: 'Découvrir nos collections',
+      ctaLink: '/collections',
+      imageUrl: '/images/default-banner.png',
+      type: 'hero',
+      startDate: new Date().toISOString(),
+      endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
+      isActive: true,
+      order: 1
+    });
+  }
 
   return (
     <div className="min-w-[375px] min-h-screen">
       <OrganizationJsonLd />
       <main>
-        {/* HeroBanner remplacé par une section simple */}
-        <section className="h-[50vh] flex items-center justify-center bg-lilas-clair/20">
-          <div className="container mx-auto text-center">
-            <h1 className="text-4xl font-bold mb-4 font-display">GlowLoops</h1>
-            <p className="text-xl">Des bijoux uniques pour sublimer votre style</p>
-          </div>
-        </section>
+        {/* Hero Banner - Réactivé avec la version corrigée */}
+        <Suspense fallback={<div className="h-[85vh] w-full bg-gray-200 animate-pulse"></div>}>
+          {heroBanners.length > 0 && (
+            <ModernHeroBanner 
+              title={heroBanners[0].title}
+              subtitle={heroBanners[0].subtitle}
+              ctaText={heroBanners[0].ctaText}
+              ctaLink={heroBanners[0].ctaLink}
+              imageUrl={heroBanners[0].imageUrl}
+            />
+          )}
+        </Suspense>
 
         {/* Nouveautés - Chargement prioritaire car au-dessus de la ligne de flottaison */}
         <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>

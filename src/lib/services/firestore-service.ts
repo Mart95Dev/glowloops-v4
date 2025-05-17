@@ -67,54 +67,90 @@ export const bannerService = {
    */
   async getActiveBanners(bannerType?: 'hero' | 'promo' | 'collection'): Promise<Banner[]> {
     try {
+      console.log(`[BannerService] Récupération des bannières de type: ${bannerType || 'tous'}`);
+      
       // Construire la requête
       const bannersRef = collection(db, 'banners');
       const currentDate = new Date();
+      console.log(`[BannerService] Date actuelle: ${currentDate.toISOString()}`);
       
-      let bannerQuery = query(
-        bannersRef,
-        where('isActive', '==', true),
-        where('startDate', '<=', currentDate),
-        where('endDate', '>=', currentDate),
-        orderBy('startDate'),
-        orderBy('order')
-      );
+      // Simplifier la requête pour déboguer
+      let bannerQuery;
       
-      // Ajouter le filtre par type si spécifié
       if (bannerType) {
+        console.log(`[BannerService] Requête filtrée par type: ${bannerType}`);
         bannerQuery = query(
           bannersRef,
           where('isActive', '==', true),
-          where('type', '==', bannerType),
-          where('startDate', '<=', currentDate),
-          where('endDate', '>=', currentDate),
-          orderBy('startDate'),
-          orderBy('order')
+          where('type', '==', bannerType)
+        );
+      } else {
+        console.log('[BannerService] Requête sans filtre de type');
+        bannerQuery = query(
+          bannersRef,
+          where('isActive', '==', true)
         );
       }
       
+      console.log('[BannerService] Exécution de la requête...');
       const querySnapshot = await getDocs(bannerQuery);
+      console.log(`[BannerService] ${querySnapshot.docs.length} bannières récupérées`);
       
       // Transformer les documents Firestore en objets Banner
       const banners: Banner[] = [];
       for (const document of querySnapshot.docs) {
         const data = document.data();
+        console.log(`[BannerService] Traitement de la bannière ID: ${document.id}`, data);
+        
         const banner = convertFirestoreData<Banner>({
           id: document.id,
           ...data
         });
         
+        // Vérifier les dates
+        const startDate = new Date(banner.startDate);
+        const endDate = new Date(banner.endDate);
+        const isDateValid = currentDate >= startDate && currentDate <= endDate;
+        
+        console.log(`[BannerService] Banner ${document.id} dates - début: ${startDate.toISOString()}, fin: ${endDate.toISOString()}, valide: ${isDateValid}`);
+        
+        if (!isDateValid) {
+          console.log(`[BannerService] Bannière ${document.id} ignorée car hors période de validité`);
+          continue;
+        }
+        
         // Rafraîchir l'URL de l'image
         if (banner.imageUrl) {
-          banner.imageUrl = await refreshStorageUrl(banner.imageUrl);
+          console.log(`[BannerService] URL image avant refresh: ${banner.imageUrl}`);
+          try {
+            // Vérifier si l'URL est déjà complète
+            if (banner.imageUrl.startsWith('http')) {
+              // S'assurer que l'URL Firebase a le paramètre alt=media
+              if (banner.imageUrl.includes('firebasestorage.googleapis.com') && !banner.imageUrl.includes('alt=media')) {
+                banner.imageUrl = `${banner.imageUrl}${banner.imageUrl.includes('?') ? '&' : '?'}alt=media`;
+                console.log(`[BannerService] URL Firebase complétée avec alt=media: ${banner.imageUrl}`);
+              }
+            } else {
+              // C'est probablement un chemin de stockage, essayer de le rafraîchir
+              banner.imageUrl = await refreshStorageUrl(banner.imageUrl);
+              console.log(`[BannerService] URL image rafraîchie: ${banner.imageUrl}`);
+            }
+          } catch (error) {
+            console.error(`[BannerService] Erreur lors du rafraîchissement de l'URL pour la bannière ${document.id}:`, error);
+          }
+          console.log(`[BannerService] URL image finale: ${banner.imageUrl}`);
+        } else {
+          console.warn(`[BannerService] Bannière ${document.id} sans URL d'image`);
         }
         
         banners.push(banner);
       }
       
-      return banners;
+      console.log(`[BannerService] ${banners.length} bannières valides renvoyées`);
+      // Trier les bannières par ordre ascendant
+      return banners.sort((a, b) => a.order - b.order);
     } catch (error) {
-      console.error('Erreur lors de la récupération des bannières:', error);
+      console.error('[BannerService] Erreur lors de la récupération des bannières:', error);
       return [];
     }
   },
