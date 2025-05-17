@@ -30,6 +30,10 @@ const DEFAULT_FALLBACK = '/images/default-product.png';
 // Constante pour le placeholder - définie en dehors du composant pour éviter les recalculs
 const BLUR_DATA_URL = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjJmMmYyIi8+PC9zdmc+';
 
+// Taille par défaut définie pour les images critiques et non-critiques
+const DEFAULT_QUALITY_CRITICAL = 55; // Qualité plus faible pour les images prioritaires (plus grande taille)
+const DEFAULT_QUALITY_NORMAL = 50;  // Qualité encore plus faible pour les images normales
+
 export function OptimizedImage({
   src,
   alt,
@@ -38,7 +42,7 @@ export function OptimizedImage({
   fill = false,
   sizes = '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw',
   priority = false,
-  quality = 70,
+  quality,
   className,
   style,
   objectFit = 'cover',
@@ -47,9 +51,12 @@ export function OptimizedImage({
   fallbackSrc = DEFAULT_FALLBACK,
   eager = false,
   blur = true,
-  format = 'webp',
+  format = 'avif', // Par défaut avif pour une meilleure compression
   ratio = 'auto',
 }: OptimizedImageProps) {
+  // Déterminer la qualité en fonction de la priorité
+  const imageQuality = quality || (priority ? DEFAULT_QUALITY_CRITICAL : DEFAULT_QUALITY_NORMAL);
+  
   const [imgSrc, setImgSrc] = useState<string>(src || fallbackSrc);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -80,7 +87,18 @@ export function OptimizedImage({
           }
           
           // Définir la qualité pour réduire la taille du fichier
-          optimizedUrl.searchParams.set('q', quality.toString());
+          optimizedUrl.searchParams.set('q', imageQuality.toString());
+          
+          // Ajouter un paramètre de redimensionnement si c'est une image de Firebase Storage
+          if (width && height && !fill) {
+            optimizedUrl.searchParams.set('width', width.toString());
+            optimizedUrl.searchParams.set('height', height.toString());
+          } else if (fill) {
+            // Définir une taille par défaut pour les images en mode fill
+            const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
+            const defaultWidth = viewportWidth <= 768 ? 800 : 1200;
+            optimizedUrl.searchParams.set('width', defaultWidth.toString());
+          }
           
           return optimizedUrl.toString();
         } catch {
@@ -95,7 +113,7 @@ export function OptimizedImage({
     // Optimiser l'URL Firebase si applicable
     const optimizedSrc = optimizeFirebaseUrl(src);
     setImgSrc(optimizedSrc);
-  }, [src, fallbackSrc, format, quality]);
+  }, [src, fallbackSrc, format, imageQuality, width, height, fill]);
 
   const handleError = () => {
     if (imgSrc !== fallbackSrc) {
@@ -165,7 +183,7 @@ export function OptimizedImage({
           fill={fill}
           sizes={sizes}
           priority={priority}
-          quality={quality}
+          quality={imageQuality}
           loading={loadingStrategy as 'eager' | 'lazy'}
           fetchPriority={fetchPriorityValue as 'high' | 'low' | 'auto'}
           style={imageStyles}

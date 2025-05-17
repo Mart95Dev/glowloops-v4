@@ -1,6 +1,7 @@
 import LoginForm from '@/components/auth/LoginForm';
 import AuthLayout from '@/components/auth/AuthLayout';
 import SocialLoginOptions from '@/components/auth/SocialLoginOptions';
+import { Suspense } from 'react';
 
 export const metadata = {
   title: 'Connexion | GlowLoops',
@@ -14,7 +15,9 @@ export default function LoginPage() {
       subtitle="Heureux de vous revoir !"
       sideContent={<SocialLoginOptions />}
     >
-      <LoginForm />
+      <Suspense fallback={<div className="py-8 text-center">Chargement...</div>}>
+        <LoginForm />
+      </Suspense>
     </AuthLayout>
   );
 } 

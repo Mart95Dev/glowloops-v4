@@ -1,9 +1,8 @@
-// Forcer le rendu statique pour éviter les problèmes de promesse
+// Configuration pour la génération statique
 export const dynamic = 'force-static';
 export const dynamicParams = false;
-
-// Utiliser la régénération statique incrémentielle (ISR) pour une meilleure performance
-export const revalidate = 3600; // Revalider toutes les heures
+export const revalidate = 3600; // Revalider toutes les heures (ISR)
+export const fetchCache = 'force-cache'; // Forcer la mise en cache des requêtes
 
 import { Suspense, lazy } from 'react';
 import { getNewArrivals, getPopularProducts, convertToProductDisplay } from '@/lib/services/product-service';
