@@ -85,15 +85,15 @@ export default function ModernNewsletterForm({
               <ul className="space-y-3 text-sm">
                 <li className="flex items-center">
                   <HiCheck className="h-5 w-5 text-menthe mr-2" />
-                  <span>Accès en avant-première aux nouveautés</span>
+                  <span>10% de réduction dès votre 1ère commande</span>
                 </li>
                 <li className="flex items-center">
                   <HiCheck className="h-5 w-5 text-menthe mr-2" />
-                  <span>Offres exclusives réservées aux abonnées</span>
+                  <span>Accès en avant-première aux ventes privées</span>
                 </li>
                 <li className="flex items-center">
                   <HiCheck className="h-5 w-5 text-menthe mr-2" />
-                  <span>Conseils style et inspiration bijoux</span>
+                  <span>Inspirations et conseils style exclusifs</span>
                 </li>
               </ul>
             </motion.div>
@@ -109,7 +109,7 @@ export default function ModernNewsletterForm({
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
                     <HiCheck className="h-8 w-8 text-green-600" />
                   </div>
-                  <h3 className="text-xl font-bold mb-2 text-gray-800">Merci de votre inscription !</h3>
+                  <h3 className="text-xl font-bold mb-2 text-gray-800">Bienvenue dans le club !</h3>
                   <p className="text-gray-600">
                     {successMessage}
                   </p>
@@ -117,10 +117,10 @@ export default function ModernNewsletterForm({
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <h3 className="text-xl font-bold text-gray-800 mb-2">
-                    Rejoignez notre communauté
+                    Rejoignez le club GlowLoops
                   </h3>
                   <p className="text-gray-600 text-sm mb-4">
-                    Inscrivez-vous pour recevoir nos dernières nouveautés et offres exclusives.
+                    Plus de 5000 personnes reçoivent déjà nos actualités et offres exclusives. Ne manquez plus rien !
                   </p>
                   
                   <div className="relative">
@@ -131,7 +131,7 @@ export default function ModernNewsletterForm({
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Votre adresse email"
+                      placeholder="Votre email pour recevoir 10% de réduction"
                       className={`w-full pl-10 pr-4 py-3 border ${
                         error ? 'border-red-300' : 'border-gray-300'
                       } rounded-lg focus:ring-2 focus:ring-lilas-clair focus:border-lilas-clair outline-none transition-all duration-300`}
@@ -151,7 +151,7 @@ export default function ModernNewsletterForm({
                   </Button>
                   
                   <p className="text-xs text-gray-500 mt-4">
-                    En vous inscrivant, vous acceptez de recevoir nos emails marketing et confirmez avoir lu notre politique de confidentialité.
+                    En vous inscrivant, vous acceptez de recevoir nos emails marketing et confirmez avoir lu notre politique de confidentialité. Désabonnement facile à tout moment.
                   </p>
                 </form>
               )}

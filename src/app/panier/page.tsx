@@ -107,18 +107,18 @@ const CartPage: React.FC = () => {
             </svg>
             <h2 className="text-xl font-playfair text-gray-700">Votre panier est vide</h2>
             <p className="text-gray-500">
-              Explorez notre sélection de bijoux pour trouver votre bonheur
+              Vos oreilles méritent un peu de brillance ! Découvrez nos collections et trouvez les boucles qui vous feront briller.
             </p>
             <Link href="/shop">
               <Button variant="default" className="mt-4">
-                Découvrir nos produits
+                Explorer les nouveautés ✨
               </Button>
             </Link>
           </div>
 
           {recommendations.length > 0 && (
             <div className="mt-8">
-              <h3 className="text-lg font-playfair mb-4">Vous pourriez aimer</h3>
+              <h3 className="text-lg font-playfair mb-4">Sélectionné pour vous 💎</h3>
               <div className="grid grid-cols-2 gap-3">
                 {recommendations.slice(0, 4).map((product) => (
                   <Link 
@@ -154,7 +154,7 @@ const CartPage: React.FC = () => {
 
   return (
     <div className="container max-w-7xl mx-auto px-4 py-6 md:py-10">
-      <h1 className="text-2xl font-playfair mb-4">Votre Panier</h1>
+      <h1 className="text-2xl font-playfair mb-4">Votre Panier Stylé 💖</h1>
       
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Liste des produits */}
@@ -162,7 +162,7 @@ const CartPage: React.FC = () => {
           <Card className="mb-6">
             <CardHeader className="pb-2">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-lg">Articles ({itemCount})</CardTitle>
+                <CardTitle className="text-lg">Vos trésors brillants ({itemCount})</CardTitle>
                 <button 
                   onClick={() => clearCart()}
                   className="text-sm text-gray-500 hover:text-lilas-fonce transition-colors"
@@ -206,7 +206,7 @@ const CartPage: React.FC = () => {
                       
                       {item.garantie && (
                         <p className="text-xs sm:text-sm text-gray-500">
-                          Garantie: {item.garantie.name} (+{item.garantie.price.toFixed(2)}€)
+                          Protection GlowCare+ (+{item.garantie.price.toFixed(2)}€)
                         </p>
                       )}
                       
@@ -251,7 +251,7 @@ const CartPage: React.FC = () => {
           <div className="hidden lg:block">
             {recommendations.length > 0 && (
               <div className="mt-8">
-                <h2 className="text-xl font-playfair mb-4">Vous pourriez aussi aimer</h2>
+                <h2 className="text-xl font-playfair mb-4">Ces pièces compléteront parfaitement votre look ✨</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {recommendations.slice(0, 4).map((product) => (
                     <Link 
@@ -297,7 +297,7 @@ const CartPage: React.FC = () => {
               
               {/* Sélection du mode de livraison */}
               <div>
-                <h3 className="font-medium text-sm sm:text-base mb-2">Livraison</h3>
+                <h3 className="font-medium text-sm sm:text-base mb-2">Options de livraison</h3>
                 <div className="space-y-2">
                   {SHIPPING_OPTIONS.map((option) => (
                     <div 
@@ -313,7 +313,7 @@ const CartPage: React.FC = () => {
                           <div className="text-xs text-gray-500">{option.description}</div>
                         </div>
                         <div className="font-medium text-xs sm:text-sm">
-                          {option.price > 0 ? `${option.price.toFixed(2)}€` : 'Gratuit'}
+                          {option.price > 0 ? `${option.price.toFixed(2)}€` : 'Offerte 🎁'}
                         </div>
                       </div>
                     </div>
@@ -324,12 +324,12 @@ const CartPage: React.FC = () => {
               {/* Ligne de séparation */}
               <div className="border-t pt-4">
                 <div className="flex justify-between font-medium text-base sm:text-lg">
-                  <span>Total</span>
+                  <span>Total à payer</span>
                   <span>{total.toFixed(2)}€</span>
                 </div>
-                <div className="text-xs sm:text-sm text-gray-500 mt-1">
-                  TVA incluse
-                </div>
+                                  <div className="text-xs sm:text-sm text-gray-500 mt-1">
+                    TVA incluse | Paiement 100% sécurisé
+                  </div>
               </div>
             </CardContent>
             <CardFooter>
@@ -341,7 +341,7 @@ const CartPage: React.FC = () => {
                   size="lg"
                   className="min-h-[44px] text-sm sm:text-base"
                 >
-                  Passer au paiement
+                  Finaliser ma commande maintenant
                 </Button>
                 <Link href="/shop" className="block text-center">
                   <Button 
@@ -349,7 +349,7 @@ const CartPage: React.FC = () => {
                     fullWidth={true}
                     className="text-sm sm:text-base"
                   >
-                    Continuer mes achats
+                    Ajouter d&apos;autres articles
                   </Button>
                 </Link>
               </div>

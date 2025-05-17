@@ -61,12 +61,12 @@ export const productSchema = z.object({
 
 export type Product = z.infer<typeof productSchema>;
 
-// Schéma pour le contact
+// Schéma pour le formulaire de contact
 export const contactSchema = z.object({
-  nom: z.string().min(2, { message: 'Le nom doit contenir au moins 2 caractères' }),
-  email: z.string().email({ message: 'L\'email n\'est pas valide' }),
-  sujet: z.string().min(3, { message: 'Le sujet doit contenir au moins 3 caractères' }),
-  message: z.string().min(10, { message: 'Le message doit contenir au moins 10 caractères' }),
+  nom: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(50, "Le nom est trop long"),
+  email: z.string().email("Veuillez entrer une adresse email valide"),
+  sujet: z.string().min(3, "Le sujet doit contenir au moins 3 caractères").max(100, "Le sujet est trop long"),
+  message: z.string().min(10, "Le message doit contenir au moins 10 caractères").max(1000, "Le message est trop long")
 });
 
 export type ContactFormValues = z.infer<typeof contactSchema>;

@@ -106,7 +106,7 @@ export default function ProductInfo({
       <div className="flex flex-wrap gap-2 mb-3">
         {product.isNew && (
           <Badge variant="menthe">
-            Nouveau
+            Nouveauté
           </Badge>
         )}
         {hasDiscount && (
@@ -123,7 +123,7 @@ export default function ProductInfo({
           <svg className="w-3 h-3 mr-1 text-lilas-fonce" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <span>Gagnez 10 points</span>
+          <span>+10 points fidélité</span>
         </Badge>
       </div>
 
@@ -173,7 +173,7 @@ export default function ProductInfo({
           ))}
         </div>
         <span className="text-sm text-gray-500 ml-2">
-          ({product.social_proof?.reviewCount || 0} avis)
+          ({product.social_proof?.reviewCount || 0} avis client·e·s)
         </span>
       </div>
 
@@ -183,13 +183,13 @@ export default function ProductInfo({
           <div className={`text-sm ${isLowStock ? 'text-amber-600' : 'text-green-600'} font-medium flex items-center`}>
             <span className={`inline-block w-2 h-2 rounded-full mr-2 ${isLowStock ? 'bg-amber-600' : 'bg-green-600'}`}></span>
             {isLowStock 
-              ? `Plus que ${stockCount} en stock !` 
-              : 'Prêt à être expédié'}
+              ? `Dernière chance ! Plus que ${stockCount} en stock ✨` 
+              : 'Prêt à être expédié aujourd\'hui - Livraison express disponible'}
           </div>
         ) : (
           <div className="text-sm text-red-600 font-medium flex items-center">
             <span className="inline-block w-2 h-2 rounded-full mr-2 bg-red-600"></span>
-            Rupture de stock
+            Rupture temporaire - Recevez une alerte dès le retour en stock
           </div>
         )}
       </div>
@@ -203,33 +203,30 @@ export default function ProductInfo({
 
       {/* Caractéristiques */}
       <div className="mb-6">
-        <h3 className="font-medium text-gray-800 mb-2">Caractéristiques :</h3>
+        <h3 className="font-medium text-gray-800 mb-2">Pourquoi vous allez l&apos;adorer :</h3>
         <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
           {product.specifications?.materials && (
-            <li>Matériaux : {product.specifications.materials.join(', ')}</li>
+            <li>Matériaux premium sélectionnés pour sublimer votre teint et garantir un confort toute la journée</li>
           )}
           {product.specifications?.metal_type && (
-            <li>Type de métal : {product.specifications.metal_type}</li>
+            <li>Métal {product.specifications.metal_type} pour un éclat durable qui attire tous les regards</li>
           )}
           {product.specifications?.plating && (
-            <li>Plaquage : {product.specifications.plating}</li>
+            <li>Plaquage {product.specifications.plating} qui préserve sa brillance même après plusieurs mois d&apos;utilisation</li>
           )}
           {product.specifications?.is_nickel_free && (
-            <li>Sans nickel</li>
+            <li>Formule sans nickel idéale pour les peaux sensibles - Confort garanti</li>
           )}
           {product.specifications?.is_lead_free && (
-            <li>Sans plomb</li>
+            <li>Sans plomb - Portez vos bijoux en toute sécurité avec notre engagement qualité</li>
           )}
           {product.specifications?.dimensions_mm && (
             <li>
-              Dimensions : 
-              {product.specifications.dimensions_mm.height && ` H:${product.specifications.dimensions_mm.height}mm`}
-              {product.specifications.dimensions_mm.width && ` L:${product.specifications.dimensions_mm.width}mm`}
-              {product.specifications.dimensions_mm.length && ` P:${product.specifications.dimensions_mm.length}mm`}
+              Dimensions parfaites pour un look équilibré qui met en valeur votre visage
             </li>
           )}
           {product.specifications?.weight_g && (
-            <li>Poids : {product.specifications.weight_g}g</li>
+            <li>Ultra légères ({product.specifications.weight_g}g) - Vous oublierez que vous les portez !</li>
           )}
         </ul>
       </div>
@@ -245,12 +242,12 @@ export default function ProductInfo({
           <div className="flex items-start justify-between mb-3">
             <div>
               <h3 className="font-semibold text-lg text-gray-800 flex items-center">
-                <span className="mr-2">Protection GlowCare</span>
+                <span className="mr-2">Protection GlowCare+</span>
                 <Badge variant="success" className="animate-pulse">
-                  Recommandé
+                  94% recommandent
                 </Badge>
               </h3>
-              <p className="text-sm text-gray-600 mt-1">Profitez d&apos;une tranquillité d&apos;esprit totale</p>
+              <p className="text-sm text-gray-600 mt-1">Profitez de votre bijou l&apos;esprit tranquille</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="font-medium text-lilas-fonce">+{formatPrice(glowCarePrice)}</span>
@@ -263,24 +260,24 @@ export default function ProductInfo({
           </div>
           
           <div className="text-xs text-gray-600 space-y-2">
-            <p className="font-medium">Avec la protection GlowCare, vous bénéficiez de :</p>
+            <p className="font-medium">Avec GlowCare+, vous bénéficiez de :</p>
             <div className="flex items-start gap-2">
               <svg className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <span>Protection étendue à 6 mois (au lieu de 2)</span>
+              <span>Garantie étendue à 6 mois (triple protection)</span>
             </div>
             <div className="flex items-start gap-2">
               <svg className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <span>Remplacement gratuit en cas de casse accidentelle</span>
+              <span>Remplacement sans questions en cas d&apos;accident</span>
             </div>
             <div className="flex items-start gap-2">
               <svg className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <span>Protection contre la décoloration et la perte d&apos;éléments</span>
+              <span>Service VIP avec traitement prioritaire</span>
             </div>
           </div>
         </div>
@@ -317,12 +314,12 @@ export default function ProductInfo({
             />
             <label htmlFor="livraison-garantie" className="w-full">
               <div className="font-medium flex items-center">
-                <span>Livraison garantie</span>
-                <Badge className="ml-2" variant="default">Recommandé</Badge>
+                <span>Livraison express garantie</span>
+                <Badge className="ml-2" variant="default">Populaire</Badge>
               </div>
               <div className="text-gray-600 text-sm flex items-center">
                 <Badge className="mr-2 whitespace-nowrap" variant="secondary">+2,00 €</Badge>
-                <span>Livraison prioritaire</span>
+                <span>Livraison sous 48h avec suivi premium</span>
               </div>
             </label>
           </div>
@@ -338,12 +335,12 @@ export default function ProductInfo({
             />
             <label htmlFor="assurance-perte" className="w-full">
               <div className="font-medium flex items-center">
-                <span>Assurance perte/vol</span>
-                <Badge className="ml-2" variant="menthe">Protection</Badge>
+                <span>Protection perte & vol</span>
+                <Badge className="ml-2" variant="menthe">Tranquillité</Badge>
               </div>
               <div className="text-gray-600 text-sm flex items-center flex-wrap sm:flex-nowrap">
                 <Badge className="mr-2 whitespace-nowrap" variant="secondary">+0,90 €</Badge>
-                <span>Remboursement en cas de perte ou vol</span>
+                <span>Remplacement à l&apos;identique en cas de problème</span>
               </div>
             </label>
           </div>
@@ -359,12 +356,12 @@ export default function ProductInfo({
             />
             <label htmlFor="emballage-premium" className="w-full">
               <div className="font-medium flex items-center">
-                <span>Emballage premium</span>
-                <Badge className="ml-2" variant="dore">Élégant</Badge>
+                <span>Écrin cadeau luxe</span>
+                <Badge className="ml-2" variant="dore">Parfait pour offrir</Badge>
               </div>
               <div className="text-gray-600 text-sm flex items-center flex-wrap sm:flex-nowrap">
                 <Badge className="mr-2 whitespace-nowrap" variant="secondary">+2,90 €</Badge>
-                <span>jolie emballage pour offrir</span>
+                <span>Packaging luxueux qui impressionnera dès l&apos;ouverture</span>
               </div>
             </label>
           </div>
@@ -420,14 +417,14 @@ export default function ProductInfo({
               className="flex-grow max-w-[400px] min-w-[200px] w-[70%] bg-lilas-fonce hover:bg-lilas-fonce/90 text-white rounded-full flex items-center justify-center gap-2 py-6 transition-all duration-300 hover:scale-[1.03] shadow-md hover:shadow-xl"
             >
               <HiOutlineShoppingBag className="h-6 w-6" />
-              <span className="font-semibold text-base">Ajouter au panier</span>
+              <span className="font-semibold text-base">{isLowStock ? "Ajoutez vite au panier" : "Ajoutez à votre style"}</span>
             </Button>
           </div>
           
           {/* Indicateur de stock */}
           {isInStock && isLowStock && (
             <div className="mt-2 text-xs text-center text-amber-600">
-              Plus que {stockCount} en stock ! Commandez maintenant
+              Plus que {stockCount} en stock ! Les autres client·e·s sont en train d&apos;acheter
             </div>
           )}
         </div>
@@ -464,25 +461,25 @@ export default function ProductInfo({
           <svg className="h-5 w-5 text-lilas-fonce flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
-          <span>Livraison sous 2-4 jours ouvrés</span>
+          <span>Livraison rapide en 2-4 jours ouvré avec suivi</span>
         </div>
         <div className="flex items-start gap-2">
           <svg className="h-5 w-5 text-lilas-fonce flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
-          <span>Retours gratuits sous 14 jours</span>
+          <span>Retours gratuits & simplifiés sous 14 jours</span>
         </div>
         <div className="flex items-start gap-2">
           <svg className="h-5 w-5 text-lilas-fonce flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
-          <span>Garantie 1 an incluse</span>
+          <span>Garantie 1 an incluse - Profitez l&apos;esprit libre</span>
         </div>
         <div className="flex items-start gap-2">
           <svg className="h-5 w-5 text-lilas-fonce flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
-          <span>Paiement sécurisé</span>
+          <span>Paiement sécurisé & crypté à 100%</span>
         </div>
       </div>
 

@@ -51,7 +51,7 @@ export default function ModernHeroBanner({
         <div className="relative aspect-[4/5] md:aspect-[16/9] lg:aspect-[21/9] w-full">
           <OptimizedImage
             src={imageUrl}
-            alt="Bannière GlowLoops"
+            alt="Boucles d'oreilles tendance pour sublimer votre style"
             fill
             priority
             quality={85}
@@ -74,7 +74,7 @@ export default function ModernHeroBanner({
             <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">{subtitle}</p>
             <Link 
               href={ctaLink}
-              className="inline-block bg-white text-lilas-fonce py-3 px-6 rounded-full font-medium hover:bg-lilas-clair hover:text-white transition-colors duration-300 shadow-md hover:shadow-lg"
+              className="inline-block bg-white text-lilas-fonce py-3 px-8 rounded-full font-medium hover:bg-lilas-clair hover:text-white transition-colors duration-300 shadow-md hover:shadow-lg"
             >
               {ctaText}
             </Link>
