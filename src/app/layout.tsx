@@ -24,11 +24,15 @@ export const dynamicRendering = 'force-static';
 // Forcer le rendu statique pour éviter les problèmes de promesse
 export const dynamicParams = false;
 
+// Optimisation des polices avec préchargement pour les tailles critiques
 const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
   weight: ["400", "500", "600", "700", "900"],
   display: "swap",
+  preload: true,
+  fallback: ['Georgia', 'serif'],
+  adjustFontFallback: true, // Évite le CLS pendant le chargement
 });
 
 const poppins = Poppins({
@@ -36,6 +40,9 @@ const poppins = Poppins({
   variable: "--font-poppins",
   weight: ["300", "400", "500", "600", "700"],
   display: "swap",
+  preload: true,
+  fallback: ['system-ui', 'Arial', 'sans-serif'],
+  adjustFontFallback: true, // Évite le CLS pendant le chargement
 });
 
 export const metadata: Metadata = {
@@ -61,7 +68,7 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <head />
       <body
-        className={`${playfairDisplay.variable} ${poppins.variable} antialiased`}
+        className={`${playfairDisplay.variable} ${poppins.variable} antialiased font-sans text-base bg-white`}
       >
         <AuthInitializer />
         <FavoritesSync />

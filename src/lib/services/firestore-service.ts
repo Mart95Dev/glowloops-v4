@@ -5,7 +5,34 @@
 import { collection, getDocs, query, where, orderBy, limit, getDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/firebase-config';
 import { convertFirestoreData } from '../utils/firestore-helpers';
-import { refreshStorageUrl } from '../utils/storage-helpers';
+import { refreshStorageUrl, optimizeFirebaseUrl, ImageSize } from '../utils/storage-helpers';
+
+/**
+ * Cache côté client pour éviter des appels redondants à Firestore
+ */
+const cache = {
+  banners: new Map<string, Banner[]>(),
+  faqs: new Map<string, FAQ[]>(),
+  instagramPosts: new Map<string, InstagramPost[]>(),
+  advantages: new Map<string, Advantage[]>()
+};
+
+// Délai d'expiration du cache en millisecondes (15 minutes)
+const CACHE_EXPIRATION = 15 * 60 * 1000; 
+
+// Vérifier si on est en production
+const isProd = process.env.NODE_ENV === 'production';
+
+// Fonction utilitaire pour journaliser les messages
+const log = (message: string, data?: unknown) => {
+  if (!isProd) {
+    if (data) {
+      console.log(message, data);
+    } else {
+      console.log(message);
+    }
+  }
+};
 
 /**
  * Types pour les données Firestore
@@ -67,40 +94,52 @@ export const bannerService = {
    */
   async getActiveBanners(bannerType?: 'hero' | 'promo' | 'collection'): Promise<Banner[]> {
     try {
-      console.log(`[BannerService] Récupération des bannières de type: ${bannerType || 'tous'}`);
+      // Clé pour le cache
+      const cacheKey = bannerType || 'all';
+      
+      // Vérifier si les données sont dans le cache
+      if (cache.banners.has(cacheKey)) {
+        const cachedData = cache.banners.get(cacheKey);
+        if (cachedData && cachedData.length > 0) {
+          log(`[BannerService] Utilisation des données en cache pour les bannières de type: ${cacheKey}`);
+          return cachedData;
+        }
+      }
+      
+      log(`[BannerService] Récupération des bannières de type: ${bannerType || 'tous'}`);
       
       // Construire la requête
       const bannersRef = collection(db, 'banners');
       const currentDate = new Date();
-      console.log(`[BannerService] Date actuelle: ${currentDate.toISOString()}`);
+      log(`[BannerService] Date actuelle: ${currentDate.toISOString()}`);
       
       // Simplifier la requête pour déboguer
       let bannerQuery;
       
       if (bannerType) {
-        console.log(`[BannerService] Requête filtrée par type: ${bannerType}`);
+        log(`[BannerService] Requête filtrée par type: ${bannerType}`);
         bannerQuery = query(
           bannersRef,
           where('isActive', '==', true),
           where('type', '==', bannerType)
         );
       } else {
-        console.log('[BannerService] Requête sans filtre de type');
+        log('[BannerService] Requête sans filtre de type');
         bannerQuery = query(
           bannersRef,
           where('isActive', '==', true)
         );
       }
       
-      console.log('[BannerService] Exécution de la requête...');
+      log('[BannerService] Exécution de la requête...');
       const querySnapshot = await getDocs(bannerQuery);
-      console.log(`[BannerService] ${querySnapshot.docs.length} bannières récupérées`);
+      log(`[BannerService] ${querySnapshot.docs.length} bannières récupérées`);
       
       // Transformer les documents Firestore en objets Banner
       const banners: Banner[] = [];
       for (const document of querySnapshot.docs) {
         const data = document.data();
-        console.log(`[BannerService] Traitement de la bannière ID: ${document.id}`, data);
+        log(`[BannerService] Traitement de la bannière ID: ${document.id}`, data);
         
         const banner = convertFirestoreData<Banner>({
           id: document.id,
@@ -112,33 +151,44 @@ export const bannerService = {
         const endDate = new Date(banner.endDate);
         const isDateValid = currentDate >= startDate && currentDate <= endDate;
         
-        console.log(`[BannerService] Banner ${document.id} dates - début: ${startDate.toISOString()}, fin: ${endDate.toISOString()}, valide: ${isDateValid}`);
+        log(`[BannerService] Banner ${document.id} dates - début: ${startDate.toISOString()}, fin: ${endDate.toISOString()}, valide: ${isDateValid}`);
         
         if (!isDateValid) {
-          console.log(`[BannerService] Bannière ${document.id} ignorée car hors période de validité`);
+          log(`[BannerService] Bannière ${document.id} ignorée car hors période de validité`);
           continue;
         }
         
         // Rafraîchir l'URL de l'image
         if (banner.imageUrl) {
-          console.log(`[BannerService] URL image avant refresh: ${banner.imageUrl}`);
+          log(`[BannerService] URL image avant refresh: ${banner.imageUrl}`);
           try {
             // Vérifier si l'URL est déjà complète
             if (banner.imageUrl.startsWith('http')) {
-              // S'assurer que l'URL Firebase a le paramètre alt=media
-              if (banner.imageUrl.includes('firebasestorage.googleapis.com') && !banner.imageUrl.includes('alt=media')) {
-                banner.imageUrl = `${banner.imageUrl}${banner.imageUrl.includes('?') ? '&' : '?'}alt=media`;
-                console.log(`[BannerService] URL Firebase complétée avec alt=media: ${banner.imageUrl}`);
+              // S'assurer que l'URL Firebase a le paramètre alt=media et est optimisée
+              if (banner.imageUrl.includes('firebasestorage.googleapis.com') || 
+                  banner.imageUrl.includes('storage.googleapis.com')) {
+                
+                // Optimiser l'URL pour les bannières hero (grand format, haute qualité)
+                banner.imageUrl = optimizeFirebaseUrl(banner.imageUrl, {
+                  size: bannerType === 'hero' ? 'large' as ImageSize : 'medium' as ImageSize,
+                  format: 'webp',
+                  quality: bannerType === 'hero' ? 80 : 75
+                });
+                log(`[BannerService] URL Firebase optimisée: ${banner.imageUrl}`);
               }
             } else {
-              // C'est probablement un chemin de stockage, essayer de le rafraîchir
-              banner.imageUrl = await refreshStorageUrl(banner.imageUrl);
-              console.log(`[BannerService] URL image rafraîchie: ${banner.imageUrl}`);
+              // C'est probablement un chemin de stockage, essayer de le rafraîchir avec optimisation
+              banner.imageUrl = await refreshStorageUrl(banner.imageUrl, {
+                size: bannerType === 'hero' ? 'large' as ImageSize : 'medium' as ImageSize,
+                format: 'webp',
+                quality: bannerType === 'hero' ? 80 : 75
+              });
+              log(`[BannerService] URL image rafraîchie: ${banner.imageUrl}`);
             }
           } catch (error) {
             console.error(`[BannerService] Erreur lors du rafraîchissement de l'URL pour la bannière ${document.id}:`, error);
           }
-          console.log(`[BannerService] URL image finale: ${banner.imageUrl}`);
+          log(`[BannerService] URL image finale: ${banner.imageUrl}`);
         } else {
           console.warn(`[BannerService] Bannière ${document.id} sans URL d'image`);
         }
@@ -146,9 +196,20 @@ export const bannerService = {
         banners.push(banner);
       }
       
-      console.log(`[BannerService] ${banners.length} bannières valides renvoyées`);
+      log(`[BannerService] ${banners.length} bannières valides renvoyées`);
       // Trier les bannières par ordre ascendant
-      return banners.sort((a, b) => a.order - b.order);
+      const sortedBanners = banners.sort((a, b) => a.order - b.order);
+      
+      // Mettre à jour le cache
+      cache.banners.set(cacheKey, sortedBanners);
+      
+      // Définir un délai d'expiration pour le cache
+      setTimeout(() => {
+        cache.banners.delete(cacheKey);
+        log(`[BannerService] Cache expiré pour les bannières de type: ${cacheKey}`);
+      }, CACHE_EXPIRATION);
+      
+      return sortedBanners;
     } catch (error) {
       console.error('[BannerService] Erreur lors de la récupération des bannières:', error);
       return [];
@@ -169,10 +230,21 @@ export const bannerService = {
       }
       
       const data = bannerDoc.data();
-      return convertFirestoreData<Banner>({
+      const banner = convertFirestoreData<Banner>({
         id: bannerDoc.id,
         ...data
       });
+      
+      // Optimiser l'URL de l'image si présente
+      if (banner.imageUrl && banner.imageUrl.startsWith('http')) {
+        banner.imageUrl = optimizeFirebaseUrl(banner.imageUrl, {
+          size: 'large' as ImageSize,
+          format: 'webp',
+          quality: 80
+        });
+      }
+      
+      return banner;
     } catch (error) {
       console.error(`Erreur lors de la récupération de la bannière ${id}:`, error);
       return null;
@@ -192,6 +264,18 @@ export const faqService = {
    */
   async getActiveFaqs(category?: string, frequentOnly = false): Promise<FAQ[]> {
     try {
+      // Clé pour le cache
+      const cacheKey = `${category || 'all'}_${frequentOnly ? 'frequent' : 'all'}`;
+      
+      // Vérifier si les données sont dans le cache
+      if (cache.faqs.has(cacheKey)) {
+        const cachedData = cache.faqs.get(cacheKey);
+        if (cachedData && cachedData.length > 0) {
+          log(`[FAQService] Utilisation des données en cache pour ${cacheKey}`);
+          return cachedData;
+        }
+      }
+      
       // Construire la requête
       const faqsRef = collection(db, 'faqs');
       
@@ -233,6 +317,15 @@ export const faqService = {
         }));
       });
       
+      // Mettre à jour le cache
+      cache.faqs.set(cacheKey, faqs);
+      
+      // Définir un délai d'expiration pour le cache
+      setTimeout(() => {
+        cache.faqs.delete(cacheKey);
+        log(`[FAQService] Cache expiré pour ${cacheKey}`);
+      }, CACHE_EXPIRATION);
+      
       return faqs;
     } catch (error) {
       console.error('Erreur lors de la récupération des FAQs:', error);
@@ -252,6 +345,18 @@ export const instagramService = {
    */
   async getActivePosts(count = 6): Promise<InstagramPost[]> {
     try {
+      // Clé pour le cache
+      const cacheKey = `count_${count}`;
+      
+      // Vérifier si les données sont dans le cache
+      if (cache.instagramPosts.has(cacheKey)) {
+        const cachedData = cache.instagramPosts.get(cacheKey);
+        if (cachedData && cachedData.length > 0) {
+          log(`[InstagramService] Utilisation des données en cache pour ${count} posts`);
+          return cachedData;
+        }
+      }
+      
       // Construire la requête
       const postsRef = collection(db, 'instagram_posts');
       
@@ -268,11 +373,35 @@ export const instagramService = {
       const posts: InstagramPost[] = [];
       querySnapshot.forEach(doc => {
         const data = doc.data();
-        posts.push(convertFirestoreData<InstagramPost>({
+        const post = convertFirestoreData<InstagramPost>({
           id: doc.id,
           ...data
-        }));
+        });
+        
+        // Optimiser l'URL de l'image si présente
+        if (post.imageUrl && post.imageUrl.startsWith('http')) {
+          if (post.imageUrl.includes('firebasestorage.googleapis.com') || 
+              post.imageUrl.includes('storage.googleapis.com')) {
+              
+            post.imageUrl = optimizeFirebaseUrl(post.imageUrl, {
+              size: 'medium' as ImageSize,
+              format: 'webp',
+              quality: 75
+            });
+          }
+        }
+        
+        posts.push(post);
       });
+      
+      // Mettre à jour le cache
+      cache.instagramPosts.set(cacheKey, posts);
+      
+      // Définir un délai d'expiration pour le cache
+      setTimeout(() => {
+        cache.instagramPosts.delete(cacheKey);
+        log(`[InstagramService] Cache expiré pour ${count} posts`);
+      }, CACHE_EXPIRATION);
       
       return posts;
     } catch (error) {
@@ -292,6 +421,18 @@ export const advantageService = {
    */
   async getActiveAdvantages(): Promise<Advantage[]> {
     try {
+      // Clé pour le cache
+      const cacheKey = 'all';
+      
+      // Vérifier si les données sont dans le cache
+      if (cache.advantages.has(cacheKey)) {
+        const cachedData = cache.advantages.get(cacheKey);
+        if (cachedData && cachedData.length > 0) {
+          log(`[AdvantageService] Utilisation des données en cache pour les avantages`);
+          return cachedData;
+        }
+      }
+      
       // Construire la requête
       const advantagesRef = collection(db, 'advantages');
       
@@ -312,6 +453,15 @@ export const advantageService = {
           ...data
         }));
       });
+      
+      // Mettre à jour le cache
+      cache.advantages.set(cacheKey, advantages);
+      
+      // Définir un délai d'expiration pour le cache
+      setTimeout(() => {
+        cache.advantages.delete(cacheKey);
+        log(`[AdvantageService] Cache expiré pour les avantages`);
+      }, CACHE_EXPIRATION);
       
       return advantages;
     } catch (error) {

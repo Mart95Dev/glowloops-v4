@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils/ui-helpers';
 
 // Constantes
 const FALLBACK_IMAGE = '/images/default-banner.png';
+const isProd = process.env.NODE_ENV === 'production';
 
 interface ModernHeroBannerProps {
   title?: string;
@@ -34,37 +35,43 @@ export default function ModernHeroBanner({
   useEffect(() => {
     // Si l'URL est fournie et semble valide, l'utiliser directement
     if (imageUrl && (imageUrl.startsWith('http') || imageUrl.startsWith('/'))) {
-      console.log('[ModernHeroBanner] URL d\'image valide détectée:', imageUrl);
+      if (!isProd) {
+        console.log('[ModernHeroBanner] URL d\'image valide détectée:', imageUrl);
+      }
       setValidImageUrl(imageUrl);
     } else {
-      console.log('[ModernHeroBanner] URL d\'image invalide ou manquante, utilisation du fallback');
+      if (!isProd) {
+        console.log('[ModernHeroBanner] URL d\'image invalide ou manquante, utilisation du fallback');
+      }
       setValidImageUrl(FALLBACK_IMAGE);
     }
   }, [imageUrl]);
 
-  // Console log pour debugging
+  // Console log pour debugging - uniquement en développement
   useEffect(() => {
-    console.log('[ModernHeroBanner] Propriétés reçues:', { title, subtitle, ctaText, ctaLink, imageUrl });
-    console.log('[ModernHeroBanner] URL d\'image validée:', validImageUrl);
+    if (!isProd) {
+      console.log('[ModernHeroBanner] Propriétés reçues:', { title, subtitle, ctaText, ctaLink, imageUrl });
+      console.log('[ModernHeroBanner] URL d\'image validée:', validImageUrl);
+    }
   }, [title, subtitle, ctaText, ctaLink, imageUrl, validImageUrl]);
 
   return (
     <section className="relative h-[85vh] sm:h-[90vh] md:h-[80vh] overflow-hidden bg-gradient-to-b from-lilas-clair/20 to-creme-nude/30">
       {/* Conteneur de l'image avec hauteur et largeur explicites */}
-      <div className="absolute inset-0 w-full h-full" style={{ height: '100%', width: '100%', position: 'absolute' }}>
+      <div className="absolute inset-0 w-full h-full">
         <OptimizedImage
           src={validImageUrl}
           alt="Collection GlowLoops"
           fill
           priority
-          quality={90}
+          quality={65} // Réduire davantage la qualité pour les bannières
           sizes={getResponsiveSizes('banner')}
           objectFit="cover"
-          objectPosition="center 30%" // Positionner légèrement plus haut pour mieux cadrer le visage
+          objectPosition="center 30%" 
           eager={true}
           fallbackSrc={FALLBACK_IMAGE}
-          format="webp" // Utiliser le format WebP pour une meilleure optimisation
-          ratio="landscape" // Définir le ratio paysage pour la bannière hero
+          format="avif" // Utiliser AVIF pour une meilleure compression
+          ratio="landscape"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
       </div>

@@ -21,11 +21,12 @@ export interface OptimizedImageProps {
   fallbackSrc?: string;
   eager?: boolean;
   blur?: boolean;
-  format?: 'webp' | 'jpg' | 'png' | 'auto';
+  format?: 'webp' | 'avif' | 'jpg' | 'png' | 'auto';
   ratio?: 'portrait' | 'landscape' | 'square' | 'auto';
 }
 
 const DEFAULT_FALLBACK = '/images/default-product.png';
+const isProd = process.env.NODE_ENV === 'production';
 
 export function OptimizedImage({
   src,
@@ -35,7 +36,7 @@ export function OptimizedImage({
   fill = false,
   sizes = '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw',
   priority = false,
-  quality = 85,
+  quality = 70,
   className,
   style,
   objectFit = 'cover',
@@ -52,19 +53,21 @@ export function OptimizedImage({
   const [blurDataUrl, setBlurDataUrl] = useState<string | undefined>(undefined);
   const [loadError, setLoadError] = useState(false);
   
-  // Log des props pour débogage
+  // Log des props seulement en développement
   useEffect(() => {
-    console.log(`[OptimizedImage] Props reçues:`, {
-      srcProvided: !!src,
-      srcValue: src ? (src.length > 100 ? `${src.substring(0, 100)}...` : src) : null,
-      alt, 
-      width, 
-      height, 
-      fill, 
-      priority,
-      format,
-      ratio
-    });
+    if (!isProd) {
+      console.log(`[OptimizedImage] Props reçues:`, {
+        srcProvided: !!src,
+        srcValue: src ? (src.length > 100 ? `${src.substring(0, 100)}...` : src) : null,
+        alt, 
+        width, 
+        height, 
+        fill, 
+        priority,
+        format,
+        ratio
+      });
+    }
   }, [src, alt, width, height, fill, priority, format, ratio]);
   
   // Déterminer les dimensions optimales en fonction du ratio
@@ -87,58 +90,78 @@ export function OptimizedImage({
           break;
       }
       
-      console.log(`[OptimizedImage] Ratio d'image ajusté: ${ratio}, objectPosition: ${objectPositionValue}`);
+      if (!isProd) {
+        console.log(`[OptimizedImage] Ratio d'image ajusté: ${ratio}, objectPosition: ${objectPositionValue}`);
+      }
     }
   }, [ratio, fill, objectPosition]);
   
-  // Gérer correctement la source initiale
+  // Fonction pour optimiser les URLs Firebase - implémentation d'URL plus performante
+  const optimizeFirebaseUrl = (url: string): string => {
+    if (!url) return url;
+    
+    // Vérifier si c'est une URL Firebase Storage
+    if (url.includes('firebasestorage.googleapis.com') || url.includes('storage.googleapis.com')) {
+      // S'assurer que l'URL a le paramètre alt=media
+      const urlWithMedia = url.includes('alt=media') ? url : `${url}${url.includes('?') ? '&' : '?'}alt=media`;
+      
+      // Ajouter des paramètres pour le format et la qualité
+      const optimizedUrl = new URL(urlWithMedia);
+      
+      // Ajouter le format si supporté
+      if (format !== 'auto') {
+        optimizedUrl.searchParams.set('format', format);
+      }
+      
+      // Définir la qualité pour réduire la taille du fichier
+      optimizedUrl.searchParams.set('q', quality.toString());
+      
+      return optimizedUrl.toString();
+    }
+    
+    return url;
+  };
+  
+  // Gérer la source initiale avec optimisation d'URL améliorée
   useEffect(() => {
     if (!src || src.trim() === '') {
-      console.log(`[OptimizedImage] Source vide ou nulle, utilisation du fallback: ${fallbackSrc}`);
+      if (!isProd) {
+        console.log(`[OptimizedImage] Source vide ou nulle, utilisation du fallback: ${fallbackSrc}`);
+      }
       setImgSrc(fallbackSrc);
       return;
     }
     
-    // Vérifie si c'est une URL Firebase Storage
-    const isFirebaseUrl = src.includes('firebasestorage.googleapis.com') || src.includes('storage.googleapis.com');
-    
-    // Optimisation de l'URL pour Next.js Image (format WebP automatique)
-    // Next.js convertit automatiquement en WebP si le navigateur le prend en charge
-    if (isFirebaseUrl) {
-      console.log(`[OptimizedImage] URL Firebase détectée, utilisation directe`);
-      // S'assurer que l'URL Firebase est correctement formatée
-      const urlWithMedia = src.includes('alt=media') ? src : `${src}${src.includes('?') ? '&' : '?'}alt=media`;
-      setImgSrc(urlWithMedia);
-      
-      // Pour le débogage
-      console.log(`[OptimizedImage] Format: ${format}, URL Firebase optimisée pour ce format`);
-    } else {
-      console.log(`[OptimizedImage] Initialisation de l'image avec la source:`, 
-        src.length > 100 ? `${src.substring(0, 100)}...` : src);
-      setImgSrc(src);
-    }
-    
+    // Optimiser l'URL Firebase si applicable
+    const optimizedSrc = optimizeFirebaseUrl(src);
+    setImgSrc(optimizedSrc);
     setLoadError(false);
     setIsLoading(true);
-  }, [src, fallbackSrc, format]);
+  }, [src, fallbackSrc, format, quality]);
   
-  // Générer un blurDataURL pour le placeholder
+  // Générer un blurDataURL optimisé et léger pour le placeholder
   useEffect(() => {
     if (blur) {
-      // Un placeholder gris très léger
-      setBlurDataUrl('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNDAwIDQwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YyZjJmMiIvPjwvc3ZnPg==');
+      // Un placeholder gris très léger - minifié
+      setBlurDataUrl('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjJmMmYyIi8+PC9zdmc+');
     }
   }, [blur]);
 
   const handleError = () => {
-    console.warn(`[OptimizedImage] Erreur de chargement de l'image:`, imgSrc);
+    if (!isProd) {
+      console.warn(`[OptimizedImage] Erreur de chargement de l'image:`, imgSrc);
+    }
     
     if (imgSrc !== fallbackSrc) {
-      console.log(`[OptimizedImage] Basculement vers l'image de fallback:`, fallbackSrc);
+      if (!isProd) {
+        console.log(`[OptimizedImage] Basculement vers l'image de fallback:`, fallbackSrc);
+      }
       setImgSrc(fallbackSrc);
       setLoadError(true);
     } else if (fallbackSrc !== DEFAULT_FALLBACK) {
-      console.log(`[OptimizedImage] Échec du fallback, utilisation de l'image par défaut:`, DEFAULT_FALLBACK);
+      if (!isProd) {
+        console.log(`[OptimizedImage] Échec du fallback, utilisation de l'image par défaut:`, DEFAULT_FALLBACK);
+      }
       setImgSrc(DEFAULT_FALLBACK);
     } else {
       console.error(`[OptimizedImage] Échec de toutes les sources d'images!`);
@@ -146,8 +169,10 @@ export function OptimizedImage({
   };
 
   const handleLoad = () => {
-    console.log(`[OptimizedImage] Image chargée avec succès:`, 
-      imgSrc.length > 100 ? `${imgSrc.substring(0, 100)}...` : imgSrc);
+    if (!isProd) {
+      console.log(`[OptimizedImage] Image chargée avec succès:`, 
+        imgSrc.length > 100 ? `${imgSrc.substring(0, 100)}...` : imgSrc);
+    }
     setIsLoading(false);
     if (onLoad) onLoad();
   };
@@ -220,6 +245,7 @@ export function OptimizedImage({
           )}
           placeholder={blur && blurDataUrl ? 'blur' : undefined}
           blurDataURL={blurDataUrl}
+          unoptimized={false} // S'assurer que Next.js optimise l'image
         />
       )}
       

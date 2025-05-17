@@ -2,7 +2,10 @@
 export const dynamic = 'force-static';
 export const dynamicParams = false;
 
-import { Suspense } from 'react';
+// Utiliser la régénération statique incrémentielle (ISR) pour une meilleure performance
+export const revalidate = 3600; // Revalider toutes les heures
+
+import { Suspense, lazy } from 'react';
 import { getNewArrivals, getPopularProducts, convertToProductDisplay } from '@/lib/services/product-service';
 import { getActiveCollections } from '@/lib/services/collection-service';
 import { getRecentInstagramPosts } from '@/lib/services/instagram-service';
@@ -18,11 +21,13 @@ import OrganizationJsonLd from '@/components/seo/OrganizationJsonLd';
 // Réactiver ModernHeroBanner qui a été corrigé
 import ModernHeroBanner from '@/components/home/ModernHeroBanner';
 import ModernNewArrivalsSlider from '@/components/home/ModernNewArrivalsSlider';
-import ModernCollectionsGrid from '@/components/home/ModernCollectionsGrid';
-import ModernBestSellersSection from '@/components/home/ModernBestSellersSection';
-import ModernInstagramSection from '@/components/home/ModernInstagramSection';
-import ModernFaqAccordion from '@/components/home/ModernFaqAccordion';
-import ModernNewsletterForm from '@/components/home/ModernNewsletterForm';
+
+// Import lazy des composants sous le pli pour améliorer les performances
+const ModernCollectionsGrid = lazy(() => import('@/components/home/ModernCollectionsGrid'));
+const ModernBestSellersSection = lazy(() => import('@/components/home/ModernBestSellersSection'));
+const ModernInstagramSection = lazy(() => import('@/components/home/ModernInstagramSection'));
+const ModernFaqAccordion = lazy(() => import('@/components/home/ModernFaqAccordion'));
+const ModernNewsletterForm = lazy(() => import('@/components/home/ModernNewsletterForm'));
 
 // Générer les métadonnées SEO pour la page d'accueil
 export const metadata = generateHomeSeoMetadata({
@@ -31,29 +36,31 @@ export const metadata = generateHomeSeoMetadata({
 
 // Utiliser une fonction asynchrone pour charger les données côté serveur
 export default async function Home() {
-  // Récupération des données
+  // Récupération des données prioritaires d'abord (pour les sections au-dessus du pli)
+  const [heroBannersData, newArrivalsData] = await Promise.all([
+    bannerService.getActiveBanners('hero'),
+    getNewArrivals(6),
+  ]);
+
+  // Conversion des données produits prioritaires
+  const newArrivals = newArrivalsData.map(convertToProductDisplay);
+
+  // Récupération des données secondaires (pour les sections sous le pli)
   const [
-    newArrivalsData,
     popularProductsData,
     collectionsData,
     instagramPostsData,
     faqsData,
     advantagesData,
-    // Réactiver heroBannersData
-    heroBannersData
   ] = await Promise.all([
-    getNewArrivals(6),
     getPopularProducts(8),
     getActiveCollections(),
     getRecentInstagramPosts(6),
     getFrequentFaqs(5),
     getActiveAdvantages(),
-    // Réactiver la récupération des bannières
-    bannerService.getActiveBanners('hero')
   ]);
 
-  // Conversion des données produits
-  const newArrivals = newArrivalsData.map(convertToProductDisplay);
+  // Conversion des données produits secondaires
   const popularProducts = popularProductsData.map(convertToProductDisplay);
 
   // Préparation des données avantages avec icônes (filtrage des entrées sans iconName)
@@ -66,7 +73,7 @@ export default async function Home() {
       icon: <AdvantageIcon iconName={advantage.iconName} />,
       order: advantage.order,
       isActive: advantage.isActive
-    }));
+  }));
 
   // Filtrer les bannières pour celles qui sont actives
   const heroBanners = heroBannersData || [];
@@ -103,7 +110,8 @@ export default async function Home() {
     <div className="min-w-[375px] min-h-screen">
       <OrganizationJsonLd />
       <main>
-        {/* Hero Banner - Réactivé avec la version corrigée */}
+        {/* Section prioritaire 1: Hero Banner - Chargement prioritaire */}
+        <section id="hero">
         <Suspense fallback={<div className="h-[85vh] w-full bg-gray-200 animate-pulse"></div>}>
           {heroBanners.length > 0 && (
             <ModernHeroBanner 
@@ -115,16 +123,22 @@ export default async function Home() {
             />
           )}
         </Suspense>
+        </section>
 
-        {/* Nouveautés - Chargement prioritaire car au-dessus de la ligne de flottaison */}
+        {/* Section prioritaire 2: Nouveautés - Chargement prioritaire */}
+        <section id="nouveautes">
         <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
           <ModernNewArrivalsSlider 
             products={newArrivals} 
             title="Nos nouveautés" 
           />
         </Suspense>
+        </section>
 
-        {/* Best-sellers - Optimisé pour le chargement paresseux */}
+        {/* Sections non prioritaires avec lazy loading et chargement différé */}
+
+        {/* Section 3: Best-sellers - Lazy loading */}
+        <section id="bestsellers">
         <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
           <ModernBestSellersSection 
             products={popularProducts} 
@@ -132,16 +146,20 @@ export default async function Home() {
             subtitle="Découvrez nos produits les plus populaires, plébiscités par notre communauté"
           />
         </Suspense>
+        </section>
 
-        {/* Collections - Grille moderne avec effets au survol */}
+        {/* Section 4: Collections - Lazy loading */}
+        <section id="collections">
         <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
           <ModernCollectionsGrid 
             collections={collectionsData}
             title="Nos collections"
           />
         </Suspense>
+        </section>
 
-        {/* Instagram - Grille moderne avec effets au survol */}
+        {/* Section 5: Instagram - Lazy loading */}
+        <section id="instagram" data-testid="instagram-section">
         <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
           <ModernInstagramSection 
             title="Nos clientes adorent GlowLoops"
@@ -150,16 +168,20 @@ export default async function Home() {
             instagramUsername="glowloops"
           />
         </Suspense>
+        </section>
 
-        {/* FAQ - Accordéon moderne avec animations */}
+        {/* Section 6: FAQ - Lazy loading */}
+        <section id="faq">
         <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
           <ModernFaqAccordion 
             faqs={faqsData}
             title="Questions fréquentes"
           />
         </Suspense>
+        </section>
 
-        {/* Newsletter - Formulaire moderne avec validation et animations */}
+        {/* Section 7: Newsletter - Lazy loading */}
+        <section id="newsletter">
         <Suspense fallback={<div className="h-96 w-full bg-gray-100 animate-pulse"></div>}>
           <ModernNewsletterForm 
             title="Restez informée"
@@ -168,38 +190,37 @@ export default async function Home() {
             successMessage="Merci pour votre inscription ! Vous recevrez bientôt nos dernières nouveautés."
           />
         </Suspense>
+        </section>
         
-        {/* Avantages - Design moderne avec icônes et animations - Placé avant le footer */}
-        <Suspense fallback={<div className="h-64 w-full bg-gray-200 animate-pulse"></div>}>
-          <section className="min-w-[375px] py-12 md:py-16 px-4 bg-white border-t border-gray-100 text-gray-800">
-            <div className="container mx-auto">
-              <div className="text-center mb-10">
-                <h2 className="text-2xl md:text-3xl font-bold font-display mb-4">
-                  Pourquoi choisir GlowLoops ?
-                </h2>
-                <p className="text-gray-600 max-w-2xl mx-auto">
-                  Des boucles d&apos;oreilles uniques, éthiques et abordables pour sublimer votre style
-                </p>
-              </div>
-              
-              {/* Grille adaptative en fonction du nombre d'avantages */}
-              <div className={`grid ${getGridCols(advantagesWithIcons.length)} gap-6 overflow-visible place-items-center justify-center max-w-6xl mx-auto`}>
-                {advantagesWithIcons.map((advantage) => (
-                  <div 
-                    key={advantage.id}
-                    className="bg-white/10 backdrop-blur-sm rounded-xl p-4 md:p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex-shrink-0 w-[280px] md:w-auto snap-center"
-                  >
-                    <div className="bg-dore rounded-full w-14 h-14 flex items-center justify-center mb-4 mx-auto">
-                      {advantage.icon}
-                    </div>
-                    <h3 className="text-xl font-bold mb-3 text-center font-display">{advantage.title}</h3>
-                    <p className="text-gray-600 text-center text-sm">{advantage.description}</p>
-                  </div>
-                ))}
-              </div>
+        {/* Section 8: Avantages - Lazy loading */}
+        <section id="avantages" className="min-w-[375px] py-12 md:py-16 px-4 bg-white border-t border-gray-100 text-gray-800">
+          <div className="container mx-auto">
+            <div className="text-center mb-10">
+              <h2 className="text-2xl md:text-3xl font-bold font-display mb-4">
+                Pourquoi choisir GlowLoops ?
+              </h2>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                Des boucles d&apos;oreilles uniques, éthiques et abordables pour sublimer votre style
+              </p>
             </div>
-          </section>
-        </Suspense>
+            
+            {/* Grille adaptative en fonction du nombre d'avantages */}
+            <div className={`grid ${getGridCols(advantagesWithIcons.length)} gap-6 overflow-visible place-items-center justify-center max-w-6xl mx-auto`}>
+              {advantagesWithIcons.map((advantage) => (
+                <div 
+                  key={advantage.id}
+                  className="bg-white/10 backdrop-blur-sm rounded-xl p-4 md:p-6 shadow-lg hover:shadow-xl transition-all duration-300 flex-shrink-0 w-[280px] md:w-auto snap-center"
+                >
+                  <div className="bg-dore rounded-full w-14 h-14 flex items-center justify-center mb-4 mx-auto">
+                    {advantage.icon}
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-center font-display">{advantage.title}</h3>
+                  <p className="text-gray-600 text-center text-sm">{advantage.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   );

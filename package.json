@@ -2,6 +2,7 @@
   "name": "glowloops-v3",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -56,6 +57,7 @@
     "eslint-config-next": "14.2.27",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "terser-webpack-plugin": "^5.3.14",
     "typescript": "^5"
   }
 }
