@@ -1,0 +1,136 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Guide de Style Textuel – E‑commerce Boucles d’Oreilles Fashion (v2 – mai 2025)
+
+> **Objectif :** assurer une voix de marque cohérente qui inspire, convertit et fidélise notre audience principale (femmes 15‑40 ans) tout en améliorant SEO, accessibilité et performance commerciale.
+
+---
+
+## 1. Positionnement & Audience
+
+* **Persona cœur :** femmes 15‑40 ans, passionnées de mode accessible, majoritairement mobile‑first.
+* **Registre :** tutoiement ou vouvoiement ? **Nous choisissons *vous*** pour son équilibre entre proximité et professionnalisme.
+* **Inclusivité :** utiliser le point médian pour les termes genrés (ex. *client·e*, *acheteur·euse*).
+* **Segmentation tonale**
+
+  * **15‑25 ans (Gen Z)** : ton plus visuel, dynamique, micro‑storytelling, références culture pop.
+  * **25‑40 ans (Millennials)** : ton narratif, mise en avant qualité & valeur, storytelling lifestyle.
+
+---
+
+## 2. Ton de Voix
+
+| Valeur          | Application concrète                                                  | Anti‑pattern                                            |
+| --------------- | --------------------------------------------------------------------- | ------------------------------------------------------- |
+| **Authentique** | Parlez vrai : transparence sur matériaux, processus, origine.         | Hyperbole promotionnelle.                               |
+| **Amical**      | Adresse directe, y compris micro‑copy (boutons, bannières).           | Jargon technique, anglicismes déplacés.                 |
+| **Inspirant**   | Mettez en scène le pouvoir stylistique des boucles.                   | Énumération sèche des specs.                            |
+| **Confiant**    | Affichez expertise sans arrogance, chiffres précis, preuves sociales. | Généralités vides (« meilleure qualité », sans preuve). |
+
+---
+
+## 3. Cohérence Linguistique & Micro‑copy
+
+1. **Pronom** : *vous* partout (CTA, pop‑up, mail).
+2. **CTA modèle** : verbe + bénéfice + timing
+
+   * Ex. **« Ajoutez ‑les à votre style dès maintenant »**.
+3. **Rareté & FOMO** : indiquer « Édition limitée » ou stock restant (« Plus que 3 ! »).
+4. **Micro‑feedback** : confirmations courtes (« Ajouté ! ») pour chaque action.
+
+---
+
+## 4. SEO & Structure
+
+1. **Longue traîne** : intégrer 1‑2 mots‑clés spécifiques par fiche (ex. « boucles d’oreilles pendantes dorées hypoallergéniques »).
+2. **Balises** :
+
+   * H1 unique : nom produit + attribut distinctif.
+   * H2 « Pourquoi vous allez l’adorer » (bénéfices), H3 « Détails », H3 « Entretien ».
+3. **Meta‑description 155 car.** avec mot‑clé + bénéfice principal.
+4. **URL courte** : /boucles‑dorées‑pendantes.
+
+---
+
+## 5. Accessibilité & Inclusivité
+
+* **WCAG 2.1** : contraste ≥ 4.5:1, texte lisible à 14 px min, focus clavier visible.
+* **Alt text** descriptif pour chaque image (ex. « Jeune femme portant une paire de boucles d’oreilles dorées pendantes de 5 cm »).
+* **Émojis** : placer hors texte clé, avec rôle décoratif (aria‑hidden="true").
+
+---
+
+## 6. Preuve Sociale & UGC
+
+1. **Avis** : afficher moyenne + nb avis dès la liste catégorie.
+2. **UGC** : min. 2 photos clientes par fiche ; privilégier formats verticaux 4:5.
+3. **Badges** : « Best‑seller », « Nouveauté », « Vu sur Insta ».
+
+---
+
+## 7. Storytelling & Modèle de Description Produit
+
+```
+⚡ ACCROCHE (≤80 car.)
+💎 BÉNÉFICE PRINCIPAL (1 phrase)
+📖 STORYTELLING (2‑3 phrases, origine design / ambiance)
+✨ DÉTAILS (liste à puces)
+👍 PREUVE SOCIALE (avis, mention influence)
+➡️ CTA CLÉ (bouton)
+```
+
+---
+
+## 8. Adaptations par Plateforme
+
+### Site Web
+
+* Descriptions complètes, listes PUIS récits.
+* Guides tailles, FAQ, retours.
+
+### Instagram
+
+* Légendes < 30 mots + 1‑3 emojis, hashtags ≤ 5.
+* Priorité Reels : 15 s, hook 0‑3 s, transformation look, CTA.
+
+### TikTok
+
+* Script 15 s : Hook (2 s) → Transformation → Close‑up produit → CTA.
+* Titre ≤ 100 car., overlay texte clés.
+
+### Pinterest
+
+* Pin title ≤ 100 car., description longue traîne, lien direct produit.
+
+### E‑mails
+
+* Objet ≤ 60 car., preview ≤ 90 car.
+* Format : accroche graphique, produit vedette, sélection 3 boucles, CTA.
+
+---
+
+## 9. Processus d’Optimisation Continue
+
+| Fréquence   | Test                      | KPI                |
+| ----------- | ------------------------- | ------------------ |
+| Mensuel     | A/B Accroche vs. Bénéfice | CTR fiche          |
+| Mensuel     | Disposition avis          | Taux de conversion |
+| Trimestriel | Emoji en légende Insta    | Engagement         |
+
+---
+
+## 10. Checklist Publication Express (avant mise en ligne)
+
+1. ✅ Pronom *vous* cohérent.
+2. ✅ Mot‑clé longue traîne placé H1 + meta.
+3. ✅ Alt text descriptif.
+4. ✅ Contraste couleurs vérifié.
+5. ✅ Minimum 2 UGC visibles.
+6. ✅ CTA comporte verbe + bénéfice.
+7. ✅ Date dernière mise à jour.
+
+
+

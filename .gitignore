@@ -48,10 +48,11 @@ next-env.d.ts
 **/*secret*
 **/*credential*
 
-/old_components
-/old_components/*
-/old_glowloops
-/old_glowloops/*
+ /old_components
+ /old_components/*
+ /old_glowloops
+ /old_glowloops/*
+
 .vercel
 
 

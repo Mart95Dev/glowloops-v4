@@ -21,9 +21,9 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     cartStore.addItem({
-      productId: product.id,
-      name: product.name,
-      price: product.price,
+      productId: product.id || '',
+      name: product.name || 'Produit sans nom',
+      price: product.price || 0,
       quantity: 1,
       image: product.images && product.images.length > 0 ? product.images[0] : '#'
     });
@@ -39,6 +39,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
   };
 
   const imageSrc = getImageSrc();
+  const lowStock = product.inventory?.quantity && product.inventory.quantity < 5;
 
   if (viewMode === 'list') {
     return (
@@ -48,11 +49,11 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
         onMouseLeave={() => setIsHovered(false)}
       >
         <div className="relative w-full sm:w-40 h-60 sm:h-40 overflow-hidden">
-          <Link href={`/produits/${product.id}`}>
+          <Link href={`/produits/${product.id || ''}`}>
             {imageSrc ? (
               <Image
                 src={imageSrc}
-                alt={product.name}
+                alt={product.name || 'Boucles d\'oreilles tendance GlowLoops'}
                 fill
                 sizes="(max-width: 640px) 100vw, 320px"
                 className="object-cover transition-transform duration-300 ease-in-out"
@@ -68,12 +69,12 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
           </Link>
           {product.isNew && (
             <div className="absolute top-2 left-2 bg-lilas-fonce text-white text-xs font-medium px-2 py-1 rounded-full">
-              Nouveau
+              Nouveau ✨
             </div>
           )}
           {product.discount && (
             <div className="absolute top-2 right-2 bg-dore text-white text-xs font-medium px-2 py-1 rounded-full">
-              -{product.discount}%
+              -{product.discount}% 🔥
             </div>
           )}
         </div>
@@ -81,7 +82,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
         <div className="flex-grow p-4">
           <div className="flex justify-between items-start">
             <div>
-              <Link href={`/produits/${product.id}`} className="hover:underline">
+              <Link href={`/produits/${product.id || ''}`} className="hover:underline">
                 <h3 className="font-medium mb-1">{product.name}</h3>
               </Link>
               
@@ -96,7 +97,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
                   </span>
                 )}
                 <span className="font-bold text-lilas-fonce">
-                  {product.price.toFixed(2)} €
+                  {(product.price || 0).toFixed(2)} €
                 </span>
               </div>
             </div>
@@ -112,7 +113,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
               variant="default"
               className="w-full bg-lilas-fonce text-white hover:bg-lilas-fonce/90"
             >
-              Ajouter au panier
+              {product.isNew ? "Craquez maintenant ✨" : "Ajoutez à votre style dès aujourd'hui"}
             </Button>
           </div>
         </div>
@@ -127,11 +128,11 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative aspect-square overflow-hidden">
-        <Link href={`/produits/${product.id}`}>
+        <Link href={`/produits/${product.id || ''}`}>
           {imageSrc ? (
             <Image
               src={imageSrc}
-              alt={product.name}
+              alt={product.name || 'Boucles d\'oreilles tendance qui sublimeront votre visage'}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
               className="object-cover transition-transform duration-300 ease-in-out"
@@ -148,24 +149,30 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
 
         {product.isNew && (
           <div className="absolute top-2 left-2 bg-lilas-fonce text-white text-xs font-medium px-2 py-1 rounded-full">
-            Nouveau
+            Nouveau ✨
           </div>
         )}
         
         {product.discount && (
           <div className="absolute top-2 right-2 bg-dore text-white text-xs font-medium px-2 py-1 rounded-full">
-            -{product.discount}%
+            -{product.discount}% 🔥
+          </div>
+        )}
+        
+        {!product.isNew && !product.discount && lowStock && (
+          <div className="absolute bottom-2 left-2 right-2 bg-red-600/80 text-white text-xs font-medium px-2 py-1 rounded-full text-center">
+            Vite ! Plus que {product.inventory?.quantity} en stock
           </div>
         )}
       </div>
 
       <div className="p-4">
         <div className="flex justify-between items-start">
-          <Link href={`/produits/${product.id}`} className="hover:underline">
+          <Link href={`/produits/${product.id || ''}`} className="hover:underline">
             <h3 className="font-medium">{product.name}</h3>
           </Link>
           
-          <button className="p-1 text-gray-400 hover:text-lilas-fonce">
+          <button className="p-1 text-gray-400 hover:text-lilas-fonce transition-colors duration-300" title="Ajouter aux favoris">
             <Heart size={18} />
           </button>
         </div>
@@ -181,7 +188,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
             </span>
           )}
           <span className="font-bold text-lilas-fonce">
-            {product.price.toFixed(2)} €
+            {(product.price || 0).toFixed(2)} €
           </span>
         </div>
         
@@ -190,7 +197,7 @@ export default function ProductCard({ product, viewMode = 'grid' }: ProductCardP
           variant="default"
           className="w-full bg-lilas-fonce text-white hover:bg-lilas-fonce/90"
         >
-          Ajouter au panier
+          {product.isNew ? "Nouvelle tendance - J'en profite" : lowStock ? "Vite avant rupture !" : "Ajoutez à votre style"}
         </Button>
       </div>
     </motion.div>
